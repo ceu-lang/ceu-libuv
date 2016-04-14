@@ -1,0 +1,5 @@
+native @plain _uv_fs_t, _uv_buf_t;
+native @nohold
+        _ceu_uv_fs_close(),
+        _uv_buf_init(),
+        _uv_fs_req_cleanup();

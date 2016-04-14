@@ -1,0 +1,42 @@
+#include "uv.ceu"
+
+input _uv_fs_t&& FS;
+
+do
+var _uv_fs_t req_open=_uv_fs_t(), req_close=_uv_fs_t();
+_ceu_uv_fs_open(&&req_open, "fs-01.txt", _O_RDONLY, 0)
+    finalize with
+        _uv_fs_req_cleanup(&&req_open);
+        _ceu_uv_fs_close(&&req_close, req_open.result);
+    end;
+
+var _uv_fs_t&& req1 = await FS until req1==&&req_open;
+_assert(req_open.result >= 0);
+
+var _char[1024] buf_ = [];
+var _uv_buf_t buf = _uv_buf_init(buf_, sizeof(buf_)-1);
+
+var int offset = 0;
+var _uv_fs_t req_read = _uv_fs_t();
+finalize with
+    _uv_fs_req_cleanup(&&req_read);
+end
+loop do
+    _ceu_uv_fs_read(&&req_read, req_open.result, &&buf, 1, offset)
+        finalize with
+            _uv_fs_req_cleanup(&&req_read);
+        end;
+    var _uv_fs_t&& req2 = await FS until req2==&&req_read;
+    _assert(req_read.result >= 0);
+    if req_read.result == 0 then
+        break;
+    end
+    buf.len = req_read.result;
+    buf.base[buf.len] = '\0';
+    _printf("%s", buf.base);
+
+    offset = offset + req_read.result;
+end
+end
+_printf("okok\n");
+escape 0;
