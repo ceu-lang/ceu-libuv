@@ -3,3 +3,69 @@ native @nohold
         _ceu_uv_fs_close(),
         _uv_buf_init(),
         _uv_fs_req_cleanup();
+
+input _uv_fs_t&& FS;
+
+class UV_FS_open with
+output:
+    event int ok;
+    function (@hold char&& path, int flags, int mode)=>UV_FS_open build;
+
+input:
+    var char&& path;
+    var int flags, mode;
+do
+    function (@hold char&& path, int flags, int mode)=>UV_FS_open build do
+        this.path  := path;
+        this.flags = flags;
+        this.mode  = mode;
+    end
+
+    var _uv_fs_t req_open  = _uv_fs_t();
+    var _uv_fs_t req_close = _uv_fs_t();
+
+    var int ret = _ceu_uv_fs_open(&&req_open, path, flags, mode)
+                    finalize with
+                        _uv_fs_req_cleanup(&&req_open);
+                        _ceu_uv_fs_close(&&req_close, req_open.result);
+                    end;
+    if ret < 0 then
+        async do end
+    else
+        var _uv_fs_t&& req = await FS until req==&&req_open;
+        ret = req_open.result;
+    end
+
+    emit this.ok => ret;
+    await FOREVER;
+end
+
+class UV_FS_read with
+input:
+    var _char&& buf;
+    var int h, size, offset;
+    function (int h, @hold _char&& buf, int size, int offset)=>UV_FS_read build;
+do
+    function (int h, @hold _char&& buf, int size, int offset)=>UV_FS_read build do
+        this.h      = h;
+        this.buf   := buf;
+        this.size   = size;
+        this.offset = offset;
+    end
+
+    var _uv_buf_t buf_ = _uv_buf_init(this.buf, this.size);
+    var _uv_fs_t req_read = _uv_fs_t();
+    finalize with
+        _uv_fs_req_cleanup(&&req_read);
+    end
+
+    var int ret = _ceu_uv_fs_read(&&req_read, this.h, &&buf_, 1, this.offset)
+                    finalize with
+                        _uv_fs_req_cleanup(&&req_read);
+                    end;
+    if ret < 0 then
+        escape ret;
+    end
+    var _uv_fs_t&& req = await FS until req==&&req_read;
+    escape req_read.result;
+end

@@ -1,0 +1,26 @@
+#include "c.ceu"
+#include "uv.ceu"
+
+native @pure _ID();
+native do
+    ##define ID(x) x
+end
+
+var UV_FS_open o = UV_FS_open.build("fs-01.txt", _O_RDONLY, 0);
+var int fd = await o.ok;
+_assert(fd >= 0);
+
+var int offset = 0;
+loop do
+    var _char[1024] buf = [];
+    var int n = do UV_FS_read.build(fd,_ID(&&buf),1023,offset);
+    buf[n] = '\0';
+    _printf("%s", buf);
+    if n == 0 then
+        break;
+    else
+        offset = offset + 1023;
+    end
+end
+
+escape 0;
