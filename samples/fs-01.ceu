@@ -2,7 +2,6 @@
 
 input _uv_fs_t&& FS;
 
-do
 var _uv_fs_t req_open=_uv_fs_t(), req_close=_uv_fs_t();
 _ceu_uv_fs_open(&&req_open, "fs-01.txt", _O_RDONLY, 0)
     finalize with
@@ -37,6 +36,5 @@ loop do
 
     offset = offset + req_read.result;
 end
-end
-_printf("okok\n");
+
 escape 0;
