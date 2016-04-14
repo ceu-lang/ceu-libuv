@@ -22,5 +22,3 @@ endif
 link:
 	rm -f arch/up
 	ln -s `readlink -f $(CEU_DIR)/arch` $(UV_DIR)/arch/up
-
-.PHONY: c
