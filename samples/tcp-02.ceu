@@ -7,8 +7,8 @@
 #@  - write long string
 #@      - ERROR!
 #@ Features:
-#@  - class Client
-#@  - spawn Client
+#@  - class Connection
+#@  - spawn Connection
 #endif
 
 #include "c.ceu"
@@ -36,11 +36,11 @@ do
     _assert(ret == 0);
 end
 
-class Client with
-    function (_uv_tcp_t& server)=>Client build;
+class Connection with
+    function (_uv_tcp_t& server)=>Connection build;
     var _uv_tcp_t& server;
 do
-    function (_uv_tcp_t& server)=>Client build do
+    function (_uv_tcp_t& server)=>Connection build do
         this.server = &server;
     end
 
@@ -88,7 +88,7 @@ do
         end
         //_assert(n_read >= 0);  // connection closed?
         if n_read < 0 then
-            _fprintf(_stderr, "[Client] error: %s\n", _uv_strerror(n_read));
+            _fprintf(_stderr, "[Connection] error: %s\n", _uv_strerror(n_read));
             break;
         else/if n_read == 0 then
             _assert(0);
@@ -111,6 +111,6 @@ end
 every (s,status) in UV_LISTEN do
     if s == (_uv_stream_t&&)&&server then
         _assert(status >= 0);
-        spawn Client.build(&server);
+        spawn Connection.build(&server);
     end
 end
