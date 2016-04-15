@@ -4,6 +4,7 @@ native @plain
         _sockaddr_in,
         _uv_buf_t,
         _uv_fs_t,
+        _uv_stream_t,
         _uv_tcp_t,
         _uv_write_t;
 

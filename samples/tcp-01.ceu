@@ -5,10 +5,10 @@
 #@  - one read / write at a time
 #@  - dies if reads BUFFER_MAX at a time
 #@ Usage:
-#@  - connect a "telnet" client to port 7000
+#@  - connect a "netcat" client to port 7000
 #@      - write anything
 #@      - read the "echo"
-#@  - connect another "telnet" client to port 7000
+#@  - connect another "netcat" client to port 7000
 #@      - write anything
 #@      - no "echo"
 #@      - close first client
@@ -77,7 +77,7 @@ loop do
     loop do
         // READ
         do
-            var _uv_buf_t buf = _uv_buf_init(buf_, n_read);
+            var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX-1);
             var _ceu_uv_read_t r = _ceu_uv_read_t(buf,0);
             client.data = &&r;
             var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client)
@@ -109,7 +109,7 @@ loop do
         // WRITE
         buf_[n_read] = '\0';
         var _uv_write_t req_write = _uv_write_t();
-        var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX-1);
+        var _uv_buf_t buf = _uv_buf_init(buf_, n_read);
         _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf);
         var _uv_write_t&& w;
         var int status;
