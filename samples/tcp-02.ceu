@@ -1,3 +1,4 @@
+#include "c.ceu"
 #include "uv.ceu"
 
 input (_uv_stream_t&&,int) UV_LISTEN;
@@ -21,8 +22,15 @@ do
     _assert(ret == 0);
 end
 
-loop do
-    // ACCEPT
+class Client with
+    function (_uv_tcp_t& server)=>Client build;
+    var _uv_tcp_t& server;
+do
+    function (_uv_tcp_t& server)=>Client build do
+        this.server = &server;
+    end
+
+    // CLIENT
     var _uv_tcp_t&? client_;
     finalize
         client_ = &_malloc(sizeof(_uv_tcp_t));
@@ -35,26 +43,16 @@ loop do
             _uv_close((_uv_handle_t&&)&&client, _ceu_uv_free);
         end;
 
-    loop do
-        var int ret = _uv_accept((_uv_stream_t&&)&&server,(_uv_stream_t&&)&&client);
-        if ret == 0 then
-            break;
-        else
-            // LISTEN
-            var _uv_stream_t&& s;
-            var int status;
-            (s,status) = await UV_LISTEN until s==(_uv_stream_t&&)&&server;
-            _assert(status >= 0);
-        end
-    end
+    // ACCEPT
+    var int ret = _uv_accept((_uv_stream_t&&)&&server,(_uv_stream_t&&)&&client);
+    _assert(ret == 0);
 
+    // READ
     var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client)
                     finalize with
                         _uv_read_stop((_uv_stream_t&&)&&client);
                     end;
     _assert(ret == 0);
-
-    // READ
     loop do
         var _ssize_t    n;
         var _uv_buf_t&& buf_r;
@@ -81,3 +79,12 @@ loop do
         end
     end
 end
+
+every (s,status) in UV_LISTEN do
+    if s == (_uv_stream_t&&)&&server then
+        _assert(status >= 0);
+        spawn Client.build(&server);
+    end
+end
+
+
