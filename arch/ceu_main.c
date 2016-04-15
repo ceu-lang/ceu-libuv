@@ -56,12 +56,25 @@ void ceu_uv_fs_close_cb (uv_fs_t* req) {
 
 /* TCP */
 
-#define ceu_uv_tcp_init(a)   uv_tcp_init(&ceu_uv_loop, a);
-#define ceu_uv_listen(a,b)   uv_listen(a,b,ceu_uv_listen_cb)
-#define ceu_uv_read_start(a) uv_read_start(a,ceu_uv_read_alloc,ceu_uv_read_start_cb);
-#define ceu_uv_write(a,b,c)  uv_write(a,b,c,1,ceu_uv_write_cb)
+#define ceu_uv_tcp_init(a)        uv_tcp_init(&ceu_uv_loop, a);
+#define ceu_uv_tcp_connect(a,b,c) uv_tcp_connect(a,b,c,ceu_uv_connect_cb)
+#define ceu_uv_listen(a,b)        uv_listen(a,b,ceu_uv_listen_cb)
+#define ceu_uv_read_start(a)      uv_read_start(a,ceu_uv_read_alloc,ceu_uv_read_start_cb);
+#define ceu_uv_write(a,b,c)       uv_write(a,b,c,1,ceu_uv_write_cb)
 
-void ceu_uv_listen_cb (uv_stream_t *s, int status) {
+void ceu_uv_connect_cb (uv_connect_t* c, int status) {
+#ifdef CEU_IN_UV_CONNECT
+    tceu__uv_connect_t___int p = { c, status };
+    ceu_sys_go(&CEU_APP, CEU_IN_UV_CONNECT, &p);
+#endif
+#ifdef CEU_RET
+    if (!CEU_APP.isAlive) {
+        uv_stop(&ceu_uv_loop);
+    }
+#endif
+}
+
+void ceu_uv_listen_cb (uv_stream_t* s, int status) {
 #ifdef CEU_IN_UV_LISTEN
     tceu__uv_stream_t___int p = { s, status };
     ceu_sys_go(&CEU_APP, CEU_IN_UV_LISTEN, &p);

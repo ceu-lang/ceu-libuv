@@ -3,6 +3,7 @@ native @plain
         _sockaddr,
         _sockaddr_in,
         _uv_buf_t,
+        _uv_connect_t,
         _uv_fs_t,
         _uv_stream_t,
         _uv_tcp_t,
@@ -14,6 +15,7 @@ native @pure
 native @nohold
         _ceu_uv_fs_close(),
         _ceu_uv_listen(),       // TODO: unlisten?
+        _ceu_uv_tcp_connect(),  // TODO: diconnect?
         _ceu_uv_write(),        // TODO: write_stop?
         _uv_accept(),
         _uv_buf_init(),
@@ -35,6 +37,8 @@ native/pre do
 end
 
 input _uv_fs_t&& FS;
+input (_uv_stream_t&&,_ssize_t, _uv_buf_t&&) UV_READ;
+input (_uv_write_t&&,int) UV_WRITE;
 
 class UV_FS_open with
 output:
@@ -98,4 +102,94 @@ do
     end
     var _uv_fs_t&& req = await FS until req==&&req_read;
     escape req_read.result;
+end
+
+#define BUFFER_MAX 1024
+
+class UV_Stream_Read with
+    var _uv_stream_t& stream;
+    var char[]&       string;
+    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_Read build;
+    event int ok;
+do
+    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_Read build do
+        this.stream = &stream;
+        this.string = &string;
+    end
+
+    var _char[BUFFER_MAX] buf_ = [];
+    var _ssize_t n_read = 0;
+
+    var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX);
+    var _ceu_uv_read_t r = _ceu_uv_read_t(buf,0);
+    this.stream.data = &&r;
+    var int ret = _ceu_uv_read_start(&&this.stream)
+                    finalize with
+                        _assert(r.has_pending_data == 0);
+                        _uv_read_stop(&&this.stream);
+                    end;
+    //_printf("error: %s\n", _uv_strerror(ret));
+    _assert(ret == 0);
+
+    loop do
+        var _uv_buf_t&& buf_r;
+        var _uv_stream_t&& s;
+        (s,n_read,buf_r) = await UV_READ until s==&&this.stream;
+        _assert(buf_r:base == buf.base);
+        _assert(buf_r:len  == buf.len);
+        //_assert(n_read >= 0);  // connection closed?
+        if n_read < 0 then
+            _fprintf(_stderr, "[Connection] error: %s\n", _uv_strerror(n_read));
+            break;
+        else/if n_read == 0 then
+            //_assert(0);   // can happen with multiple writes over "buf_"
+        end
+        buf_[n_read] = '\0';
+        this.string = [] .. this.string .. (char&&)buf_;
+        emit this.ok => n_read;
+    end
+end
+
+class UV_Stream_ReadLine with
+    var _uv_stream_t& stream;
+    var char[]&       string;
+    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_ReadLine build;
+do
+    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_ReadLine build do
+        this.stream = &stream;
+        this.string = &string;
+    end
+
+// TODO: outer
+    var UV_Stream_Read r = UV_Stream_Read.build(&outer.stream,&outer.string);
+    loop do
+        await r.ok;
+        var char n=0, c=0;
+        var int ret = _sscanf((char&&)&&this.string, "%*[^\n]%[\n]%c", &&n,&&c);
+        _assert(ret < 2);
+        if ret == 1 then
+            _assert(n == '\n');
+            break;
+        end
+    end
+end
+
+class UV_Stream_Write with
+    var _uv_stream_t& stream;
+    var char[]&       string;
+    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_Write build;
+do
+    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_Write build do
+        this.stream = &stream;
+        this.string = &string;
+    end
+
+    // WRITE
+    var _uv_write_t req_write = _uv_write_t();
+    var _uv_buf_t buf = _uv_buf_init((char&&)&&this.string, $this.string);
+    _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&this.stream, &&buf);
+    var _uv_write_t&& w;
+    var int status;
+    (w, status) = await UV_WRITE until w==&&req_write;
+    _assert(status == 0);
 end
