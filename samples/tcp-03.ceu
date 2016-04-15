@@ -75,10 +75,16 @@ do
         this.backlog = backlog;
     end
 
-    var _uv_tcp_t server = _uv_tcp_t();
+    var _uv_tcp_t&? server_;
+    finalize
+        server_ = &_malloc(sizeof(_uv_tcp_t));
+    with
+        // free after uv_close
+    end
+    var _uv_tcp_t& server = &server_!;
     _ceu_uv_tcp_init(&&server)
         finalize with
-            _uv_close((_uv_handle_t&&)&&server, null);
+            _uv_close((_uv_handle_t&&)&&server, _ceu_uv_free);
         end;
 
     var _sockaddr_in addr = _sockaddr_in();

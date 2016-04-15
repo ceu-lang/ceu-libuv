@@ -182,8 +182,15 @@ int main (int argc, char *argv[])
 
     uv_run(&ceu_uv_loop, UV_RUN_DEFAULT);
 
-END:
-    uv_loop_close(&ceu_uv_loop);
+#ifdef CEU_ASYNCS
+    uv_close((uv_handle_t*)&ceu_uv_idle, NULL);
+#endif
+#ifdef CEU_WCLOCKS
+    uv_close((uv_handle_t*)&ceu_uv_timer, NULL);
+#endif
+    while (uv_run(&ceu_uv_loop,UV_RUN_NOWAIT) != 0);
+    assert(uv_loop_close(&ceu_uv_loop) == 0);
+
 #ifdef CEU_RET
     return CEU_APP.ret;
 #else
