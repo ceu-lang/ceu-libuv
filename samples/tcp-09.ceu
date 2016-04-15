@@ -1,0 +1,63 @@
+#if 0
+#@ Description: 2 "echo" servers & 4 "echo" clients
+#@  - stop 1 server after 5s
+#@ Features:
+#@  - UV_TCP_Server, UV_TCP_Client
+#endif
+
+#include "c.ceu"
+
+#define UV_TCP_SERVER_HANDLER_CEU tcp-08-handler.ceu
+#include "uv.ceu"
+
+#define PORT    7000
+#define BACKLOG 128
+
+class Client with
+    var int port;
+    function (int port)=>Client build;
+do
+    function (int port)=>Client build do
+        this.port = port;
+    end
+
+    loop do
+        var UV_TCP_Client c = UV_TCP_Client.build("127.0.0.1", outer.port);
+        var int status = await c.ok;
+        if status != 0 then
+            continue;
+        end
+
+        watching c do
+            finalize with
+                _printf("[client %p] stop\n", &&c.tcp);
+            end;
+            loop do
+                await 1s;
+                var char[] string = [] .. "Alo mundo\n";
+                do UV_Stream_Write.build(&c.tcp, &string);
+                string = [].."";
+                do UV_Stream_ReadLine.build(&c.tcp, &string);
+                _printf("[client %p] %s", &&c.tcp, (char&&)&&string);
+            end
+        end
+        break;
+    end
+end
+
+par do
+    do UV_TCP_Server.build("0.0.0.0", PORT+0, BACKLOG);
+with
+    watching 5s do
+        do UV_TCP_Server.build("0.0.0.0", PORT+1, BACKLOG);
+    end
+    _printf("[server %d] stop\n", PORT+1);
+with
+    do Client.build(PORT+0);
+with
+    do Client.build(PORT+0);
+with
+    do Client.build(PORT+1);
+with
+    do Client.build(PORT+1);
+end

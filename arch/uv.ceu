@@ -44,6 +44,7 @@ input (_uv_stream_t&&,_ssize_t, _uv_buf_t&&) UV_READ;
 input (_uv_write_t&&,int) UV_WRITE;
 input (_uv_stream_t&&,int) UV_LISTEN;
 input (_uv_connect_t&&,int) UV_CONNECT;
+input (_uv_stream_t&&,int) UV_ERROR;
 
 class UV_FS_open with
 output:
@@ -213,24 +214,32 @@ do
         this.port = port;
     end
 
-    var _uv_tcp_t client = _uv_tcp_t();
-    _ceu_uv_tcp_init(&&client)
+    // CLIENT
+    var _uv_tcp_t&? tcp_;
+    finalize
+        tcp_ = &_malloc(sizeof(_uv_tcp_t));
+    with
+        // free after uv_close
+    end
+    this.tcp = &tcp_!;
+    _ceu_uv_tcp_init(&&tcp)
         finalize with
-            _uv_close((_uv_handle_t&&)&&client, null);
+            _uv_close((_uv_handle_t&&)&&tcp, _ceu_uv_free);
         end;
-    this.tcp = &client;
 
     var _uv_connect_t connect = _uv_connect_t();
     var _sockaddr_in dest = _sockaddr_in();
     _uv_ip4_addr(this.ip, this.port, &&dest);
-    _ceu_uv_tcp_connect(&&connect, &&client, (_sockaddr&&)&&dest);
+    _ceu_uv_tcp_connect(&&connect, &&tcp, (_sockaddr&&)&&dest);
 
     var _uv_connect_t&& c;
     var int status;
     (c,status) = await UV_CONNECT until c==&&connect;
 
     emit this.ok => status;
-    await FOREVER;
+    var _uv_stream_t&& s;
+    var int status;
+    (s,status) = await UV_ERROR until (s==(_uv_stream_t&&)&&this.tcp);
 end
 
 #define _UV_STRINGIFY(X) #X

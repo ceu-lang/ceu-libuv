@@ -99,11 +99,17 @@ void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
     r->has_pending_data = (n == r->buf.len);
     tceu__uv_stream_t___ssize_t__uv_buf_t_ p = { s, n, (uv_buf_t*)buf };
     ceu_sys_go(&CEU_APP, CEU_IN_UV_READ, &p);
+#ifdef CEU_IN_UV_ERROR
+    if (n < 0) {
+        tceu__uv_stream_t___int p = { s, n };
+        ceu_sys_go(&CEU_APP, CEU_IN_UV_ERROR, &s);
+    }
 #endif
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
         uv_stop(&ceu_uv_loop);
     }
+#endif
 #endif
 }
 
@@ -111,11 +117,17 @@ void ceu_uv_write_cb (uv_write_t* req, int status) {
 #ifdef CEU_IN_UV_WRITE
     tceu__uv_write_t___int p = { req, status };
     ceu_sys_go(&CEU_APP, CEU_IN_UV_WRITE, &p);
+#ifdef CEU_IN_UV_ERROR
+    if (status < 0) {
+        tceu__uv_stream_t___int p = { req->handle, status };
+        ceu_sys_go(&CEU_APP, CEU_IN_UV_ERROR, &p);
+    }
 #endif
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
         uv_stop(&ceu_uv_loop);
     }
+#endif
 #endif
 }
 
