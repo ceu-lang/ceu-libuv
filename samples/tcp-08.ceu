@@ -1,0 +1,30 @@
+#if 0
+#@ Description: "echo" client & server
+#@ Features:
+#@  - UV_TCP_Server, UV_TCP_Client
+#endif
+
+#include "c.ceu"
+
+#define UV_TCP_SERVER_HANDLER_CEU tcp-08-handler.ceu
+#include "uv.ceu"
+
+#define PORT    7000
+#define BACKLOG 128
+
+var UV_TCP_Server _ = UV_TCP_Server.build("0.0.0.0", PORT, BACKLOG);
+
+var UV_TCP_Client c = UV_TCP_Client.build("127.0.0.1", PORT);
+var int status = await c.ok;
+_assert(status == 0);
+
+loop do
+    await 1s;
+    var char[] string = [] .. "Alo mundo\n";
+    do UV_Stream_Write.build(&c.tcp, &string);
+    string = [].."";
+    do UV_Stream_ReadLine.build(&c.tcp, &string);
+    _printf("[client] %s", (char&&)&&string);
+end
+
+escape 0;
