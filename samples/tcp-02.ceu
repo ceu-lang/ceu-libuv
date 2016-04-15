@@ -58,9 +58,10 @@ do
         var _uv_buf_t&& buf_r;
         var _uv_stream_t&& s;
         (s,n,buf_r) = await UV_READ until s==(_uv_stream_t&&)&&client;
+        var _char&& base = buf_r:base;  // TODO: across finalize
         finalize with
-            if buf_r:base != null then
-                _free(buf_r:base);
+            if base != null then
+                _free(base);
             end
         end
         //_assert(n >= 0);  // connection closed?
@@ -70,7 +71,7 @@ do
             _assert(0);
         else
             var _uv_write_t req_write = _uv_write_t();
-            var _uv_buf_t buf_w = _uv_buf_init(buf_r:base, n);
+            var _uv_buf_t buf_w = _uv_buf_init(base, n);
             _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf_w);
             var _uv_write_t&& w;
             var int status;
