@@ -1,0 +1,103 @@
+#include "c.ceu"
+#include "uv.ceu"
+
+input (_uv_stream_t&&,int) UV_LISTEN;
+input (_uv_stream_t&&,_ssize_t, _uv_buf_t&&) UV_READ;
+input (_uv_write_t&&,int) UV_WRITE;
+
+class Client with
+    function (_uv_tcp_t& server)=>Client build;
+    var _uv_tcp_t& server;
+do
+    function (_uv_tcp_t& server)=>Client build do
+        this.server = &server;
+    end
+
+    // CLIENT
+    var _uv_tcp_t&? client_;
+    finalize
+        client_ = &_malloc(sizeof(_uv_tcp_t));
+    with
+        // free after uv_close
+    end
+    var _uv_tcp_t& client = &client_!;
+    _ceu_uv_tcp_init(&&client)
+        finalize with
+            _uv_close((_uv_handle_t&&)&&client, _ceu_uv_free);
+        end;
+
+    // ACCEPT
+    var int ret = _uv_accept((_uv_stream_t&&)&&server,(_uv_stream_t&&)&&client);
+    _assert(ret == 0);
+
+    // READ
+    var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client)
+                    finalize with
+                        _uv_read_stop((_uv_stream_t&&)&&client);
+                    end;
+    _assert(ret == 0);
+    loop do
+        var _ssize_t    n;
+        var _uv_buf_t&& buf_r;
+        var _uv_stream_t&& s;
+        (s,n,buf_r) = await UV_READ until s==(_uv_stream_t&&)&&client;
+        finalize with
+            if buf_r:base != null then
+                _free(buf_r:base);
+            end
+        end
+        //_assert(n >= 0);  // connection closed?
+        if n < 0 then
+            break;
+        else/if n == 0 then
+            _assert(0);
+        else
+            var _uv_write_t req_write = _uv_write_t();
+            var _uv_buf_t buf_w = _uv_buf_init(buf_r:base, n);
+            _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf_w);
+            var _uv_write_t&& w;
+            var int status;
+            (w, status) = await UV_WRITE until w==&&req_write;
+            _assert(status == 0);
+        end
+    end
+end
+
+class Server with
+    var _char&& ip;
+    var int port;
+    var int backlog;
+    function (@hold _char&& ip, int port, int backlog)=>Server build;
+do
+    function (@hold _char&& ip, int port, int backlog)=>Server build do
+        this.ip     := ip;
+        this.port    = port;
+        this.backlog = backlog;
+    end
+
+    var _uv_tcp_t server = _uv_tcp_t();
+    _ceu_uv_tcp_init(&&server)
+        finalize with
+            _uv_close((_uv_handle_t&&)&&server, null);
+        end;
+
+    var _sockaddr_in addr = _sockaddr_in();
+    _uv_ip4_addr(this.ip, this.port, &&addr);
+    _uv_tcp_bind(&&server, (_sockaddr&&)&&addr, 0);
+    do
+        var int ret = _ceu_uv_listen((_uv_stream_t&&)&&server, this.backlog);
+        _assert(ret == 0);
+    end
+
+    every (s,status) in UV_LISTEN do
+        if s == (_uv_stream_t&&)&&server then
+            _assert(status >= 0);
+            spawn Client.build(&server);
+        end
+    end
+end
+
+var Server _ = Server.build("0.0.0.0", 7000, 128);
+var Server _ = Server.build("0.0.0.0", 7001, 128);
+
+await FOREVER;
