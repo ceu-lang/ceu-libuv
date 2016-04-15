@@ -1,12 +1,13 @@
 #if 0
 #@ Description: Parallel "echo" servers.
-#@ Features:
 #@  - same as `tcp-02.ceu`
 #@  - executes two servers
 #@ Usage:
 #@  - connect "telnet" clients to port 7000 or 7001
 #@  - write long string
 #@      - ERROR!
+#@ Features:
+#@  - class Server
 #endif
 
 #include "c.ceu"
@@ -71,25 +72,24 @@ do
             _assert(buf_r:len  == buf.len);
         end
         //_assert(n_read >= 0);  // connection closed?
-
-        // not reading anymore
-
-        // WRITE
         if n_read < 0 then
             _fprintf(_stderr, "[Client] error: %s\n", _uv_strerror(n_read));
             break;
         else/if n_read == 0 then
             _assert(0);
-        else
-            buf_[n_read] = '\0';
-            var _uv_write_t req_write = _uv_write_t();
-            var _uv_buf_t buf = _uv_buf_init(buf_, n_read);
-            _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf);
-            var _uv_write_t&& w;
-            var int status;
-            (w, status) = await UV_WRITE until w==&&req_write;
-            _assert(status == 0);
         end
+
+        // not reading anymore
+
+        // WRITE
+        buf_[n_read] = '\0';
+        var _uv_write_t req_write = _uv_write_t();
+        var _uv_buf_t buf = _uv_buf_init(buf_, n_read);
+        _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf);
+        var _uv_write_t&& w;
+        var int status;
+        (w, status) = await UV_WRITE until w==&&req_write;
+        _assert(status == 0);
     end
 end
 
@@ -136,4 +136,4 @@ end
 var Server _ = Server.build("0.0.0.0", DEFAULT_PORT+0, DEFAULT_BACKLOG);
 var Server _ = Server.build("0.0.0.0", DEFAULT_PORT+1, DEFAULT_BACKLOG);
 
-await 10s;
+await FOREVER;

@@ -1,6 +1,5 @@
 #if 0
 #@ Description: Sequential "echo" server.
-#@ Features:
 #@  - one port: 7000
 #@  - one client at a time
 #@  - one read / write at a time
@@ -16,6 +15,8 @@
 #@      - read the "echo"
 #@  - write long string
 #@      - ERROR!
+#@ Features:
+#@  - UV_LISTEN, UV_READ, UV_WRITE
 #endif
 
 #include "c.ceu"
@@ -96,24 +97,23 @@ loop do
             _assert(buf_r:len  == buf.len);
         end
         //_assert(n_read >= 0);  // connection closed?
-
-        // not reading anymore
-
-        // WRITE
         if n_read < 0 then
             _fprintf(_stderr, "error: %s\n", _uv_strerror(n_read));
             break;
         else/if n_read == 0 then
             _assert(0);
-        else
-            buf_[n_read] = '\0';
-            var _uv_write_t req_write = _uv_write_t();
-            var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX-1);
-            _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf);
-            var _uv_write_t&& w;
-            var int status;
-            (w, status) = await UV_WRITE until w==&&req_write;
-            _assert(status == 0);
         end
+
+        // not reading anymore
+
+        // WRITE
+        buf_[n_read] = '\0';
+        var _uv_write_t req_write = _uv_write_t();
+        var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX-1);
+        _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf);
+        var _uv_write_t&& w;
+        var int status;
+        (w, status) = await UV_WRITE until w==&&req_write;
+        _assert(status == 0);
     end
 end
