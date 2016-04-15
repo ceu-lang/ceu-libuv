@@ -21,11 +21,13 @@ native @nohold
         _uv_fs_req_cleanup(),
         _uv_ip4_addr(),
         _uv_read_stop(),
-        _uv_tcp_bind();         // TODO: unbind?
+        _uv_tcp_bind(),         // TODO: unbind?
+        _uv_tcp_getsockname();
 
 native/pre do
-    typedef struct sockaddr    sockaddr;
-    typedef struct sockaddr_in sockaddr_in;
+    typedef struct sockaddr         sockaddr;
+    typedef struct sockaddr_in      sockaddr_in;
+    typedef struct sockaddr_storage sockaddr_storage;
     typedef struct {
         uv_buf_t buf;
         int has_pending_data;
