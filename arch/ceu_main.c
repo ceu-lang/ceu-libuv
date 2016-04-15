@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <uv.h>
 
 #define ceu_out_assert(v) ceu_sys_assert(v)
@@ -27,13 +28,16 @@ void ceu_sys_log (int mode, long s) {
 tceu_app CEU_APP;
 uv_loop_t ceu_uv_loop;
 
-#ifdef CEU_IN_FS
+/* FS */
+
 #define ceu_uv_fs_open(a,b,c,d)   uv_fs_open(&ceu_uv_loop,a,b,c,d,ceu_uv_fs_cb)
 #define ceu_uv_fs_read(a,b,c,d,e) uv_fs_read(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
 #define ceu_uv_fs_close(a,b)      uv_fs_close(&ceu_uv_loop,a,b,ceu_uv_fs_close_cb)
 
 void ceu_uv_fs_cb (uv_fs_t* req) {
+#ifdef CEU_IN_FS
     ceu_sys_go(&CEU_APP, CEU_IN_FS, &req);
+#endif
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
         uv_stop(&ceu_uv_loop);
@@ -45,7 +49,60 @@ void ceu_uv_fs_close_cb (uv_fs_t* req) {
     assert(req->result == 0);
     uv_fs_req_cleanup(req);
 }
+
+/* TCP */
+
+#define ceu_uv_tcp_init(a)   uv_tcp_init(&ceu_uv_loop, a);
+#define ceu_uv_listen(a,b)   uv_listen(a,b,ceu_uv_listen_cb)
+#define ceu_uv_read_start(a) uv_read_start(a,ceu_uv_malloc,ceu_uv_read_start_cb)
+#define ceu_uv_write(a,b,c)  uv_write(a,b,c,1,ceu_uv_write_cb)
+
+void ceu_uv_listen_cb (uv_stream_t *s, int status) {
+#ifdef CEU_IN_UV_LISTEN
+    tceu__uv_stream_t___int p = { s, status };
+    ceu_sys_go(&CEU_APP, CEU_IN_UV_LISTEN, &p);
 #endif
+#ifdef CEU_RET
+    if (!CEU_APP.isAlive) {
+        uv_stop(&ceu_uv_loop);
+    }
+#endif
+}
+
+void ceu_uv_malloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
+    buf->base = (char*) malloc(size);
+    buf->len = size;
+}
+
+void ceu_uv_free (uv_handle_t* h) {
+    free(h);
+}
+
+void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
+#ifdef CEU_IN_UV_READ
+    tceu__uv_stream_t___ssize_t__uv_buf_t_ p = { s, n, (uv_buf_t*)buf };
+    ceu_sys_go(&CEU_APP, CEU_IN_UV_READ, &p);
+#endif
+#ifdef CEU_RET
+    if (!CEU_APP.isAlive) {
+        uv_stop(&ceu_uv_loop);
+    }
+#endif
+}
+
+void ceu_uv_write_cb (uv_write_t* req, int status) {
+#ifdef CEU_IN_UV_WRITE
+    tceu__uv_write_t___int p = { req, status };
+    ceu_sys_go(&CEU_APP, CEU_IN_UV_WRITE, &p);
+#endif
+#ifdef CEU_RET
+    if (!CEU_APP.isAlive) {
+        uv_stop(&ceu_uv_loop);
+    }
+#endif
+}
+
+/* ASYNCS */
 
 #ifdef CEU_ASYNCS
 uv_idle_t ceu_uv_idle;
@@ -63,6 +120,8 @@ void ceu_uv_idle_cb (uv_idle_t* idler) {
     }
 }
 #endif
+
+/* WCLOCKS */
 
 #ifdef CEU_WCLOCKS
 uv_timer_t ceu_uv_timer;

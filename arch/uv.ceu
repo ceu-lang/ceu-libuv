@@ -1,8 +1,27 @@
-native @plain _uv_fs_t, _uv_buf_t;
+native @plain
+        _sockaddr,
+        _sockaddr_in,
+        _uv_buf_t,
+        _uv_fs_t,
+        _uv_tcp_t,
+        _uv_write_t;
+
 native @nohold
         _ceu_uv_fs_close(),
+        _ceu_uv_listen(),       // TODO: unlisten?
+        _ceu_uv_write(),        // TODO: write_stop?
+        _uv_accept(),
         _uv_buf_init(),
-        _uv_fs_req_cleanup();
+        _uv_close(),
+        _uv_fs_req_cleanup(),
+        _uv_ip4_addr(),
+        _uv_read_stop(),
+        _uv_tcp_bind();         // TODO: unbind?
+
+native/pre do
+    typedef struct sockaddr    sockaddr;
+    typedef struct sockaddr_in sockaddr_in;
+end
 
 input _uv_fs_t&& FS;
 
