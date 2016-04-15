@@ -1,3 +1,14 @@
+#if 0
+#@ Description: Parallel "echo" server.
+#@ Features:
+#@  - same as `tcp-01.ceu`
+#@  - accepts multiple clients at the same time
+#@ Usage:
+#@  - connect "telnet" clients to port 7000
+#@  - write long string
+#@      - ERROR!
+#endif
+
 #include "c.ceu"
 #include "uv.ceu"
 
@@ -5,8 +16,9 @@ input (_uv_stream_t&&,int) UV_LISTEN;
 input (_uv_stream_t&&,_ssize_t, _uv_buf_t&&) UV_READ;
 input (_uv_write_t&&,int) UV_WRITE;
 
-#define DEFAULT_PORT 7000
+#define DEFAULT_PORT    7000
 #define DEFAULT_BACKLOG 128
+#define BUFFER_MAX      10
 
 var _uv_tcp_t server = _uv_tcp_t();
 _ceu_uv_tcp_init(&&server)
@@ -47,32 +59,45 @@ do
     var int ret = _uv_accept((_uv_stream_t&&)&&server,(_uv_stream_t&&)&&client);
     _assert(ret == 0);
 
-    // READ
-    var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client)
-                    finalize with
-                        _uv_read_stop((_uv_stream_t&&)&&client);
-                    end;
-    _assert(ret == 0);
+    // READ/WRITE LOOP
+    var _char[BUFFER_MAX] buf_ = [];
+    var _ssize_t n_read = 0;
     loop do
-        var _ssize_t    n;
-        var _uv_buf_t&& buf_r;
-        var _uv_stream_t&& s;
-        (s,n,buf_r) = await UV_READ until s==(_uv_stream_t&&)&&client;
-        var _char&& base = buf_r:base;  // TODO: across finalize
-        finalize with
-            if base != null then
-                _free(base);
-            end
+        // READ
+        do
+            var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX-1);
+            var _ceu_uv_read_t r = _ceu_uv_read_t(buf,0);
+            client.data = &&r;
+            var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client)
+                            finalize with end;
+            finalize with
+                // finalize after each UV_READ
+                _assert(r.has_pending_data == 0);
+                _uv_read_stop((_uv_stream_t&&)&&client);
+            end;
+            //_printf("error: %s\n", _uv_strerror(ret));
+            _assert(ret == 0);
+
+            var _uv_buf_t&& buf_r;
+            var _uv_stream_t&& s;
+            (s,n_read,buf_r) = await UV_READ until s==(_uv_stream_t&&)&&client;
+            _assert(buf_r:base == buf.base);
+            _assert(buf_r:len  == buf.len);
         end
-        //_assert(n >= 0);  // connection closed?
-        if n < 0 then
+        //_assert(n_read >= 0);  // connection closed?
+
+        // not reading anymore
+
+        // WRITE
+        if n_read < 0 then
             break;
-        else/if n == 0 then
+        else/if n_read == 0 then
             _assert(0);
         else
+            buf_[n_read] = '\0';
             var _uv_write_t req_write = _uv_write_t();
-            var _uv_buf_t buf_w = _uv_buf_init(base, n);
-            _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf_w);
+            var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX-1);
+            _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf);
             var _uv_write_t&& w;
             var int status;
             (w, status) = await UV_WRITE until w==&&req_write;

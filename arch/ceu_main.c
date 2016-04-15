@@ -28,6 +28,10 @@ void ceu_sys_log (int mode, long s) {
 tceu_app CEU_APP;
 uv_loop_t ceu_uv_loop;
 
+void ceu_uv_free (uv_handle_t* h) {
+    free(h);
+}
+
 /* FS */
 
 #define ceu_uv_fs_open(a,b,c,d)   uv_fs_open(&ceu_uv_loop,a,b,c,d,ceu_uv_fs_cb)
@@ -54,7 +58,7 @@ void ceu_uv_fs_close_cb (uv_fs_t* req) {
 
 #define ceu_uv_tcp_init(a)   uv_tcp_init(&ceu_uv_loop, a);
 #define ceu_uv_listen(a,b)   uv_listen(a,b,ceu_uv_listen_cb)
-#define ceu_uv_read_start(a) uv_read_start(a,ceu_uv_malloc,ceu_uv_read_start_cb)
+#define ceu_uv_read_start(a) uv_read_start(a,ceu_uv_read_alloc,ceu_uv_read_start_cb);
 #define ceu_uv_write(a,b,c)  uv_write(a,b,c,1,ceu_uv_write_cb)
 
 void ceu_uv_listen_cb (uv_stream_t *s, int status) {
@@ -69,17 +73,17 @@ void ceu_uv_listen_cb (uv_stream_t *s, int status) {
 #endif
 }
 
-void ceu_uv_malloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
-    buf->base = (char*) malloc(size);
-    buf->len = size;
-}
-
-void ceu_uv_free (uv_handle_t* h) {
-    free(h);
+void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
+    assert(h->data != NULL);
+    *buf = ((ceu_uv_read_t*)(h->data))->buf;
 }
 
 void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
 #ifdef CEU_IN_UV_READ
+    assert(s->data != NULL);
+    ceu_uv_read_t* r = (ceu_uv_read_t*)s->data;
+    assert(r->buf.base == buf->base);
+    r->has_pending_data = (n == r->buf.len);
     tceu__uv_stream_t___ssize_t__uv_buf_t_ p = { s, n, (uv_buf_t*)buf };
     ceu_sys_go(&CEU_APP, CEU_IN_UV_READ, &p);
 #endif
