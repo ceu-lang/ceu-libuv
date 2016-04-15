@@ -1,13 +1,13 @@
 #if 0
 #@ Description: Sequential "echo" client.
 #@  - see `tcp-01.ceu`
-#@ Features:
-#@  - UV_LISTEN, UV_READ, UV_WRITE
 #@ Usage:
 #@  - create an echo server in the command line:
 #@  $ mkfifo fifo
 #@  $ cat fifo  | nc -l 7000 -v | cat  > fifo
 #@ http://unix.stackexchange.com/questions/147977/netcat-echo-server-possible-with-pipes-instead-of-commands-as-strings
+#@ Features:
+#@  - UV_CONNECT
 #endif
 
 #include "c.ceu"
@@ -34,9 +34,10 @@ _ceu_uv_tcp_connect(&&connect, &&client, (_sockaddr&&)&&dest);
 var _uv_connect_t&& c;
 var int status;
 (c,status) = await UV_CONNECT until c==&&connect;
-_assert(status >= 0);
+_assert(status == 0);
 
 loop do
+    await 1s;
     var char[] string = [] .. "Alo mundo\n";
     do UV_Stream_Write.build(&client, &string);
     string = [].."";

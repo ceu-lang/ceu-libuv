@@ -1,0 +1,64 @@
+#if 0
+#@ Description: Sequential "echo" client.
+#@  - same as `tcp-06.ceu`
+#@ Features:
+#@  - class Client
+#endif
+
+#include "c.ceu"
+#include "uv.ceu"
+
+input (_uv_connect_t&&,int) UV_CONNECT;
+input (_uv_stream_t&&,_ssize_t, _uv_buf_t&&) UV_READ;
+input (_uv_write_t&&,int) UV_WRITE;
+
+#define DEFAULT_PORT 7000
+
+class Client with
+    var _char&& ip;
+    var int port;
+    event int ok;
+output:
+    var _uv_tcp_t& tcp;
+
+    function (@hold _char&& ip, int port)=>Client build;
+do
+    function (@hold _char&& ip, int port)=>Client build do
+        this.ip  := ip;
+        this.port = port;
+    end
+
+    var _uv_tcp_t client = _uv_tcp_t();
+    _ceu_uv_tcp_init(&&client)
+        finalize with
+            _uv_close((_uv_handle_t&&)&&client, null);
+        end;
+    this.tcp = &client;
+
+    var _uv_connect_t connect = _uv_connect_t();
+    var _sockaddr_in dest = _sockaddr_in();
+    _uv_ip4_addr(this.ip, this.port, &&dest);
+    _ceu_uv_tcp_connect(&&connect, &&client, (_sockaddr&&)&&dest);
+
+    var _uv_connect_t&& c;
+    var int status;
+    (c,status) = await UV_CONNECT until c==&&connect;
+
+    emit this.ok => status;
+    await FOREVER;
+end
+
+var Client c = Client.build("127.0.0.1", DEFAULT_PORT);
+var int status = await c.ok;
+_assert(status == 0);
+
+loop do
+    await 1s;
+    var char[] string = [] .. "Alo mundo\n";
+    do UV_Stream_Write.build(&c.tcp, &string);
+    string = [].."";
+    do UV_Stream_ReadLine.build(&c.tcp, &string);
+    _printf("%s", (char&&)&&string);
+end
+
+escape 0;
