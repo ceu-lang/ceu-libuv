@@ -90,13 +90,14 @@ do
 
         // WRITE
         if n_read < 0 then
+            _fprintf(_stderr, "[Client] error: %s\n", _uv_strerror(n_read));
             break;
         else/if n_read == 0 then
             _assert(0);
         else
             buf_[n_read] = '\0';
             var _uv_write_t req_write = _uv_write_t();
-            var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX-1);
+            var _uv_buf_t buf = _uv_buf_init(buf_, n_read);
             _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf);
             var _uv_write_t&& w;
             var int status;

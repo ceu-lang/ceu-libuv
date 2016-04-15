@@ -7,6 +7,9 @@ native @plain
         _uv_tcp_t,
         _uv_write_t;
 
+native @pure
+        _uv_strerror();
+
 native @nohold
         _ceu_uv_fs_close(),
         _ceu_uv_listen(),       // TODO: unlisten?

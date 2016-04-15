@@ -76,7 +76,7 @@ loop do
     loop do
         // READ
         do
-            var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX-1);
+            var _uv_buf_t buf = _uv_buf_init(buf_, n_read);
             var _ceu_uv_read_t r = _ceu_uv_read_t(buf,0);
             client.data = &&r;
             var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client)
@@ -101,6 +101,7 @@ loop do
 
         // WRITE
         if n_read < 0 then
+            _fprintf(_stderr, "error: %s\n", _uv_strerror(n_read));
             break;
         else/if n_read == 0 then
             _assert(0);
