@@ -194,6 +194,22 @@ void ceu_uv_timer_cb (uv_timer_t* timer) {
 }
 #endif
 
+/* THREADS */
+
+#ifdef CEU_THREADS
+uv_prepare_t ceu_uv_prepare;
+uv_check_t   ceu_uv_check;
+void ceu_uv_prepare_cb (uv_prepare_t* prepare) {
+    CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex_external);
+}
+void ceu_uv_check_cb (uv_check_t* check) {
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex_external);
+    if (CEU_APP.threads_n > 0) {
+        //CEU_THREADS_SLEEP(100);
+    }
+}
+#endif
+
 #include "_ceu_app.c"
 
 static char CEU_DATA[sizeof(CEU_Main)];
@@ -210,10 +226,19 @@ int main (int argc, char *argv[])
     uv_uptime(&ceu_uv_uptime);
     uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
 #endif
+#ifdef CEU_THREADS
+    uv_prepare_init(&ceu_uv_loop, &ceu_uv_prepare);
+    uv_check_init(&ceu_uv_loop, &ceu_uv_check);
+    assert(uv_prepare_start(&ceu_uv_prepare, ceu_uv_prepare_cb) == 0);
+    assert(uv_check_start(&ceu_uv_check, ceu_uv_check_cb) == 0);
+#endif
 
     CEU_APP.data = (tceu_org*) &CEU_DATA;
     CEU_APP.init = &ceu_app_init;
     CEU_APP.init(&CEU_APP);    /* calls CEU_THREADS_MUTEX_LOCK() */
+#ifdef CEU_THREADS
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex_external);
+#endif
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
         uv_stop(&ceu_uv_loop);
@@ -236,6 +261,10 @@ int main (int argc, char *argv[])
 #endif
 #ifdef CEU_WCLOCKS
     uv_close((uv_handle_t*)&ceu_uv_timer, NULL);
+#endif
+#ifdef CEU_THREADS
+    uv_close((uv_handle_t*)&ceu_uv_prepare, NULL);
+    uv_close((uv_handle_t*)&ceu_uv_check, NULL);
 #endif
     while (uv_run(&ceu_uv_loop,UV_RUN_NOWAIT) != 0);
     assert(uv_loop_close(&ceu_uv_loop) == 0);
