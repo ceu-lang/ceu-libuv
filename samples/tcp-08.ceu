@@ -21,9 +21,9 @@ _assert(status == 0);
 loop do
     await 1s;
     var char[] string = [] .. "Alo mundo\n";
-    do UV_Stream_Write.build(&c.tcp, &string);
+    do UV_Stream_Write.build(&_UV_STREAM_ALIAS(c.tcp), &string);
     string = [].."";
-    do UV_Stream_ReadLine.build(&c.tcp, &string);
+    do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(c.tcp), &string);
     _printf("[client] %s", (char&&)&&string);
 end
 

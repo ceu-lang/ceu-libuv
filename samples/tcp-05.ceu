@@ -116,11 +116,11 @@ do
 
 // TODO: outer
     var char[] string;
-    var Read r = Read.build(&tcp,&string);
+    var Read r = Read.build(&_UV_STREAM_ALIAS(tcp),&string);
     loop do
         await r.ok;
         _printf("[handler-0] %s\n", (char&&)&&string);
-        do Write.build(&tcp, &string);
+        do Write.build(&_UV_STREAM_ALIAS(tcp), &string);
         string = [].."";
     end
 end
@@ -135,9 +135,9 @@ do
 
     loop do
         var char[] string;
-        do ReadLine.build(&tcp, &string);
+        do ReadLine.build(&_UV_STREAM_ALIAS(tcp), &string);
         _printf("[handler-1] %s", (char&&)&&string);
-        do Write.build(&tcp, &string);
+        do Write.build(&_UV_STREAM_ALIAS(tcp), &string);
     end
 end
 
@@ -151,7 +151,7 @@ do
 
     var _sockaddr_in sock = _sockaddr_in();
     var int len = sizeof(_sockaddr_in);
-    var int ret = _uv_tcp_getsockname(&&this.tcp, &&sock, &&len);
+    var int ret = _uv_tcp_getsockname(&&this.tcp, (_sockaddr&&)&&sock, &&len);
     _assert(ret == 0);
     var int port = _ntohs(sock.sin_port);
 

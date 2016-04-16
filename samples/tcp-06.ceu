@@ -39,9 +39,9 @@ _assert(status == 0);
 loop do
     await 1s;
     var char[] string = [] .. "Alo mundo\n";
-    do UV_Stream_Write.build(&client, &string);
+    do UV_Stream_Write.build(&_UV_STREAM_ALIAS(client), &string);
     string = [].."";
-    do UV_Stream_ReadLine.build(&client, &string);
+    do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(client), &string);
     _printf("%s", (char&&)&&string);
 end
 

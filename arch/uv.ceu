@@ -37,6 +37,8 @@ native/pre do
         uv_buf_t buf;
         int has_pending_data;
     } ceu_uv_read_t;
+
+    ##define UV_STREAM_ALIAS(x) ((uv_stream_t*)&x)
 end
 
 input _uv_fs_t&& FS;
@@ -64,7 +66,7 @@ do
     var _uv_fs_t req_open  = _uv_fs_t();
     var _uv_fs_t req_close = _uv_fs_t();
 
-    var int ret = _ceu_uv_fs_open(&&req_open, path, flags, mode)
+    var int ret = _ceu_uv_fs_open(&&req_open, _UNSAFE_POINTER_TO_ALIAS(path), flags, mode)
                     finalize with
                         _uv_fs_req_cleanup(&&req_open);
                         _ceu_uv_fs_close(&&req_close, req_open.result);
@@ -242,10 +244,6 @@ do
     (s,status) = await UV_ERROR until (s==(_uv_stream_t&&)&&this.tcp);
 end
 
-#define _UV_STRINGIFY(X) #X
-#define UV_STRINGIFY(X) _UV_STRINGIFY(X)
-#include UV_STRINGIFY(UV_TCP_SERVER_HANDLER_CEU)
-
 class UV_TCP_Server_Connection with
     function (_uv_tcp_t& server)=>UV_TCP_Server_Connection build;
     var _uv_tcp_t& server;
@@ -271,7 +269,14 @@ do
     var int ret = _uv_accept((_uv_stream_t&&)&&server,(_uv_stream_t&&)&&client);
     _assert(ret == 0);
 
+#ifdef UV_TCP_SERVER_HANDLER_CEU
+#define _UV_STRINGIFY(X) #X
+#define UV_STRINGIFY(X) _UV_STRINGIFY(X)
+#include UV_STRINGIFY(UV_TCP_SERVER_HANDLER_CEU)
     do UV_TCP_Server_Handler.build(&client);
+#else
+    _assert(0);
+#endif
 end
 
 class UV_TCP_Server with

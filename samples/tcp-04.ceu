@@ -131,9 +131,9 @@ do
 
     loop do
         var char[] string;
-        do ReadLine.build(&client, &string);
+        do ReadLine.build(&_UV_STREAM_ALIAS(client), &string);
         _printf("[read] %s", (char&&)&&string);
-        do Write.build(&client, &string);
+        do Write.build(&_UV_STREAM_ALIAS(client), &string);
     end
 end
 
