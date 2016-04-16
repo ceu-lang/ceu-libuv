@@ -72,8 +72,7 @@ do
         this.string = &string;
     end
 
-// TODO: outer
-    var Read r = Read.build(&outer.stream,&outer.string);
+    var Read r = Read.build(&this.stream,&this.string);
     loop do
         await r.ok;
         var char n=0, c=0;
@@ -114,9 +113,8 @@ do
         this.tcp = &tcp;
     end
 
-// TODO: outer
     var char[] string;
-    var Read r = Read.build(&_UV_STREAM_ALIAS(tcp),&string);
+    var Read r = Read.build(&_UV_STREAM_ALIAS(this.tcp),&this.string);
     loop do
         await r.ok;
         _printf("[handler-0] %s\n", (_char&&)&&string);

@@ -23,7 +23,7 @@ do
     end
 
     loop do
-        var UV_TCP_Client c = UV_TCP_Client.build("127.0.0.1", outer.port);
+        var UV_TCP_Client c = UV_TCP_Client.build("127.0.0.1", this.port);
         var int status = await c.ok;
         if status != 0 then
             continue;

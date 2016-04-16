@@ -70,8 +70,7 @@ do
         this.string = &string;
     end
 
-// TODO: outer
-    var Read r = Read.build(&outer.stream,&outer.string);
+    var Read r = Read.build(&this.stream,&this.string);
     loop do
         await r.ok;
         var char n=0, c=0;
