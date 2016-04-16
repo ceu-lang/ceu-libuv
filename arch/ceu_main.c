@@ -23,6 +23,14 @@ void ceu_sys_log (int mode, long s) {
     }
 }
 
+typedef struct sockaddr         sockaddr;
+typedef struct sockaddr_in      sockaddr_in;
+typedef struct sockaddr_storage sockaddr_storage;
+typedef struct {
+    uv_buf_t buf;
+    int has_pending_data;
+} ceu_uv_read_t;
+
 #include "_ceu_app.h"
 
 tceu_app CEU_APP;

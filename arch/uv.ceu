@@ -32,14 +32,6 @@ native @nohold
         _uv_tcp_getsockname();
 
 native/pre do
-    typedef struct sockaddr         sockaddr;
-    typedef struct sockaddr_in      sockaddr_in;
-    typedef struct sockaddr_storage sockaddr_storage;
-    typedef struct {
-        uv_buf_t buf;
-        int has_pending_data;
-    } ceu_uv_read_t;
-
     ##define UV_STREAM_ALIAS(x) ((uv_stream_t*)&x)
 end
 
