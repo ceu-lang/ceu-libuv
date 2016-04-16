@@ -108,9 +108,16 @@ do
     end
 end
 
-every (s,status) in UV_LISTEN do
-    if s == (_uv_stream_t&&)&&server then
-        _assert(status >= 0);
-        spawn Connection.build(&server);
+_printf("I will terminate after 10s...\n");
+
+watching 10s do
+    every (s,status) in UV_LISTEN do
+        if s == (_uv_stream_t&&)&&server then
+            _assert(status >= 0);
+            spawn Connection.build(&server);
+        end
     end
 end
+
+_printf("DONE!\n");
+escape 0;

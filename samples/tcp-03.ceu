@@ -136,4 +136,7 @@ end
 var Server _ = Server.build("0.0.0.0", DEFAULT_PORT+0, DEFAULT_BACKLOG);
 var Server _ = Server.build("0.0.0.0", DEFAULT_PORT+1, DEFAULT_BACKLOG);
 
-await FOREVER;
+_printf("I will terminate after 10s...\n");
+await 10s;
+_printf("DONE!\n");
+escape 0;

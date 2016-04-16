@@ -52,13 +52,16 @@ var Client c = Client.build("127.0.0.1", DEFAULT_PORT);
 var int status = await c.ok;
 _assert(status == 0);
 
-loop do
+_printf("I will terminate after 10s...\n");
+
+loop i in 10 do
     await 1s;
-    var char[] string = [] .. "Alo mundo\n";
+    var char[] string = [] .. "Alo mundo!\n";
     do UV_Stream_Write.build(&_UV_STREAM_ALIAS(c.tcp), &string);
     string = [].."";
     do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(c.tcp), &string);
     _printf("%s", (char&&)&&string);
 end
 
+_printf("DONE!\n");
 escape 0;

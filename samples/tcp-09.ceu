@@ -8,7 +8,7 @@
 
 #include "c.ceu"
 
-#define UV_TCP_SERVER_HANDLER_CEU tcp-08-handler.ceu
+#define UV_TCP_SERVER_HANDLER_CEU tcp-08-handler.inc
 #include "uv.ceu"
 
 #define PORT    7000
@@ -32,7 +32,7 @@ do
         watching c do
             loop do
                 await 1s;
-                var char[] string = [] .. "Alo mundo\n";
+                var char[] string = [] .. "Alo mundo!\n";
                 do UV_Stream_Write.build(&_UV_STREAM_ALIAS(c.tcp), &string);
                 string = [].."";
                 do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(c.tcp), &string);
@@ -43,23 +43,30 @@ do
     end
 end
 
-par do
-    do UV_TCP_Server.build("0.0.0.0", PORT+0, BACKLOG);
-with
-    watching 5s do
-        do UV_TCP_Server.build("0.0.0.0", PORT+1, BACKLOG);
+_printf("I will terminate after 10s...\n");
+
+watching 10s do
+    par do
+        do UV_TCP_Server.build("0.0.0.0", PORT+0, BACKLOG);
+    with
+        watching 5s do
+            do UV_TCP_Server.build("0.0.0.0", PORT+1, BACKLOG);
+        end
+        _printf("[server %d] stop\n", PORT+1);
+    with
+        do Client.build(PORT+0);
+        _printf("[client %d] stop\n", PORT+0);
+    with
+        do Client.build(PORT+0);
+        _printf("[client %d] stop\n", PORT+0);
+    with
+        do Client.build(PORT+1);
+        _printf("[client %d] stop\n", PORT+1);
+    with
+        do Client.build(PORT+1);
+        _printf("[client %d] stop\n", PORT+1);
     end
-    _printf("[server %d] stop\n", PORT+1);
-with
-    do Client.build(PORT+0);
-    _printf("[client %d] stop\n", PORT+0);
-with
-    do Client.build(PORT+0);
-    _printf("[client %d] stop\n", PORT+0);
-with
-    do Client.build(PORT+1);
-    _printf("[client %d] stop\n", PORT+1);
-with
-    do Client.build(PORT+1);
-    _printf("[client %d] stop\n", PORT+1);
 end
+
+_printf("DONE!\n");
+escape 0;

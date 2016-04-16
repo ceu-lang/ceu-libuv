@@ -44,7 +44,9 @@ do
     _assert(ret == 0);
 end
 
-loop do
+_printf("I will terminate after two connections...\n");
+
+loop i in 2 do
     // ACCEPT
     var _uv_tcp_t&? client_;
     finalize
@@ -117,3 +119,6 @@ loop do
         _assert(status == 0);
     end
 end
+
+_printf("DONE!\n");
+escape 0;

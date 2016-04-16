@@ -1,6 +1,8 @@
 #ifndef _UV_CEU
 #define _UV_CEU
 
+#include "c.ceu"
+
 native @plain
         _ceu_uv_read_t,
         _sockaddr,
@@ -234,14 +236,18 @@ do
     _uv_ip4_addr(this.ip, this.port, &&dest);
     _ceu_uv_tcp_connect(&&connect, &&tcp, (_sockaddr&&)&&dest);
 
-    var _uv_connect_t&& c;
-    var int status;
-    (c,status) = await UV_CONNECT until c==&&connect;
+    do
+        var _uv_connect_t&& c;
+        var int status;
+        (c,status) = await UV_CONNECT until c==&&connect;
+        emit this.ok => status;
+    end
 
-    emit this.ok => status;
-    var _uv_stream_t&& s;
-    var int status;
-    (s,status) = await UV_ERROR until (s==(_uv_stream_t&&)&&this.tcp);
+    do
+        var _uv_stream_t&& s;
+        var int status;
+        (s,status) = await UV_ERROR until (s==(_uv_stream_t&&)&&this.tcp);
+    end
 end
 
 class UV_TCP_Server_Connection with
