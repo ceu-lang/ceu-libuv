@@ -197,7 +197,8 @@ do
     // WRITE
     var _uv_write_t req_write = _uv_write_t();
     var _uv_buf_t buf = _uv_buf_init((char&&)&&this.string, $this.string);
-    _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&this.stream, &&buf);
+    var int ret = _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&this.stream, &&buf);
+    _assert(ret >= 0);
     var _uv_write_t&& w;
     var int status;
     (w, status) = await UV_WRITE until w==&&req_write;

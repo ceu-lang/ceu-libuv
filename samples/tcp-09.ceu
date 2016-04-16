@@ -34,8 +34,11 @@ do
                 await 1s;
                 var char[] string = [] .. "Alo mundo!\n";
                 do UV_Stream_Write.build(&_UV_STREAM_ALIAS(c.tcp), &string);
+// change to 0 to generate "write" errors instead of "read" errors
+#if 1
                 string = [].."";
                 do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(c.tcp), &string);
+#endif
                 _printf("[client %p] %s", &&c.tcp, (char&&)&&string);
             end
         end
