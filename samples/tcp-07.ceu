@@ -60,7 +60,7 @@ loop i in 10 do
     do UV_Stream_Write.build(&_UV_STREAM_ALIAS(c.tcp), &string);
     string = [].."";
     do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(c.tcp), &string);
-    _printf("%s", (char&&)&&string);
+    _printf("%s", (_char&&)&&string);
 end
 
 _printf("DONE!\n");

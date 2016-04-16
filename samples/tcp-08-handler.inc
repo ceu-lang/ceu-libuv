@@ -12,7 +12,7 @@ do
     loop do
         var char[] string;
         do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(tcp), &string);
-        _printf("[server %p] %s", &&tcp, (char&&)&&string);
+        _printf("[server %p] %s", &&tcp, (_char&&)&&string);
         do UV_Stream_Write.build(&_UV_STREAM_ALIAS(tcp), &string);
     end
 end

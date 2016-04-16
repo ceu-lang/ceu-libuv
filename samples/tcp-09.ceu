@@ -39,7 +39,7 @@ do
                 string = [].."";
                 do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(c.tcp), &string);
 #endif
-                _printf("[client %p] %s", &&c.tcp, (char&&)&&string);
+                _printf("[client %p] %s", &&c.tcp, (_char&&)&&string);
             end
         end
         break;

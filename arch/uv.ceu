@@ -167,7 +167,7 @@ do
     loop do
         await r.ok;
         var char n=0, c=0;
-        var int ret = _sscanf((char&&)&&this.string, "%*[^\n]%[\n]%c", &&n,&&c);
+        var int ret = _sscanf((_char&&)&&this.string, "%*[^\n]%[\n]%c", &&n,&&c);
         _assert(ret < 2);
         if ret == 1 then
             _assert(n == '\n');
@@ -188,7 +188,7 @@ do
 
     // WRITE
     var _uv_write_t req_write = _uv_write_t();
-    var _uv_buf_t buf = _uv_buf_init((char&&)&&this.string, $this.string);
+    var _uv_buf_t buf = _uv_buf_init((_char&&)&&this.string, $this.string);
     var int ret = _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&this.stream, &&buf);
     _assert(ret >= 0);
     var _uv_write_t&& w;
