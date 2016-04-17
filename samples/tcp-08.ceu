@@ -12,9 +12,11 @@
 #define PORT    7000
 #define BACKLOG 128
 
-var UV_TCP_Server _ = UV_TCP_Server.build("0.0.0.0", PORT, BACKLOG);
+var char[] ip1 = [].."0.0.0.0";
+var UV_TCP_Server _ = UV_TCP_Server.build(&ip1, PORT, BACKLOG);
 
-var UV_TCP_Client c = UV_TCP_Client.build("127.0.0.1", PORT);
+var char[] ip2 = [].."127.0.0.1";
+var UV_TCP_Client c = UV_TCP_Client.build(&ip2, PORT);
 var int status = await c.ok;
 _assert(status == 0);
 

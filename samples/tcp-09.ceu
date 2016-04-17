@@ -23,7 +23,8 @@ do
     end
 
     loop do
-        var UV_TCP_Client c = UV_TCP_Client.build("127.0.0.1", this.port);
+        var char[] ip = [].."127.0.0.1";
+        var UV_TCP_Client c = UV_TCP_Client.build(&ip, this.port);
         var int status = await c.ok;
         if status != 0 then
             continue;
@@ -50,10 +51,12 @@ _printf("I will terminate after 10s...\n");
 
 watching 10s do
     par do
-        do UV_TCP_Server.build("0.0.0.0", PORT+0, BACKLOG);
+        var char[] ip = [].."0.0.0.0";
+        do UV_TCP_Server.build(&ip, PORT+0, BACKLOG);
     with
         watching 5s do
-            do UV_TCP_Server.build("0.0.0.0", PORT+1, BACKLOG);
+            var char[] ip = [].."0.0.0.0";
+            do UV_TCP_Server.build(&ip, PORT+1, BACKLOG);
         end
         _printf("[server %d] stop\n", PORT+1);
     with
