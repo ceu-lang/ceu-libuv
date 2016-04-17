@@ -245,8 +245,11 @@ int main (int argc, char *argv[])
     }
 #endif
 
-#ifdef CEU_IN_OS_START_
-    ceu_sys_go(&CEU_APP, CEU_IN_OS_START_, NULL);
+#ifdef CEU_IN_OS_START
+    {
+        tceu_os_start arg = { argc, argv };
+        ceu_sys_go(&CEU_APP, CEU_IN_OS_START, &arg);
+    }
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
         uv_stop(&ceu_uv_loop);
