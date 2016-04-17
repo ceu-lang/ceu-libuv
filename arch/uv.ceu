@@ -77,19 +77,18 @@ do
 end
 
 class UV_FS_read with
-input:
-    var _char&& buf;
+    var byte[]& buf;
     var int h, size, offset;
-    function (int h, @hold _char&& buf, int size, int offset)=>UV_FS_read build;
+    function (int h, byte[]& buf, int size, int offset)=>UV_FS_read build;
 do
-    function (int h, @hold _char&& buf, int size, int offset)=>UV_FS_read build do
+    function (int h, byte[]& buf, int size, int offset)=>UV_FS_read build do
         this.h      = h;
-        this.buf   := buf;
+        this.buf    = &buf;
         this.size   = size;
         this.offset = offset;
     end
 
-    var _uv_buf_t buf_ = _uv_buf_init(this.buf, this.size);
+    var _uv_buf_t buf_ = _uv_buf_init((_byte&&)&&this.buf, this.size);
     var _uv_fs_t req_read = _uv_fs_t();
     finalize with
         _uv_fs_req_cleanup(&&req_read);
@@ -103,6 +102,7 @@ do
         escape ret;
     end
     var _uv_fs_t&& req = await FS until req==&&req_read;
+    $this.buf := req_read.result;
     escape req_read.result;
 end
 
@@ -119,7 +119,7 @@ do
         this.string = &string;
     end
 
-    var _char[BUFFER_MAX] buf_ = [];
+    var _byte[BUFFER_MAX] buf_ = [];
     var _ssize_t n_read = 0;
 
     var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX);
@@ -177,17 +177,17 @@ end
 
 class UV_Stream_Write with
     var _uv_stream_t& stream;
-    var char[]&       string;
-    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_Write build;
+    var byte[]&       bytes;
+    function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Write build;
 do
-    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_Write build do
+    function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Write build do
         this.stream = &stream;
-        this.string = &string;
+        this.bytes  = &bytes;
     end
 
     // WRITE
     var _uv_write_t req_write = _uv_write_t();
-    var _uv_buf_t buf = _uv_buf_init((_char&&)&&this.string, $this.string);
+    var _uv_buf_t buf = _uv_buf_init((_byte&&)&&this.bytes, $this.bytes);
     var int ret = _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&this.stream, &&buf);
     _assert(ret >= 0);
     var _uv_write_t&& w;
@@ -197,16 +197,16 @@ do
 end
 
 class UV_TCP_Client with
-    var _char&& ip;
+    var char[]& ip;
     var int port;
     event int ok;
 output:
     var _uv_tcp_t& tcp;
 
-    function (@hold _char&& ip, int port)=>UV_TCP_Client build;
+    function (char[]& ip, int port)=>UV_TCP_Client build;
 do
-    function (@hold _char&& ip, int port)=>UV_TCP_Client build do
-        this.ip  := ip;
+    function (char[]& ip, int port)=>UV_TCP_Client build do
+        this.ip   = &ip;
         this.port = port;
     end
 
@@ -225,7 +225,7 @@ do
 
     var _uv_connect_t connect = _uv_connect_t();
     var _sockaddr_in dest = _sockaddr_in();
-    _uv_ip4_addr(this.ip, this.port, &&dest);
+    _uv_ip4_addr((_char&&)&&this.ip, this.port, &&dest);
     _ceu_uv_tcp_connect(&&connect, &&tcp, (_sockaddr&&)&&dest);
 
     do
@@ -278,13 +278,13 @@ do
 end
 
 class UV_TCP_Server with
-    var _char&& ip;
+    var char[]& ip;
     var int port;
     var int backlog;
-    function (@hold _char&& ip, int port, int backlog)=>UV_TCP_Server build;
+    function (char[]& ip, int port, int backlog)=>UV_TCP_Server build;
 do
-    function (@hold _char&& ip, int port, int backlog)=>UV_TCP_Server build do
-        this.ip     := ip;
+    function (char[]& ip, int port, int backlog)=>UV_TCP_Server build do
+        this.ip      = &ip;
         this.port    = port;
         this.backlog = backlog;
     end
@@ -302,7 +302,7 @@ do
         end;
 
     var _sockaddr_in addr = _sockaddr_in();
-    _uv_ip4_addr(this.ip, this.port, &&addr);
+    _uv_ip4_addr((_char&&)&&this.ip, this.port, &&addr);
     _uv_tcp_bind(&&server, (_sockaddr&&)&&addr, 0);
     do
         var int ret = _ceu_uv_listen((_uv_stream_t&&)&&server, this.backlog);
