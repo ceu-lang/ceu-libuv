@@ -119,7 +119,7 @@ do
         await r.ok;
         _printf("[handler-0] %s\n", (_char&&)&&string);
         do Write.build(&_UV_STREAM_ALIAS(tcp), &string);
-        string = [].."";
+        $string = 0;
     end
 end
 
