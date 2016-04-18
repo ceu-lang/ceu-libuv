@@ -111,6 +111,7 @@ end
 class UV_Stream_Read with
     var _uv_stream_t& stream;
     var byte[]&       bytes;
+    var int           next = 0;
     function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Read build;
     event int ok;
 do
@@ -120,7 +121,6 @@ do
     end
 
     var _byte[BUFFER_MAX] buf_ = [];
-    var _ssize_t n_read = 0;
 
     var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX);
     var _ceu_uv_read_t r = _ceu_uv_read_t(buf,0);
@@ -136,19 +136,19 @@ do
     loop do
         var _uv_buf_t&& buf_r;
         var _uv_stream_t&& s;
-        (s,n_read,buf_r) = await UV_READ until s==&&this.stream;
+        var int n;
+        (s,n,buf_r) = await UV_READ until s==&&this.stream;
         _assert(buf_r:base == buf.base);
         _assert(buf_r:len  == buf.len);
-        //_assert(n_read >= 0);  // connection closed?
-        if n_read < 0 then
-            _fprintf(_stderr, "[UV_Stream_Read] error: %s\n", _uv_strerror(n_read));
+        //_assert(n >= 0);  // connection closed?
+        if n < 0 then
+            _fprintf(_stderr, "[UV_Stream_Read] error: %s\n", _uv_strerror(n));
             break;
-        else/if n_read == 0 then
-            //_assert(0);   // can happen with multiple writes over "buf_"
         end
-        buf_[n_read] = '\0';
-        _ceu_vector_copy_buffer(&&this.bytes, $this.bytes, &&buf_, n_read);
-        emit this.ok => n_read;
+        //_assert(n>0);   // can happen with multiple writes over "buf_"
+        next = next + n;
+        _ceu_vector_copy_buffer(&&this.bytes, $this.bytes, &&buf_, n);
+        emit this.ok => n;
     end
 end
 
