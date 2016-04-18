@@ -110,13 +110,13 @@ end
 
 class UV_Stream_Read with
     var _uv_stream_t& stream;
-    var char[]&       string;
-    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_Read build;
+    var byte[]&       bytes;
+    function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Read build;
     event int ok;
 do
-    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_Read build do
+    function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Read build do
         this.stream = &stream;
-        this.string = &string;
+        this.bytes = &bytes;
     end
 
     var _byte[BUFFER_MAX] buf_ = [];
@@ -147,7 +147,7 @@ do
             //_assert(0);   // can happen with multiple writes over "buf_"
         end
         buf_[n_read] = '\0';
-        this.string = [] .. this.string .. (char&&)buf_;
+        _ceu_vector_copy_buffer(&&this.bytes, $this.bytes, &&buf_, n_read);
         emit this.ok => n_read;
     end
 end
