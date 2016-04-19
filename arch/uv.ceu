@@ -15,6 +15,7 @@ native @plain
         _uv_write_t;
 
 native @pure
+        _GET_HOST_U32(),
         _uv_strerror();
 
 native @nohold
@@ -34,6 +35,14 @@ native @nohold
 native/pre do
     ##define UV_STREAM_ALIAS(x) ((uv_stream_t*)&x)
 end
+
+#define GET_HOST_U32(bytes,off) _ntohl(*((u32&&)&&(((_byte&&)&&bytes)[off])))
+
+#define PUT_NETWORK_U32(bytes,host)      \
+    do                                   \
+        var u32 network = _htonl(host);  \
+        _ceu_vector_copy_buffer(&&bytes, $bytes, (byte&&)&&network, sizeof(u32));   \
+    end
 
 input _uv_fs_t&& FS;
 input (_uv_stream_t&&,_ssize_t, _uv_buf_t&&) UV_READ;
@@ -176,18 +185,33 @@ do
 end
 
 class UV_Stream_Write with
+input:
     var _uv_stream_t& stream;
     var byte[]&       bytes;
+    var u32           starting, excluding;
     function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Write build;
+    function (_uv_stream_t& stream, byte[]& bytes, u32 starting, u32 excluding)=>UV_Stream_Write build2;
 do
     function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Write build do
-        this.stream = &stream;
-        this.bytes  = &bytes;
+        this.stream    = &stream;
+        this.bytes     = &bytes;
+        this.starting  = 0;
+        this.excluding = $bytes;
     end
+    function (_uv_stream_t& stream, byte[]& bytes, u32 starting, u32 excluding)=>UV_Stream_Write build2 do
+        this.stream    = &stream;
+        this.bytes     = &bytes;
+        this.starting  = starting;
+        this.excluding = excluding;
+    end
+    _assert($bytes >= this.excluding);
+    _assert(this.starting <= this.excluding);
 
     // WRITE
     var _uv_write_t req_write = _uv_write_t();
     var _uv_buf_t buf = _uv_buf_init((_byte&&)&&this.bytes, $this.bytes);
+                  buf.base = buf.base+starting;
+                  buf.len  = excluding-starting;
     var int ret = _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&this.stream, &&buf);
     _assert(ret >= 0);
     var _uv_write_t&& w;
