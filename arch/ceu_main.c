@@ -175,7 +175,9 @@ uv_timer_t ceu_uv_timer;
 double ceu_uv_uptime;
 #define ceu_out_wclock_set(us)                                      \
     if (us == CEU_WCLOCK_INACTIVE) {                                \
-         uv_timer_stop(&ceu_uv_timer);                              \
+        uv_timer_stop(&ceu_uv_timer);                               \
+    } else if (us <= 0) {                                           \
+        uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, 0, 0);       \
     } else {                                                        \
         uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, us/1000, 0); \
     }
@@ -248,7 +250,13 @@ int main (int argc, char *argv[])
 #ifdef CEU_IN_OS_START
     {
         tceu_os_start arg = { argc, argv };
+#ifdef CEU_THREADS
+        CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex_external);
+#endif
         ceu_sys_go(&CEU_APP, CEU_IN_OS_START, &arg);
+#ifdef CEU_THREADS
+        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex_external);
+#endif
     }
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {

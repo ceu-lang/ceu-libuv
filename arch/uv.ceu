@@ -38,10 +38,12 @@ end
 
 #define GET_HOST_U32(bytes,off) _ntohl(*((u32&&)&&(((_byte&&)&&bytes)[off])))
 
-#define PUT_NETWORK_U32(bytes,host)      \
-    do                                   \
-        var u32 network = _htonl(host);  \
-        _ceu_vector_copy_buffer(&&(bytes), $(bytes), (byte&&)&&network, sizeof(u32));   \
+#define PUT_NETWORK_U32(bytes,off,host)                     \
+    do                                                      \
+        var u32 network = _htonl(host);                     \
+        _assert(_ceu_vector_copy_buffer(&&(bytes), off,     \
+                                       (byte&&)&&network,   \
+                                       sizeof(u32)));       \
     end
 
 input _uv_fs_t&& FS;
