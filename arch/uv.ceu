@@ -17,6 +17,8 @@ native @plain
 
 native @pure
         _GET_HOST_U32(),
+        _uv_is_readable(),
+        _uv_is_writable(),
         _uv_strerror();
 
 native @nohold
@@ -133,6 +135,7 @@ do
     end
 
     this.stream.data = &&bytes;
+    _assert(_uv_is_readable(&&this.stream));
     var int err = _ceu_uv_read_start(&&this.stream)
                     finalize with
                         _uv_read_stop(&&this.stream);
@@ -249,6 +252,7 @@ do
     var _uv_buf_t buf = _uv_buf_init((_byte&&)&&this.bytes, $this.bytes);
                   buf.base = buf.base+starting;
                   buf.len  = excluding-starting;
+    _assert(_uv_is_writable(&&this.stream));
     var int ret = _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&this.stream, &&buf);
     _assert(ret >= 0);
     var _uv_write_t&& w;

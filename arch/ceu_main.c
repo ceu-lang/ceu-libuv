@@ -107,9 +107,9 @@ void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
         int len = ceu_vector_getlen(vec);
         if (max <= 0) {
             if (max == 0) {
-                ceu_vector_setlen(vec, CEU_UV_READ_ALLOC_DYN_INIT, 1);
+                ceu_vector_resize(vec, CEU_UV_READ_ALLOC_DYN_INIT);
             } else if (max<0 && len*2>(-max)) {
-                ceu_vector_setlen(vec, (-max+10)*3/2, 1);
+                ceu_vector_resize(vec, (-max+10)*3/2);
             }
         }
     }

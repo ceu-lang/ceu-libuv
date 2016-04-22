@@ -58,7 +58,6 @@ loop i in 10 do
     await 1s;
     var char[] string = [] .. "Alo mundo!\n";
     do UV_Stream_Write.build(&_UV_STREAM_ALIAS(c.tcp), &string);
-    $string = 0;
     do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(c.tcp), &string);
     _printf("%s", (_char&&)&&string);
 end
