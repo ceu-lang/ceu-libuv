@@ -147,7 +147,7 @@ do
                         _uv_read_stop(&&this.stream);
                     end;
     //_printf("error: %s\n", _uv_strerror(err));
-    _assert(err == _ERR_NONE);
+    _assert(err == 0);
 
     par/or do
         var _uv_stream_t&& s;
@@ -208,7 +208,7 @@ do
     end
 
     if reader.next >= this.limit then
-        escape _ERR_NONE;
+        escape 0;
     end
 
     watching this.reader do
@@ -216,7 +216,7 @@ do
             var int dt = await this.reader.ok;
             _assert(dt>0);
             if this.reader.next >= this.limit then
-                escape _ERR_NONE;
+                escape 0;
             end
         end
     end
@@ -224,8 +224,6 @@ do
     // client code must enclose with UV_ERROR
     _assert(0);
 end
-
-// TODO: receive UV_Stream_Read instead of stream
 
 class UV_Stream_ReadLine with
     var _uv_stream_t& stream;
@@ -238,16 +236,22 @@ do
     end
 
     var UV_Stream_Read r = UV_Stream_Read.build(&this.stream,&this.string);
-    loop do
-        await r.ok;
-        var char n=0, c=0;
-        var int ret = _sscanf((_char&&)&&this.string, "%*[^\n]%[\n]%c", &&n,&&c);
-        _assert(ret < 2);
-        if ret == 1 then
-            _assert(n == '\n');
-            break;
+
+    watching r do
+        loop do
+            await r.ok;
+            var char n=0, c=0;
+            var int ret = _sscanf((_char&&)&&this.string, "%*[^\n]%[\n]%c", &&n,&&c);
+            _assert(ret < 2);
+            if ret == 1 then
+                _assert(n == '\n');
+                escape 0;
+            end
         end
     end
+
+    // client code must enclose with UV_ERROR
+    _assert(0);
 end
 
 class UV_Stream_Write with
