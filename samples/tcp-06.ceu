@@ -3,8 +3,8 @@
 #@  - see `tcp-01.ceu`
 #@ Usage:
 #@  - create an echo server in the command line:
-#@  $ mkfifo fifo
-#@  $ cat fifo  | nc -l 7000 -v | cat  > fifo
+#@  $ mkfifo /tmp/fifo
+#@  $ cat /tmp/fifo  | nc -l 7000 -v | cat  > /tmp/fifo
 #@ http://unix.stackexchange.com/questions/147977/netcat-echo-server-possible-with-pipes-instead-of-commands-as-strings
 #@ Features:
 #@  - UV_CONNECT

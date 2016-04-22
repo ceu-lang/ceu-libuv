@@ -8,8 +8,9 @@
 
 #include "c.ceu"
 
-#define UV_TCP_SERVER_HANDLER_CEU tcp-08-handler.inc
 #include "uv.ceu"
+#define UV_TCP_SERVER_HANDLER_CEU tcp-08-handler.inc
+#include "uv-server.ceu"
 
 #define PORT    7000
 #define BACKLOG 128

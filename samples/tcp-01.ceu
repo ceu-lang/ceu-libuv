@@ -6,6 +6,7 @@
 #@  - dies if reads BUFFER_MAX at a time
 #@ Usage:
 #@  - connect a "netcat" client to port 7000
+#@      - nc localhost 7000
 #@      - write anything
 #@      - read the "echo"
 #@  - connect another "netcat" client to port 7000

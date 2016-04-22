@@ -38,12 +38,12 @@ end
 
 #define GET_HOST_U32(bytes,off) _ntohl(*((u32&&)&&(((_byte&&)&&bytes)[off])))
 
-#define PUT_NETWORK_U32(bytes,off,host)                     \
-    do                                                      \
-        var u32 network = _htonl(host);                     \
-        _assert(_ceu_vector_copy_buffer(&&(bytes), off,     \
-                                       (byte&&)&&network,   \
-                                       sizeof(u32)));       \
+#define PUT_NETWORK_U32(bytes,off,host)             \
+    do                                              \
+        var u32 network = _htonl(host);             \
+        _ceu_vector_copy_buffer(&&(bytes), off,     \
+                                (byte&&)&&network,  \
+                                sizeof(u32),1);     \
     end
 
 input _uv_fs_t&& FS;
@@ -122,7 +122,8 @@ end
 class UV_Stream_Read with
     var _uv_stream_t& stream;
     var byte[]&       bytes;
-    var int           next = 0;
+    var u32           next = 0;
+    var u32           max = 0;
     function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Read build;
     event int ok;
 do
@@ -147,18 +148,38 @@ do
     loop do
         var _uv_buf_t&& buf_r;
         var _uv_stream_t&& s;
-        var int n;
+        var u32 n;
         (s,n,buf_r) = await UV_READ until s==&&this.stream;
         _assert(buf_r:base == buf.base);
         _assert(buf_r:len  == buf.len);
         //_assert(n >= 0);  // connection closed?
         if n < 0 then
             _fprintf(_stderr, "[UV_Stream_Read] error: %s\n", _uv_strerror(n));
+// TODO: quando der esse erro, verificar a semantica,
+//       gerar UV_ERROR (fora ou aqui embaixo)
+_assert(0);
             break;
         end
         //_assert(n>0);   // can happen with multiple writes over "buf_"
-        next = next + n;
-        _ceu_vector_copy_buffer(&&this.bytes, $this.bytes, &&buf_, n);
+
+        var int ok = (max==0 or max<next+n);
+        if ok then
+            ok = _ceu_vector_copy_buffer(&&this.bytes, $this.bytes,
+                                         &&buf_, n, max==0);
+                    // force vector growth if max==0
+        end
+
+        if ok then
+            next = next + n;
+        else
+// TODO: quando der esse erro, verificar a semantica
+_printf(">>> %d\n", ok);
+_assert(0);
+            n = 0;
+            async (stream) do
+                emit UV_ERROR => (&&stream, _UV_ENOBUFS);
+            end
+        end
         emit this.ok => n;
     end
 end
