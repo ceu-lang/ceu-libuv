@@ -1,6 +1,8 @@
 #ifndef _UV_CEU
 #define _UV_CEU
 
+// TODO: int, u32 => ssize_t, size_t
+
 #include "c.ceu"
 
 native @plain
@@ -119,6 +121,8 @@ end
 
 #define BUFFER_MAX 1024
 
+// TODO: rename UV_Stream_Reader/Writer? build->run?
+
 class UV_Stream_Read with
     var _uv_stream_t& stream;
     var byte[]&       bytes;
@@ -137,52 +141,91 @@ do
     var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX);
     var _ceu_uv_read_t r = _ceu_uv_read_t(buf,0);
     this.stream.data = &&r;
-    var int ret = _ceu_uv_read_start(&&this.stream)
+    var int err = _ceu_uv_read_start(&&this.stream)
                     finalize with
                         _assert(r.has_pending_data == 0);
                         _uv_read_stop(&&this.stream);
                     end;
-    //_printf("error: %s\n", _uv_strerror(ret));
-    _assert(ret == 0);
+    //_printf("error: %s\n", _uv_strerror(err));
+    _assert(err == _ERR_NONE);
 
-    loop do
-        var _uv_buf_t&& buf_r;
+    par/or do
         var _uv_stream_t&& s;
-        var u32 n;
-        (s,n,buf_r) = await UV_READ until s==&&this.stream;
-        _assert(buf_r:base == buf.base);
-        _assert(buf_r:len  == buf.len);
-        //_assert(n >= 0);  // connection closed?
-        if n < 0 then
-            _fprintf(_stderr, "[UV_Stream_Read] error: %s\n", _uv_strerror(n));
-// TODO: quando der esse erro, verificar a semantica,
-//       gerar UV_ERROR (fora ou aqui embaixo)
-_assert(0);
-            break;
-        end
-        //_assert(n>0);   // can happen with multiple writes over "buf_"
+        var int err_;
+        (s,err_) = await UV_ERROR until (s==&&this.stream);
+        err = err_;
+        emit this.ok => err;
+    with
+        loop do
+            var _uv_buf_t&& buf_r;
+            var _uv_stream_t&& s;
+            var u32 n;
+            (s,n,buf_r) = await UV_READ until s==&&this.stream;
+            _assert(buf_r:base == buf.base);
+            _assert(buf_r:len  == buf.len);
+            //_assert(n >= 0);  // connection closed?
+            if n < 0 then
+                _fprintf(_stderr, "[UV_Stream_Read] error: %s\n", _uv_strerror(n));
+    // TODO: quando der esse erro, verificar a semantica,
+    //       gerar UV_ERROR (fora ou aqui embaixo)
+    _assert(0);
+                break;
+            end
+            //_assert(n>0);   // can happen with multiple writes over "buf_"
 
-        var int ok = (max==0 or max<next+n);
-        if ok then
-            ok = _ceu_vector_copy_buffer(&&this.bytes, $this.bytes,
-                                         &&buf_, n, max==0);
-                    // force vector growth if max==0
-        end
+            var int ok = (max==0 or max<next+n);
+            if ok then
+                ok = _ceu_vector_copy_buffer(&&this.bytes, $this.bytes,
+                                             &&buf_, n, max==0);
+                        // force vector growth if max==0
+            end
 
-        if ok then
-            next = next + n;
-        else
-// TODO: quando der esse erro, verificar a semantica
-_printf(">>> %d\n", ok);
-_assert(0);
-            n = 0;
-            async (stream) do
-                emit UV_ERROR => (&&stream, _UV_ENOBUFS);
+            if ok then
+                next = next + n;
+            else
+    // TODO: quando der esse erro, verificar a semantica
+    _printf(">>> %d\n", ok);
+    _assert(0);
+                n = 0;
+                async (stream) do
+                    emit UV_ERROR => (&&stream, _UV_ENOBUFS);
+                end
+            end
+            emit this.ok => n;
+        end
+    end
+    escape err;
+end
+
+class UV_Stream_ReadUntil with
+    var UV_Stream_Read& reader;
+    var u32             limit;
+    function (UV_Stream_Read& reader, u32 limit)=>UV_Stream_ReadUntil run;
+do
+    function (UV_Stream_Read& reader, u32 limit)=>UV_Stream_ReadUntil run do
+        this.reader = &reader;
+        this.limit  = limit;
+    end
+
+    if reader.next >= this.limit then
+        escape _ERR_NONE;
+    end
+
+    watching this.reader do
+        loop do
+            var int dt = await this.reader.ok;
+            _assert(dt>0);
+            if this.reader.next >= this.limit then
+                escape _ERR_NONE;
             end
         end
-        emit this.ok => n;
     end
+
+    // client code must enclose with UV_ERROR
+    _assert(0);
 end
+
+// TODO: receive UV_Stream_Read instead of stream
 
 class UV_Stream_ReadLine with
     var _uv_stream_t& stream;
@@ -277,15 +320,15 @@ do
 
     do
         var _uv_connect_t&& c;
-        var int status;
-        (c,status) = await UV_CONNECT until c==&&connect;
-        emit this.ok => status;
+        var int err;
+        (c,err) = await UV_CONNECT until c==&&connect;
+        emit this.ok => err;
     end
 
     do
         var _uv_stream_t&& s;
-        var int status;
-        (s,status) = await UV_ERROR until (s==(_uv_stream_t&&)&&this.tcp);
+        var int err;
+        (s,err) = await UV_ERROR until (s==(_uv_stream_t&&)&&this.tcp);
     end
 end
 
