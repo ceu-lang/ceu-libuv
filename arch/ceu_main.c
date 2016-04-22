@@ -70,9 +70,9 @@ void ceu_uv_fs_close_cb (uv_fs_t* req) {
 #define ceu_uv_read_start(a)      uv_read_start(a,ceu_uv_read_alloc,ceu_uv_read_start_cb);
 #define ceu_uv_write(a,b,c)       uv_write(a,b,c,1,ceu_uv_write_cb)
 
-void ceu_uv_connect_cb (uv_connect_t* c, int status) {
+void ceu_uv_connect_cb (uv_connect_t* c, int err) {
 #ifdef CEU_IN_UV_CONNECT
-    tceu__uv_connect_t___int p = { c, status };
+    tceu__uv_connect_t___int p = { c, err };
     ceu_sys_go(&CEU_APP, CEU_IN_UV_CONNECT, &p);
 #endif
 #ifdef CEU_RET
@@ -82,9 +82,9 @@ void ceu_uv_connect_cb (uv_connect_t* c, int status) {
 #endif
 }
 
-void ceu_uv_listen_cb (uv_stream_t* s, int status) {
+void ceu_uv_listen_cb (uv_stream_t* s, int err) {
 #ifdef CEU_IN_UV_LISTEN
-    tceu__uv_stream_t___int p = { s, status };
+    tceu__uv_stream_t___int p = { s, err };
     ceu_sys_go(&CEU_APP, CEU_IN_UV_LISTEN, &p);
 #endif
 #ifdef CEU_RET
@@ -102,8 +102,10 @@ void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
 void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
 #ifdef CEU_IN_UV_ERROR
     if (n < 0) {
+        // if the "assert" fails, see if the error makes sense and extend it
+        assert(n == UV__EOF);
         tceu__uv_stream_t___int p = { s, n };
-        ceu_sys_go(&CEU_APP, CEU_IN_UV_ERROR, &s);
+        ceu_sys_go(&CEU_APP, CEU_IN_UV_ERROR, &p);
     }
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
@@ -126,10 +128,12 @@ void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
 #endif
 }
 
-void ceu_uv_write_cb (uv_write_t* req, int status) {
+void ceu_uv_write_cb (uv_write_t* req, int err) {
 #ifdef CEU_IN_UV_ERROR
-    if (status < 0) {
-        tceu__uv_stream_t___int p = { req->handle, status };
+    if (err < 0) {
+        // if the "assert" fails, see if the error makes sense and extend it
+        assert(err == UV__EOF);
+        tceu__uv_stream_t___int p = { req->handle, err };
         ceu_sys_go(&CEU_APP, CEU_IN_UV_ERROR, &p);
     }
 #ifdef CEU_RET
@@ -139,7 +143,7 @@ void ceu_uv_write_cb (uv_write_t* req, int status) {
 #endif
 #endif
 #ifdef CEU_IN_UV_WRITE
-    tceu__uv_write_t___int p = { req, status };
+    tceu__uv_write_t___int p = { req, err };
     ceu_sys_go(&CEU_APP, CEU_IN_UV_WRITE, &p);
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
