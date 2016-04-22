@@ -6,7 +6,6 @@
 #include "c.ceu"
 
 native @plain
-        _ceu_uv_read_t,
         _sockaddr,
         _sockaddr_in,
         _uv_buf_t,
@@ -119,15 +118,12 @@ do
     escape req_read.result;
 end
 
-#define BUFFER_MAX 1024
-
 // TODO: rename UV_Stream_Reader/Writer? build->run?
 
 class UV_Stream_Read with
     var _uv_stream_t& stream;
     var byte[]&       bytes;
     var u32           next = 0;
-    var u32           max = 0;
     function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Read build;
     event int ok;
 do
@@ -136,14 +132,9 @@ do
         this.bytes = &bytes;
     end
 
-    var _byte[BUFFER_MAX] buf_ = [];
-
-    var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX);
-    var _ceu_uv_read_t r = _ceu_uv_read_t(buf,0);
-    this.stream.data = &&r;
+    this.stream.data = &&bytes;
     var int err = _ceu_uv_read_start(&&this.stream)
                     finalize with
-                        _assert(r.has_pending_data == 0);
                         _uv_read_stop(&&this.stream);
                     end;
     //_printf("error: %s\n", _uv_strerror(err));
@@ -161,37 +152,13 @@ do
             var _uv_stream_t&& s;
             var u32 n;
             (s,n,buf_r) = await UV_READ until s==&&this.stream;
-            _assert(buf_r:base == buf.base);
-            _assert(buf_r:len  == buf.len);
-            //_assert(n >= 0);  // connection closed?
-            if n < 0 then
-                _fprintf(_stderr, "[UV_Stream_Read] error: %s\n", _uv_strerror(n));
-    // TODO: quando der esse erro, verificar a semantica,
-    //       gerar UV_ERROR (fora ou aqui embaixo)
-    _assert(0);
-                break;
-            end
-            //_assert(n>0);   // can happen with multiple writes over "buf_"
+            _assert((_byte&&)buf_r:base == ((_byte&&)&&this.bytes));
+            _assert(buf_r:len  == $this.bytes);
 
-            var int ok = (max==0 or max<next+n);
-            if ok then
-                ok = _ceu_vector_copy_buffer(&&this.bytes, $this.bytes,
-                                             &&buf_, n, max==0);
-                        // force vector growth if max==0
-            end
+            _assert(n != 0); // TODO: if this happens, try to understand why
+            _assert(n >= 0); // UV_ERROR aborts me
 
-            if ok then
-                next = next + n;
-            else
-    // TODO: quando der esse erro, verificar a semantica
-    _printf(">>> %d\n", ok);
-    _assert(0);
-                n = 0;
-                async (stream) do
-                    emit UV_ERROR => (&&stream, _UV_ENOBUFS);
-                end
-            end
-            emit this.ok => n;
+            next = next + n;
         end
     end
     escape err;

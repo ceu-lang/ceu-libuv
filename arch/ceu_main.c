@@ -27,8 +27,8 @@ typedef struct sockaddr         sockaddr;
 typedef struct sockaddr_in      sockaddr_in;
 typedef struct sockaddr_storage sockaddr_storage;
 typedef struct {
-    uv_buf_t buf;
-    int has_pending_data;
+    void* vec;
+    int   has_pending_data;
 } ceu_uv_read_t;
 
 #include "_ceu_app.h"
@@ -94,37 +94,61 @@ void ceu_uv_listen_cb (uv_stream_t* s, int err) {
 #endif
 }
 
+#define CEU_UV_READ_ALLOC_DYN_INIT 128
+
 void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
     assert(h->data != NULL);
-    *buf = ((ceu_uv_read_t*)(h->data))->buf;
+    tceu_vector* vec = (tceu_vector*) h->data;
+
+    // init dynamic vector or
+    // grow dynamic vector if going past half of it
+    {
+        int max = ceu_vector_getmax(vec);
+        int len = ceu_vector_getlen(vec);
+        if (max <= 0) {
+            if (max == 0) {
+                ceu_vector_setlen(vec, CEU_UV_READ_ALLOC_DYN_INIT, 1);
+            } else if (max<0 && len*2>(-max)) {
+                ceu_vector_setlen(vec, (-max+10)*3/2, 1);
+            }
+        }
+    }
+    {
+        int max = ceu_vector_getmax(vec);
+        *buf = uv_buf_init(vec->mem, ((max<0) ? -max : max));
+    }
 }
 
 void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
+    assert(s->data != NULL);
+    tceu_vector* vec = (tceu_vector*) s->data;
+    assert(vec->mem == (byte*)buf->base);
+    if (ceu_vector_setlen(vec, ceu_vector_getlen(vec)+n,1) == 0) {
+        n = UV_ENOBUFS;
+    }
+
 #ifdef CEU_IN_UV_ERROR
     if (n < 0) {
-        // if the "assert" fails, see if the error makes sense and extend it
-        assert(n == UV__EOF);
         tceu__uv_stream_t___int p = { s, n };
         ceu_sys_go(&CEU_APP, CEU_IN_UV_ERROR, &p);
-    }
 #ifdef CEU_RET
-    if (!CEU_APP.isAlive) {
-        uv_stop(&ceu_uv_loop);
+        if (!CEU_APP.isAlive) {
+            uv_stop(&ceu_uv_loop);
+        }
+#endif
     }
 #endif
-#endif
+
 #ifdef CEU_IN_UV_READ
-    assert(s->data != NULL);
-    ceu_uv_read_t* r = (ceu_uv_read_t*)s->data;
-    assert(r->buf.base == buf->base);
-    r->has_pending_data = (n == r->buf.len);
-    tceu__uv_stream_t___ssize_t__uv_buf_t_ p = { s, n, (uv_buf_t*)buf };
-    ceu_sys_go(&CEU_APP, CEU_IN_UV_READ, &p);
+    {
+        tceu__uv_stream_t___ssize_t__uv_buf_t_ p = { s, n, (uv_buf_t*)buf };
+        ceu_sys_go(&CEU_APP, CEU_IN_UV_READ, &p);
 #ifdef CEU_RET
-    if (!CEU_APP.isAlive) {
-        uv_stop(&ceu_uv_loop);
-    }
+        if (!CEU_APP.isAlive) {
+            uv_stop(&ceu_uv_loop);
+        }
 #endif
+    }
 #endif
 }
 
