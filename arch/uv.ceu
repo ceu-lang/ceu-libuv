@@ -153,12 +153,12 @@ do
             var u32 n;
             (s,n,buf_r) = await UV_READ until s==&&this.stream;
             _assert((_byte&&)buf_r:base == ((_byte&&)&&this.bytes));
-            _assert(buf_r:len  == $this.bytes);
 
             _assert(n != 0); // TODO: if this happens, try to understand why
             _assert(n >= 0); // UV_ERROR aborts me
 
             next = next + n;
+            emit this.ok => n;
         end
     end
     escape err;
