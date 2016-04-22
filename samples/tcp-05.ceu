@@ -18,93 +18,6 @@ input (_uv_write_t&&,int) UV_WRITE;
 #define DEFAULT_BACKLOG 128
 #define BUFFER_MAX      10
 
-class Read with
-    var _uv_stream_t& stream;
-    var char[]&       string;
-    function (_uv_stream_t& stream, char[]& string)=>Read build;
-    event int ok;
-do
-    function (_uv_stream_t& stream, char[]& string)=>Read build do
-        this.stream = &stream;
-        this.string = &string;
-    end
-
-    var _char[BUFFER_MAX] buf_ = [];
-    var _ssize_t n_read = 0;
-
-    var _uv_buf_t buf = _uv_buf_init(buf_, BUFFER_MAX-1);
-    var _ceu_uv_read_t r = _ceu_uv_read_t(buf,0);
-    this.stream.data = &&r;
-    var int ret = _ceu_uv_read_start(&&this.stream)
-                    finalize with
-                        _assert(r.has_pending_data == 0);
-                        _uv_read_stop(&&this.stream);
-                    end;
-    //_printf("error: %s\n", _uv_strerror(ret));
-    _assert(ret == 0);
-
-    loop do
-        var _uv_buf_t&& buf_r;
-        var _uv_stream_t&& s;
-        (s,n_read,buf_r) = await UV_READ until s==&&this.stream;
-        _assert(buf_r:base == buf.base);
-        _assert(buf_r:len  == buf.len);
-        //_assert(n_read >= 0);  // connection closed?
-        if n_read < 0 then
-            _fprintf(_stderr, "[Connection] error: %s\n", _uv_strerror(n_read));
-            break;
-        else/if n_read == 0 then
-            //_assert(0);   // can happen with multiple writes over "buf_"
-        end
-        buf_[n_read] = '\0';
-        this.string = [] .. this.string .. (char&&)buf_;
-        emit this.ok => n_read;
-    end
-end
-
-class ReadLine with
-    var _uv_stream_t& stream;
-    var char[]&       string;
-    function (_uv_stream_t& stream, char[]& string)=>ReadLine build;
-do
-    function (_uv_stream_t& stream, char[]& string)=>ReadLine build do
-        this.stream = &stream;
-        this.string = &string;
-    end
-
-    var Read r = Read.build(&this.stream,&this.string);
-    loop do
-        await r.ok;
-        var char n=0, c=0;
-        var int ret = _sscanf((_char&&)&&this.string, "%*[^\n]%[\n]%c", &&n,&&c);
-        _assert(ret < 2);
-        if ret == 1 then
-            _assert(n == '\n');
-            break;
-        end
-    end
-end
-
-class Write with
-    var _uv_stream_t& stream;
-    var char[]&       string;
-    function (_uv_stream_t& stream, char[]& string)=>Write build;
-do
-    function (_uv_stream_t& stream, char[]& string)=>Write build do
-        this.stream = &stream;
-        this.string = &string;
-    end
-
-    // WRITE
-    var _uv_write_t req_write = _uv_write_t();
-    var _uv_buf_t buf = _uv_buf_init((_char&&)&&this.string, $this.string);
-    _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&this.stream, &&buf);
-    var _uv_write_t&& w;
-    var int status;
-    (w, status) = await UV_WRITE until w==&&req_write;
-    _assert(status == 0);
-end
-
 class Handler0 with
     var _uv_tcp_t& tcp;
     function (_uv_tcp_t& tcp)=>Handler0 build;
@@ -114,11 +27,11 @@ do
     end
 
     var char[] string;
-    var Read r = Read.build(&_UV_STREAM_ALIAS(this.tcp),&this.string);
+    var UV_Stream_Read r = UV_Stream_Read.build(&_UV_STREAM_ALIAS(this.tcp),&this.string);
     loop do
         await r.ok;
         _printf("[handler-0] %s\n", (_char&&)&&string);
-        do Write.build(&_UV_STREAM_ALIAS(tcp), &string);
+        do UV_Stream_Write.build(&_UV_STREAM_ALIAS(tcp), &string);
         $string = 0;
     end
 end
@@ -133,9 +46,9 @@ do
 
     loop do
         var char[] string;
-        do ReadLine.build(&_UV_STREAM_ALIAS(tcp), &string);
+        do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(tcp), &string);
         _printf("[handler-1] %s", (_char&&)&&string);
-        do Write.build(&_UV_STREAM_ALIAS(tcp), &string);
+        do UV_Stream_Write.build(&_UV_STREAM_ALIAS(tcp), &string);
     end
 end
 
