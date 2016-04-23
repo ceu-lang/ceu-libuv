@@ -131,10 +131,10 @@ class UV_Stream_Read with
 do
     function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Read build do
         this.stream = &stream;
-        this.bytes = &bytes;
+        this.bytes  = &bytes;
     end
 
-    this.stream.data = &&bytes;
+    this.stream.data = &&this.bytes;
     _assert(_uv_is_readable(&&this.stream));
     var int err = _ceu_uv_read_start(&&this.stream)
                     finalize with
@@ -154,8 +154,9 @@ do
             var _uv_buf_t&& buf_r;
             var _uv_stream_t&& s;
             var u32 n;
-            (s,n,buf_r) = await UV_READ until s==&&this.stream;
-            _assert((_byte&&)buf_r:base == ((_byte&&)&&this.bytes));
+            (s,n,buf_r) = await UV_READ
+                          until s == &&this.stream and
+                                ((_byte&&)buf_r:base == ((_byte&&)&&this.bytes));
 
             _assert(n != 0); // TODO: if this happens, try to understand why
             _assert(n >= 0); // UV_ERROR aborts me
@@ -184,15 +185,14 @@ do
     watching this.reader do
         loop do
             var int dt = await this.reader.ok;
-            _assert(dt>0);
+            if dt < 0 then
+                escape dt;
+            end
             if this.reader.next >= this.limit then
                 escape 0;
             end
         end
     end
-
-    // client code must enclose with UV_ERROR
-    _assert(0);
 end
 
 class UV_Stream_ReadLine with

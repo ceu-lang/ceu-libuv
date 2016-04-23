@@ -122,13 +122,14 @@ void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
 void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
     assert(n != 0); // TODO: if this happens, try to understand why
 
+    assert(s->data != NULL);
+    tceu_vector* vec = (tceu_vector*) s->data;
+    assert(vec->mem == (byte*)buf->base);
     if (n > 0) {
-        assert(s->data != NULL);
-        tceu_vector* vec = (tceu_vector*) s->data;
-        assert(vec->mem == (byte*)buf->base);
         if (ceu_vector_setlen(vec, ceu_vector_getlen(vec)+n,1) == 0) {
             n = UV_ENOBUFS;
         }
+        assert(vec->mem == (byte*)buf->base);
     }
 
 #ifdef CEU_IN_UV_ERROR
