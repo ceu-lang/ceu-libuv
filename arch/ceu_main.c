@@ -235,10 +235,10 @@ void ceu_uv_timer_cb (uv_timer_t* timer) {
 uv_prepare_t ceu_uv_prepare;
 uv_check_t   ceu_uv_check;
 void ceu_uv_prepare_cb (uv_prepare_t* prepare) {
-    CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex_external);
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex_external);
 }
 void ceu_uv_check_cb (uv_check_t* check) {
-    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex_external);
+    CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex_external);
     if (CEU_APP.threads_n > 0) {
         //CEU_THREADS_SLEEP(100);
     }
