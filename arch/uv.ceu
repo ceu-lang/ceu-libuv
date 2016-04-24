@@ -313,6 +313,7 @@ do
         var _uv_stream_t&& s;
         var int err;
         (s,err) = await UV_ERROR until (s==(_uv_stream_t&&)&&this.tcp);
+        escape err;
     end
 end
 
