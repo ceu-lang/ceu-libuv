@@ -121,6 +121,8 @@ do
 end
 
 // TODO: rename UV_Stream_Reader/Writer? build->run?
+// TODO: function to signal "consumption", if the org is finalized w/ pending
+//       consumption, then error
 
 class UV_Stream_Read with
     var _uv_stream_t& stream;
@@ -133,6 +135,8 @@ do
         this.stream = &stream;
         this.bytes  = &bytes;
     end
+
+    $bytes = 0;
 
     this.stream.data = &&this.bytes;
     _assert(_uv_is_readable(&&this.stream));
@@ -155,8 +159,8 @@ do
             var _uv_stream_t&& s;
             var u32 n;
             (s,n,buf_r) = await UV_READ
-                          until s == &&this.stream and
-                                ((_byte&&)buf_r:base == ((_byte&&)&&this.bytes));
+                          until s == &&this.stream;// and
+                                //((_byte&&)buf_r:base == ((_byte&&)&&this.bytes));
 
             _assert(n != 0); // TODO: if this happens, try to understand why
             _assert(n >= 0); // UV_ERROR aborts me
@@ -186,6 +190,9 @@ do
         loop do
             var int dt = await this.reader.ok;
             if dt < 0 then
+                // TODO: versions w/ assert/escape
+                _printf("error: %s\n", _uv_strerror(dt));
+                _assert(0);
                 escape dt;
             end
             if this.reader.next >= this.limit then
@@ -258,6 +265,8 @@ do
     var _uv_write_t&& w;
     var int status;
     (w, status) = await UV_WRITE until w==&&req_write;
+
+    // force external UV_ERROR
     _assert(status == 0);
 end
 

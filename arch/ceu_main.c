@@ -100,11 +100,11 @@ void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
     assert(h->data != NULL);
     tceu_vector* vec = (tceu_vector*) h->data;
 
-    // init dynamic vector or
-    // grow dynamic vector if going past half of it
+    int len = ceu_vector_getlen(vec);
     {
+        // init dynamic vector or
+        // grow dynamic vector if going past half of it
         int max = ceu_vector_getmax(vec);
-        int len = ceu_vector_getlen(vec);
         if (max <= 0) {
             if (max == 0) {
                 ceu_vector_resize(vec, CEU_UV_READ_ALLOC_DYN_INIT);
@@ -115,7 +115,7 @@ void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
     }
     {
         int max = ceu_vector_getmax(vec);
-        *buf = uv_buf_init(vec->mem, ((max<0) ? -max : max));
+        *buf = uv_buf_init(vec->mem+len, ((max<0) ? -max : max)-len);
     }
 }
 
@@ -124,12 +124,12 @@ void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
 
     assert(s->data != NULL);
     tceu_vector* vec = (tceu_vector*) s->data;
-    assert(vec->mem == (byte*)buf->base);
+    //assert(vec->mem == (byte*)buf->base);
     if (n > 0) {
         if (ceu_vector_setlen(vec, ceu_vector_getlen(vec)+n,1) == 0) {
             n = UV_ENOBUFS;
         }
-        assert(vec->mem == (byte*)buf->base);
+        //assert(vec->mem == (byte*)buf->base);
     }
 
 #ifdef CEU_IN_UV_ERROR
