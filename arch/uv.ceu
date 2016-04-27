@@ -191,7 +191,7 @@ do
             var int dt = await this.reader.ok;
             if dt < 0 then
                 // TODO: versions w/ assert/escape
-                _printf("error: %s\n", _uv_strerror(dt));
+                _printf("error[%d]: %s\n", dt, _uv_strerror(dt));
                 _assert(0);
                 escape dt;
             end
