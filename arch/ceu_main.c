@@ -75,6 +75,10 @@ void ceu_uv_connect_cb (uv_connect_t* c, int err) {
     tceu__uv_connect_t___int p = { c, err };
     ceu_sys_go(&CEU_APP, CEU_IN_UV_CONNECT, &p);
 #endif
+    if (err < 0) {
+        free(c);
+        return;
+    }
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
         uv_stop(&ceu_uv_loop);
@@ -83,6 +87,7 @@ void ceu_uv_connect_cb (uv_connect_t* c, int err) {
 }
 
 void ceu_uv_listen_cb (uv_stream_t* s, int err) {
+    assert(err >= 0);
 #ifdef CEU_IN_UV_LISTEN
     tceu__uv_stream_t___int p = { s, err };
     ceu_sys_go(&CEU_APP, CEU_IN_UV_LISTEN, &p);

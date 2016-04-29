@@ -325,15 +325,21 @@ do
             _uv_close((_uv_handle_t&&)&&tcp, _ceu_uv_free);
         end;
 
-    var _uv_connect_t connect = _uv_connect_t();
+    var _uv_connect_t&? connect_;
+    finalize
+        connect_ = &_malloc(sizeof(_uv_connect_t));
+    with
+        // free on uv callback
+    end
+
     var _sockaddr_in dest = _sockaddr_in();
     _uv_ip4_addr((_char&&)&&this.ip, this.port, &&dest);
-    _ceu_uv_tcp_connect(&&connect, &&tcp, (_sockaddr&&)&&dest);
+    _ceu_uv_tcp_connect(&&connect_!, &&tcp, (_sockaddr&&)&&dest);
 
     do
         var _uv_connect_t&& c;
         var int err;
-        (c,err) = await UV_CONNECT until c==&&connect;
+        (c,err) = await UV_CONNECT until c==&&connect_!;
         emit this.ok => err;
     end
 
