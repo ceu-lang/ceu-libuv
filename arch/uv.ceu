@@ -23,6 +23,7 @@ native @pure
         _uv_strerror();
 
 native @nohold
+        _ceu_uv_close(),
         _ceu_uv_fs_close(),
         _ceu_uv_listen(),       // TODO: unlisten?
         _ceu_uv_tcp_connect(),  // TODO: diconnect?
@@ -31,7 +32,6 @@ native @nohold
         _ceu_uv_write(),        // TODO: write_stop?
         _uv_accept(),
         _uv_buf_init(),
-        _uv_close(),
         _uv_fs_req_cleanup(),
         _uv_inet_ntop(),
         _uv_ip4_addr(),
@@ -172,7 +172,7 @@ do
                     finalize with
                         _uv_read_stop(&&this.stream);
                     end;
-    //_printf("error: %s\n", _uv_strerror(err));
+    //_fprintf(_stderr, "uv-error: %s\n", _uv_strerror(err));
     _assert(err == 0);
 
     par/or do
@@ -322,7 +322,7 @@ do
     this.tcp = &tcp_!;
     _ceu_uv_tcp_init(&&tcp)
         finalize with
-            _uv_close((_uv_handle_t&&)&&tcp, _ceu_uv_free);
+            _ceu_uv_close((_uv_handle_t&&)&&tcp);
         end;
 
     var _uv_connect_t&? connect_;

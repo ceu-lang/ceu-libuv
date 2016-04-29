@@ -64,6 +64,10 @@ void ceu_uv_fs_close_cb (uv_fs_t* req) {
 
 /* TCP */
 
+#if 0
+#define ceu_uv_close(a)           if (!uv_is_closing(a)) { uv_close(a,ceu_uv_free); }
+#endif
+#define ceu_uv_close(a)           uv_close(a,ceu_uv_free)
 #define ceu_uv_tcp_init(a)        uv_tcp_init(&ceu_uv_loop, a);
 #define ceu_uv_tcp_connect(a,b,c) uv_tcp_connect(a,b,c,ceu_uv_connect_cb)
 #define ceu_uv_listen(a,b)        uv_listen(a,b,ceu_uv_listen_cb)
