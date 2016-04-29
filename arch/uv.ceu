@@ -8,6 +8,7 @@
 native @plain
         _sockaddr,
         _sockaddr_in,
+        _sockaddr_storage,
         _uv_buf_t,
         _uv_connect_t,
         _uv_fs_t,
@@ -25,18 +26,45 @@ native @nohold
         _ceu_uv_fs_close(),
         _ceu_uv_listen(),       // TODO: unlisten?
         _ceu_uv_tcp_connect(),  // TODO: diconnect?
+        _ceu_uv_tcp_getpeerport(),
+        _ceu_uv_tcp_getsockport(),
         _ceu_uv_write(),        // TODO: write_stop?
         _uv_accept(),
         _uv_buf_init(),
         _uv_close(),
         _uv_fs_req_cleanup(),
+        _uv_inet_ntop(),
         _uv_ip4_addr(),
         _uv_read_stop(),
         _uv_tcp_bind(),         // TODO: unbind?
+        _uv_tcp_getpeername(),
         _uv_tcp_getsockname();
 
 native/pre do
     ##define UV_STREAM_ALIAS(x) ((uv_stream_t*)&x)
+end
+
+native do
+    int ceu_uv_tcp_getpeerport (uv_tcp_t* tcp) {
+        sockaddr_in name;
+        int namelen = sizeof(name);
+        uv_tcp_getpeername(tcp, (sockaddr*)&name, &namelen);
+        char addr[16];
+        uv_inet_ntop(AF_INET, &name.sin_addr, addr, sizeof(addr));
+        int port = ntohs(name.sin_port);
+        //_printf("%s:%d\n", (_char&&)&&addr, port);
+        return port;
+    }
+    int ceu_uv_tcp_getsockport (uv_tcp_t* tcp) {
+        sockaddr_in name;
+        int namelen = sizeof(name);
+        uv_tcp_getsockname(tcp, (sockaddr*)&name, &namelen);
+        char addr[16];
+        uv_inet_ntop(AF_INET, &name.sin_addr, addr, sizeof(addr));
+        int port = ntohs(name.sin_port);
+        //_printf("%s:%d\n", (_char&&)&&addr, port);
+        return port;
+    }
 end
 
 #define GET_HOST_U32(bytes,off) _ntohl(*((u32&&)&&(((_byte&&)&&bytes)[off])))

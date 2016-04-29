@@ -205,22 +205,21 @@ void ceu_uv_idle_cb (uv_idle_t* idler) {
 
 #ifdef CEU_WCLOCKS
 uv_timer_t ceu_uv_timer;
-double ceu_uv_uptime;
-#define ceu_out_wclock_set(us)                                      \
-    if (us == CEU_WCLOCK_INACTIVE) {                                \
-        uv_timer_stop(&ceu_uv_timer);                               \
-    } else if (us <= 0) {                                           \
-        uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, 0, 0);       \
-    } else {                                                        \
-        uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, us/1000, 0); \
+int ceu_uv_timer_next_us;
+#define ceu_out_wclock_set(us)         \
+    if (us == CEU_WCLOCK_INACTIVE) {   \
+        uv_timer_stop(&ceu_uv_timer);  \
+    } else if (us <= 0) {              \
+        ceu_uv_timer_next_us = 0;      \
+        uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, 0, 0); \
+    } else {                           \
+        ceu_uv_timer_next_us = us;     \
+        uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, ceu_uv_timer_next_us/1000, 0); \
     }
+
 void ceu_uv_timer_cb (uv_timer_t* timer) {
     assert(timer == &ceu_uv_timer);
-    double now;
-    uv_uptime(&now);
-    int dt = (now - ceu_uv_uptime)*1000000;
-    ceu_uv_uptime = now;
-    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK, &dt);
+    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK, &ceu_uv_timer_next_us);
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
         uv_stop(&ceu_uv_loop);
@@ -258,7 +257,6 @@ int main (int argc, char *argv[])
     uv_idle_init(&ceu_uv_loop, &ceu_uv_idle);
 #endif
 #ifdef CEU_WCLOCKS
-    uv_uptime(&ceu_uv_uptime);
     uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
 #endif
 #ifdef CEU_THREADS
