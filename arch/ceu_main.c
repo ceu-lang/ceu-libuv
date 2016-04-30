@@ -37,6 +37,17 @@ tceu_app CEU_APP;
 uv_loop_t ceu_uv_loop;
 
 void ceu_uv_free (uv_handle_t* h) {
+    // TODO: other stream types
+#if 0
+    if (h->type == UV_TCP) {
+        uv_stream_t* s = (uv_stream_t*)h;
+        if (s->connect_req != NULL) {
+printf(">>> FREE\n");
+            free(s->connect_req);
+            s->connect_req = NULL;
+        }
+    }
+#endif
     free(h);
 }
 
@@ -79,10 +90,7 @@ void ceu_uv_connect_cb (uv_connect_t* c, int err) {
     tceu__uv_connect_t___int p = { c, err };
     ceu_sys_go(&CEU_APP, CEU_IN_UV_CONNECT, &p);
 #endif
-    if (err < 0) {
-        free(c);
-        return;
-    }
+    free(c);
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
         uv_stop(&ceu_uv_loop);
@@ -245,12 +253,12 @@ uv_prepare_t ceu_uv_prepare;
 uv_check_t   ceu_uv_check;
 void ceu_uv_prepare_cb (uv_prepare_t* prepare) {
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex_external);
+    if (CEU_APP.threads_n > 0) {
+        //CEU_THREADS_SLEEP(1000);
+    }
 }
 void ceu_uv_check_cb (uv_check_t* check) {
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex_external);
-    if (CEU_APP.threads_n > 0) {
-        //CEU_THREADS_SLEEP(100);
-    }
 }
 #endif
 
