@@ -214,7 +214,7 @@ void ceu_uv_idle_cb (uv_idle_t* idler) {
 
 #ifdef CEU_WCLOCKS
 uv_timer_t ceu_uv_timer;
-int ceu_uv_timer_next_us;
+s32 ceu_uv_timer_next_us;
 #define ceu_out_wclock_set(us)         \
     if (us == CEU_WCLOCK_INACTIVE) {   \
         uv_timer_stop(&ceu_uv_timer);  \
@@ -228,7 +228,8 @@ int ceu_uv_timer_next_us;
 
 void ceu_uv_timer_cb (uv_timer_t* timer) {
     assert(timer == &ceu_uv_timer);
-    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK, &ceu_uv_timer_next_us);
+    s32 now = ceu_uv_timer_next_us;
+    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK, &now);
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
         uv_stop(&ceu_uv_loop);
