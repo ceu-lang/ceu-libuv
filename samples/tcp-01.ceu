@@ -58,7 +58,7 @@ loop i in 2 do
     var _uv_tcp_t& client = &client_!;
     _ceu_uv_tcp_init(&&client)
         finalize with
-            _uv_close((_uv_handle_t&&)&&client, _ceu_uv_free);
+            _ceu_uv_close((_uv_handle_t&&)&&client);
         end;
 
     loop do
@@ -101,8 +101,8 @@ loop i in 2 do
             var _uv_buf_t&& buf_r;
             var _uv_stream_t&& s;
             (s,n_read,buf_r) = await UV_READ until s==(_uv_stream_t&&)&&client;
-            _assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
-            _assert(buf_r:len == $$buf);
+            //_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
+            //_assert(buf_r:len == $$buf);
         end
         //_assert(n_read >= 0);  // connection closed?
         if n_read < 0 then

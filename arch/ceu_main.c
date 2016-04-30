@@ -305,6 +305,7 @@ int main (int argc, char *argv[])
 #endif
 #endif
 
+    // TODO: detect/error if return w/o "escape"
     uv_run(&ceu_uv_loop, UV_RUN_DEFAULT);
 
 #ifdef CEU_ASYNCS

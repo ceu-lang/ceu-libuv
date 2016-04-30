@@ -102,7 +102,7 @@ do
     var _uv_tcp_t& client = &client_!;
     _ceu_uv_tcp_init(&&client)
         finalize with
-            _uv_close((_uv_handle_t&&)&&client, _ceu_uv_free);
+            _ceu_uv_close((_uv_handle_t&&)&&client);
         end;
 
     // ACCEPT
@@ -133,7 +133,7 @@ do
     var _uv_tcp_t& server = &server_!;
     _ceu_uv_tcp_init(&&server)
         finalize with
-            _uv_close((_uv_handle_t&&)&&server, _ceu_uv_free);
+            _ceu_uv_close((_uv_handle_t&&)&&server);
         end;
 
     var _sockaddr_in addr = _sockaddr_in();

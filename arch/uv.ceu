@@ -12,6 +12,7 @@ native @plain
         _uv_buf_t,
         _uv_connect_t,
         _uv_fs_t,
+        _uv_handle_t,
         _uv_stream_t,
         _uv_tcp_t,
         _uv_write_t;
@@ -32,6 +33,7 @@ native @nohold
         _ceu_uv_write(),        // TODO: write_stop?
         _uv_accept(),
         _uv_buf_init(),
+        _uv_close(),
         _uv_fs_req_cleanup(),
         _uv_inet_ntop(),
         _uv_ip4_addr(),
