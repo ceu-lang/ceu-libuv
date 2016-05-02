@@ -252,13 +252,14 @@ void ceu_uv_timer_cb (uv_timer_t* timer) {
 uv_prepare_t ceu_uv_prepare;
 uv_check_t   ceu_uv_check;
 void ceu_uv_prepare_cb (uv_prepare_t* prepare) {
-    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex_external);
-    if (CEU_APP.threads_n > 0) {
-        //CEU_THREADS_SLEEP(1000);
+    ceu_threads_gc(&CEU_APP, 0);
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    if (CEU_APP.threads_head != NULL) {
+        CEU_THREADS_SLEEP(1000);
     }
 }
 void ceu_uv_check_cb (uv_check_t* check) {
-    CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex_external);
+    CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
 }
 #endif
 
@@ -288,7 +289,7 @@ int main (int argc, char *argv[])
     CEU_APP.init = &ceu_app_init;
     CEU_APP.init(&CEU_APP);    /* calls CEU_THREADS_MUTEX_LOCK() */
 #ifdef CEU_THREADS
-    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex_external);
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
 #endif
 #ifdef CEU_RET
     if (!CEU_APP.isAlive) {
@@ -300,11 +301,11 @@ int main (int argc, char *argv[])
     {
         tceu_os_start arg = { argc, argv };
 #ifdef CEU_THREADS
-        CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex_external);
+        CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
 #endif
         ceu_sys_go(&CEU_APP, CEU_IN_OS_START, &arg);
 #ifdef CEU_THREADS
-        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex_external);
+        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
 #endif
     }
 #ifdef CEU_RET
@@ -329,6 +330,11 @@ int main (int argc, char *argv[])
 #endif
     while (uv_run(&ceu_uv_loop,UV_RUN_NOWAIT) != 0);
     assert(uv_loop_close(&ceu_uv_loop) == 0);
+
+#ifdef CEU_THREADS
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    ceu_out_assert(ceu_threads_gc(&CEU_APP,1) == 0); /* wait all terminate/free */
+#endif
 
 #ifdef CEU_RET
     return CEU_APP.ret;
