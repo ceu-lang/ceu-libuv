@@ -26,6 +26,7 @@ native @pure
 native @nohold
         _ceu_uv_close(),
         _ceu_uv_fs_close(),
+        _ceu_uv_fs_close_(),
         _ceu_uv_listen(),       // TODO: unlisten?
         _ceu_uv_tcp_connect(),  // TODO: diconnect?
         _ceu_uv_tcp_getpeerport(),
@@ -111,7 +112,7 @@ do
     var int ret = _ceu_uv_fs_open(&&req_open, _UNSAFE_POINTER_TO_ALIAS(path), flags, mode)
                     finalize with
                         _uv_fs_req_cleanup(&&req_open);
-                        _ceu_uv_fs_close(&&req_close, req_open.result);
+                        _ceu_uv_fs_close_(&&req_close, req_open.result);
                     end;
     if this.ret < 0 then
         async do end
