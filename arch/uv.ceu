@@ -102,21 +102,22 @@ do
         this.mode  = mode;
     end
 
+    var int fd_ = -1;
+    this.fd = &fd_;
+
     var _uv_fs_t req_open  = _uv_fs_t();
     var _uv_fs_t req_close = _uv_fs_t();
 
-    var int fd_ = _ceu_uv_fs_open(&&req_open, _UNSAFE_POINTER_TO_ALIAS(path), flags, mode)
+    var int ret = _ceu_uv_fs_open(&&req_open, _UNSAFE_POINTER_TO_ALIAS(path), flags, mode)
                     finalize with
                         _uv_fs_req_cleanup(&&req_open);
                         _ceu_uv_fs_close(&&req_close, req_open.result);
                     end;
-    this.fd = &fd_;
-    if this.fd < 0 then
+    if this.ret < 0 then
         async do end
     else
         var _uv_fs_t&& req = await FS until req==&&req_open;
-        var int ret = req_open.result;
-        _assert(ret == this.fd);
+        this.fd = req_open.result;
     end
 
     emit this.ok;
@@ -127,9 +128,9 @@ class UV_FS_read with
     var UV_FS_open& open;
     var byte[]& buf;
     var int size, offset;
-    function (UV_FS_open& open, byte[]& buf, int size, int offset)=>UV_FS_read build;
+    function (UV_FS_open& open, byte[]& buf, int size, int offset)=>UV_FS_read run;
 do
-    function (UV_FS_open& open, byte[]& buf, int size, int offset)=>UV_FS_read build do
+    function (UV_FS_open& open, byte[]& buf, int size, int offset)=>UV_FS_read run do
         this.open   = &open;
         this.buf    = &buf;
         this.size   = size;
@@ -152,6 +153,36 @@ do
     var _uv_fs_t&& req = await FS until req==&&req_read;
     $this.buf := req_read.result;
     escape req_read.result;
+end
+
+class UV_FS_write with
+    var UV_FS_open& open;
+    var byte[]& buf;
+    var int size, offset;
+    function (UV_FS_open& open, byte[]& buf, int size, int offset)=>UV_FS_write run;
+do
+    function (UV_FS_open& open, byte[]& buf, int size, int offset)=>UV_FS_write run do
+        this.open   = &open;
+        this.buf    = &buf;
+        this.size   = size;
+        this.offset = offset;
+    end
+
+    var _uv_buf_t buf_ = _uv_buf_init((_byte&&)&&this.buf, this.size);
+    var _uv_fs_t req_write = _uv_fs_t();
+    finalize with
+        _uv_fs_req_cleanup(&&req_write);
+    end
+
+    var int ret = _ceu_uv_fs_write(&&req_write, this.open.fd, &&buf_, 1, this.offset)
+                    finalize with
+                        _uv_fs_req_cleanup(&&req_write);
+                    end;
+    if ret < 0 then
+        escape ret;
+    end
+    var _uv_fs_t&& req = await FS until req==&&req_write;
+    escape req_write.result;
 end
 
 // TODO: rename UV_Stream_Reader/Writer? build->run?

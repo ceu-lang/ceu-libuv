@@ -2,13 +2,13 @@
 #include "uv.ceu"
 
 var UV_FS_open o = UV_FS_open.build("fs-01.txt", _O_RDONLY, 0);
-var int fd = await o.ok;
-_assert(fd >= 0);
+await o.ok;
+_assert(o.fd >= 0);
 
 var int offset = 0;
 loop do
     var byte[1024] buf;
-    var int n = do UV_FS_read.build(fd,&buf,$$buf-1,offset);
+    var int n = do UV_FS_read.run(&o,&buf,$$buf-1,offset);
     _assert(n >= 0);
     $buf := n+1;
     buf[n] = '\0';

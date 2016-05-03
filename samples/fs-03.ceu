@@ -1,0 +1,21 @@
+// TODO: assert "samples/build/fs-03.txt" == "samples/fs-03.txt"
+
+#include "c.ceu"
+#include "uv.ceu"
+
+var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
+var UV_FS_open o = UV_FS_open.build("fs-03.txt", _O_CREAT|_O_WRONLY, mode);
+await o.ok;
+if o.fd < 0 then
+    _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.fd));
+end
+_assert(o.fd >= 0);
+
+var byte[1024] buf;
+loop i in 1024 do
+    buf = []..buf..['a'+i%25];
+end
+var int n = do UV_FS_write.run(&o,&buf,$$buf,0);
+_assert(n == 1024);
+
+escape 0;
