@@ -1,8 +1,9 @@
 #include "c.ceu"
 #include "uv.ceu"
 
+var char[] path = [].."fs-03.txt";
 var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
-var UV_FS_open o = UV_FS_open.build("fs-03.txt", _O_CREAT|_O_WRONLY, mode);
+var UV_FS_open o = UV_FS_open.build(&path, _O_CREAT|_O_WRONLY, mode);
 await o.ok;
 if o.fd < 0 then
     _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.fd));
@@ -18,8 +19,8 @@ var int n = do UV_FS_write.run(&o,&buf,$$buf,0);
 _assert(n == 1025);
 
 [[
-local src   = io.open('../fs-03.txt'):read'*a'
-local build = io.open('fs-03.txt'):read'*a'
+local src   = io.open('../'..@path):read'*a'
+local build = io.open(@path):read'*a'
 assert(src == build)
 ]];
 

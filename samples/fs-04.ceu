@@ -1,7 +1,8 @@
 #include "c.ceu"
 #include "uv.ceu"
 
-var UV_FS_open o = UV_FS_open.build("fs-03.txt", _O_RDONLY, 0);
+var char[] path = [].."fs-03.txt";
+var UV_FS_open o = UV_FS_open.build(&path, _O_RDONLY, 0);
 await o.ok;
 if o.fd < 0 then
     _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.fd));
@@ -22,6 +23,6 @@ _printf("ret = %d\n", ret);
 _assert(ret == 10);
 
 _printf(">>> %s\n", (_char&&)&&buf);
-_assert(_strcmp("pqrstuvwx\n", (_char&&)&&buf) == 0);
+_assert(_strcmp("pqrstuvwx\n",(_char&&)&&buf) == 0);
 
 escape 0;

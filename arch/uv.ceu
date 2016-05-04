@@ -92,14 +92,14 @@ class UV_FS_open with
 output:
     var int& fd;
     event void ok;
-    function (@hold char&& path, int flags, int mode)=>UV_FS_open build;
+    function (char[]& path, int flags, int mode)=>UV_FS_open build;
 
 input:
-    var char&& path;
+    var char[]& path;
     var int flags, mode;
 do
-    function (@hold char&& path, int flags, int mode)=>UV_FS_open build do
-        this.path  := path;
+    function (char[]& path, int flags, int mode)=>UV_FS_open build do
+        this.path  = &path;
         this.flags = flags;
         this.mode  = mode;
     end
@@ -110,7 +110,7 @@ do
     var _uv_fs_t req_open  = _uv_fs_t();
     var _uv_fs_t req_close = _uv_fs_t();
 
-    var int ret = _ceu_uv_fs_open(&&req_open, _UNSAFE_POINTER_TO_ALIAS(path), flags, mode)
+    var int ret = _ceu_uv_fs_open(&&req_open, _UNSAFE_POINTER_TO_ALIAS((_char&&)&&path), flags, mode)
                     finalize with
                         _uv_fs_req_cleanup(&&req_open);
                         _ceu_uv_fs_close_(&&req_close, req_open.result);
@@ -296,6 +296,8 @@ do
             end
         end
     end
+
+    escape -1;
 end
 
 class UV_Stream_ReadLine with

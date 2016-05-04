@@ -1,7 +1,8 @@
 #include "c.ceu"
 #include "uv.ceu"
 
-var UV_FS_open o = UV_FS_open.build("fs-01.txt", _O_RDONLY, 0);
+var char[] path = [].."fs-01.txt";
+var UV_FS_open o = UV_FS_open.build(&path, _O_RDONLY, 0);
 await o.ok;
 _assert(o.fd >= 0);
 
