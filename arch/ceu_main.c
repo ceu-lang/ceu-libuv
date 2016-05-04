@@ -56,6 +56,7 @@ printf(">>> FREE\n");
 #define ceu_uv_fs_open(a,b,c,d)    uv_fs_open(&ceu_uv_loop,a,b,c,d,ceu_uv_fs_cb)
 #define ceu_uv_fs_read(a,b,c,d,e)  uv_fs_read(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
 #define ceu_uv_fs_write(a,b,c,d,e) uv_fs_write(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
+#define ceu_uv_fs_fstat(a,b)       uv_fs_fstat(&ceu_uv_loop,a,b,ceu_uv_fs_cb)
 #define ceu_uv_fs_close(a,b)       uv_fs_close(&ceu_uv_loop,a,b,ceu_uv_fs_close_cb)
 #define ceu_uv_fs_close_(a,b)      uv_fs_close(&ceu_uv_loop,a,b,NULL); \
                                    ceu_uv_fs_close_cb(a)

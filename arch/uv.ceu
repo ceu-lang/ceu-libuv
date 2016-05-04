@@ -13,6 +13,7 @@ native @plain
         _uv_connect_t,
         _uv_fs_t,
         _uv_handle_t,
+        _uv_stat_t,
         _uv_stream_t,
         _uv_tcp_t,
         _uv_write_t;
@@ -184,6 +185,35 @@ do
     end
     var _uv_fs_t&& req = await FS until req==&&req_write;
     escape req_write.result;
+end
+
+class UV_FS_fstat with
+    var UV_FS_open& open;
+    var _uv_stat_t& stat;
+    function (UV_FS_open& open, _uv_stat_t& stat)=>UV_FS_fstat run;
+do
+    function (UV_FS_open& open, _uv_stat_t& stat)=>UV_FS_fstat run do
+        this.open = &open;
+        this.stat = &stat;
+    end
+
+    var _uv_fs_t req_fstat = _uv_fs_t();
+    finalize with
+        _uv_fs_req_cleanup(&&req_fstat);
+    end
+
+    var int ret = _ceu_uv_fs_fstat(&&req_fstat, this.open.fd)
+                    finalize with
+                        _uv_fs_req_cleanup(&&req_fstat);
+                    end;
+    if ret < 0 then
+        escape ret;
+    end
+    var _uv_fs_t&& req = await FS until req==&&req_fstat;
+
+    this.stat = *((_uv_stat_t&&)req_fstat.ptr);
+
+    escape 0;
 end
 
 // TODO: rename UV_Stream_Reader/Writer? build->run?
