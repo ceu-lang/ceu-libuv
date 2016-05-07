@@ -73,7 +73,8 @@ void ceu_uv_fs_cb (uv_fs_t* req) {
 }
 
 void ceu_uv_fs_close_cb (uv_fs_t* req) {
-    assert(req->result == 0);
+//TODO???
+    //assert(req->result == 0);
     uv_fs_req_cleanup(req);
 }
 
