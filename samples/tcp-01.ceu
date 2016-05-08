@@ -88,6 +88,7 @@ loop i in 2 do
     loop do
         // READ
         do
+            $buf = 0;
             client.data = &&buf;
             var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client)
                             finalize with end;
