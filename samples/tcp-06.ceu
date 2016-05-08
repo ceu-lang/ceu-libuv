@@ -26,14 +26,20 @@ _ceu_uv_tcp_init(&&client)
         _uv_close((_uv_handle_t&&)&&client, null);
     end;
 
-var _uv_connect_t connect = _uv_connect_t();
+var _uv_connect_t&? connect;
+finalize
+    connect = &_malloc(sizeof(_uv_connect_t));
+with
+    // free on uv callback
+end
+
 var _sockaddr_in dest = _sockaddr_in();
 _uv_ip4_addr("127.0.0.1", DEFAULT_PORT, &&dest);
-_ceu_uv_tcp_connect(&&connect, &&client, (_sockaddr&&)&&dest);
+_ceu_uv_tcp_connect(&&connect!, &&client, (_sockaddr&&)&&dest);
 
 var _uv_connect_t&& c;
 var int status;
-(c,status) = await UV_CONNECT until c==&&connect;
+(c,status) = await UV_CONNECT until c==&&connect!;
 _assert(status == 0);
 
 _printf("I will terminate after 10s...\n");
