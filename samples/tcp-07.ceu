@@ -35,14 +35,20 @@ do
         end;
     this.tcp = &client;
 
-    var _uv_connect_t connect = _uv_connect_t();
+    var _uv_connect_t&? connect;
+    finalize
+        connect = &_malloc(sizeof(_uv_connect_t));
+    with
+        // free on uv callback
+    end
+
     var _sockaddr_in dest = _sockaddr_in();
     _uv_ip4_addr(this.ip, this.port, &&dest);
-    _ceu_uv_tcp_connect(&&connect, &&client, (_sockaddr&&)&&dest);
+    _ceu_uv_tcp_connect(&&connect!, &&client, (_sockaddr&&)&&dest);
 
     var _uv_connect_t&& c;
     var int status;
-    (c,status) = await UV_CONNECT until c==&&connect;
+    (c,status) = await UV_CONNECT until c==&&connect!;
 
     emit this.ok => status;
     await FOREVER;
