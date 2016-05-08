@@ -2,9 +2,8 @@
 # EDIT
 ###############################################################################
 
-C_FLAGS += -llua5.1		# samples/fs-03.ceu
-CEU_DIR = /data/ceu/ceu
-#CEU_DIR ?= $(error set absolute path to "<ceu>" repository)
+CEU_DIR ?= $(error set absolute path to "<ceu>" repository)
+C_FLAGS += -llua5.3		# samples/fs-03.ceu
 
 ###############################################################################
 # DO NOT EDIT
