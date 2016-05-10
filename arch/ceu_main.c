@@ -118,6 +118,7 @@ void ceu_uv_listen_cb (uv_stream_t* s, int err) {
 
 #define CEU_UV_READ_ALLOC_DYN_INIT 128
 
+#ifdef CEU_IN_UV_READ
 void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
     assert(h->data != NULL);
     tceu_vector* vec = (tceu_vector*) h->data;
@@ -129,9 +130,9 @@ void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
         int max = ceu_vector_getmax(vec);
         if (max <= 0) {
             if (max == 0) {
-                ceu_vector_resize(vec, CEU_UV_READ_ALLOC_DYN_INIT);
+                ceu_vector_setmax(vec, CEU_UV_READ_ALLOC_DYN_INIT, 0);
             } else if (max<0 && len*2>(-max)) {
-                ceu_vector_resize(vec, (-max+10)*3/2);
+                ceu_vector_setmax(vec, (-max+10)*3/2, 0);
             }
         }
     }
@@ -178,7 +179,9 @@ void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
     }
 #endif
 }
+#endif
 
+#ifdef CEU_IN_UV_WRITE
 void ceu_uv_write_cb (uv_write_t* req, int err) {
 #ifdef CEU_IN_UV_ERROR
     if (err < 0) {
@@ -203,6 +206,7 @@ void ceu_uv_write_cb (uv_write_t* req, int err) {
 #endif
 #endif
 }
+#endif
 
 /* ASYNCS */
 

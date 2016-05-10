@@ -139,7 +139,7 @@ do
         this.offset = offset;
     end
 
-    var _uv_buf_t buf_ = _uv_buf_init((_byte&&)&&this.buf, this.size);
+    var _uv_buf_t buf_ = _uv_buf_init((_char&&)(_byte&&)&&this.buf, this.size);
     var _uv_fs_t req_read = _uv_fs_t();
 
     var int ret = _ceu_uv_fs_read(&&req_read, this.open.fd, &&buf_, 1, this.offset)

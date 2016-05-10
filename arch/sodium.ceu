@@ -4,5 +4,9 @@
 native @pure
         _crypto_generichash();
 
+native do
+    ##include <sodium.h>
+end
+
 #endif
 

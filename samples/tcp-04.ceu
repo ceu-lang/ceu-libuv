@@ -40,11 +40,17 @@ do
     var int ret = _uv_accept((_uv_stream_t&&)&&server,(_uv_stream_t&&)&&client);
     _assert(ret == 0);
 
-    loop do
-        var char[] string;
-        do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(client), &string);
-        _printf("[read] %s", (_char&&)&&string);
-        do UV_Stream_Write.build(&_UV_STREAM_ALIAS(client), &string);
+    par/or do
+        var _uv_stream_t&& s;
+        var int err;
+        (s,err) = await UV_ERROR until (s==(_uv_stream_t&&)&&client);
+    with
+        loop do
+            var char[] string;
+            do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(client), &string);
+            _printf("[read] %s", (_char&&)&&string);
+            do UV_Stream_Write.build(&_UV_STREAM_ALIAS(client), &string);
+        end
     end
 end
 
