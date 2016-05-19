@@ -205,6 +205,7 @@ void ceu_uv_write_cb (uv_write_t* req, int err) {
     }
 #endif
 #endif
+    free(req);
 }
 #endif
 
@@ -294,8 +295,9 @@ int main (int argc, char *argv[])
     assert(uv_check_start(&ceu_uv_check, ceu_uv_check_cb) == 0);
 #endif
 
-    CEU_APP.data = (tceu_org*) &CEU_DATA;
-    CEU_APP.init = &ceu_app_init;
+    CEU_APP.data  = (tceu_org*) &CEU_DATA;
+    CEU_APP.init  = &ceu_app_init;
+    CEU_APP.close = &ceu_app_close;
     CEU_APP.init(&CEU_APP);    /* calls CEU_THREADS_MUTEX_LOCK() */
 #ifdef CEU_THREADS
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
@@ -344,15 +346,6 @@ int main (int argc, char *argv[])
     while (uv_run(&ceu_uv_loop,UV_RUN_NOWAIT) != 0);
     assert(uv_loop_close(&ceu_uv_loop) == 0);
 
-#ifdef CEU_THREADS
-    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
-    ceu_out_assert(ceu_threads_gc(&CEU_APP,1) == 0); /* wait all terminate/free */
-#endif
-
-#ifdef CEU_RET
-    return CEU_APP.ret;
-#else
-    return 0;
-#endif
+    return CEU_APP.close(&CEU_APP);
 }
 

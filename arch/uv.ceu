@@ -223,10 +223,15 @@ class UV_Stream_Read with
     var u32           next = 0;
     function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Read build;
     event int ok;
+    function (void)=>void reset;
 do
     function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Read build do
         this.stream = &stream;
         this.bytes  = &bytes;
+    end
+    function (void)=>void reset do
+        $this.bytes = 0;
+        this.next = 0;
     end
 
     $bytes = 0;
@@ -351,16 +356,22 @@ do
     _assert(this.starting <= this.excluding);
 
     // WRITE
-    var _uv_write_t req_write = _uv_write_t();
+    var _uv_write_t&? req_write;
+    finalize
+	req_write = &_malloc(sizeof(_uv_write_t));
+    with
+	// free on uv callback
+    end
+
     var _uv_buf_t buf = _uv_buf_init((_byte&&)&&this.bytes, $this.bytes);
                   buf.base = buf.base+starting;
                   buf.len  = excluding-starting;
     _assert(_uv_is_writable(&&this.stream));
-    var int ret = _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&this.stream, &&buf);
+    var int ret = _ceu_uv_write(&&req_write!, &&this.stream, &&buf);
     _assert(ret >= 0);
     var _uv_write_t&& w;
     var int status;
-    (w, status) = await UV_WRITE until w==&&req_write;
+    (w, status) = await UV_WRITE until w==&&req_write!;
 
     // force external UV_ERROR
     _assert(status == 0);
