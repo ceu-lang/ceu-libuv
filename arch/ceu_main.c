@@ -138,7 +138,7 @@ void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
     }
     {
         int max = ceu_vector_getmax(vec);
-        *buf = uv_buf_init(vec->mem+len, ((max<0) ? -max : max)-len);
+        *buf = uv_buf_init((char*)vec->mem+len, ((max<0) ? -max : max)-len);
     }
 }
 

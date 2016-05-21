@@ -154,6 +154,37 @@ do
     escape req_read.result;
 end
 
+class UV_FS_Read_Line with
+    var UV_FS_open& open;
+    var char[]&     line;
+    var u32&        offset;
+    function (UV_FS_open& open, byte[]& line, u32& offset)=>UV_FS_Read_Line run;
+do
+    function (UV_FS_open& open, byte[]& line, u32& offset)=>UV_FS_Read_Line run do
+        this.open   = &open;
+        this.line   = &line;
+        this.offset = &offset;
+    end
+
+    // TODO: reading 1-by-1
+    loop do
+        var char[1] buf;
+        var int ret = do UV_FS_read.run(&open, &buf, 1, this.offset);
+        this.offset = offset + 1;
+        if ret == 0 then
+            escape _UV_EOF;
+        else
+            _assert(ret == 1);
+        end
+        if buf[0] == '\n' then
+            break;
+        end
+        this.line = []..line..buf;
+    end
+
+    escape 0;
+end
+
 class UV_FS_write with
     var UV_FS_open& open;
     var byte[]& buf;
@@ -167,7 +198,7 @@ do
         this.offset = offset;
     end
 
-    var _uv_buf_t buf_ = _uv_buf_init((_byte&&)&&this.buf, this.size);
+    var _uv_buf_t buf_ = _uv_buf_init((_char&&)(_byte&&)&&this.buf, this.size);
     var _uv_fs_t req_write = _uv_fs_t();
     finalize with
         _uv_fs_req_cleanup(&&req_write);
@@ -363,7 +394,7 @@ do
 	// free on uv callback
     end
 
-    var _uv_buf_t buf = _uv_buf_init((_byte&&)&&this.bytes, $this.bytes);
+    var _uv_buf_t buf = _uv_buf_init((_char&&)(_byte&&)&&this.bytes, $this.bytes);
                   buf.base = buf.base+starting;
                   buf.len  = excluding-starting;
     _assert(_uv_is_writable(&&this.stream));
