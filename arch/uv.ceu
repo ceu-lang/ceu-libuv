@@ -1,6 +1,116 @@
 #ifndef _UV_CEU
 #define _UV_CEU
 
+native/pre do
+    ##include <uv.h>
+
+end
+
+native/pos do
+    ##define ceu_callback_env(cmd,evt,params) ceu_uv_callback(cmd,evt,params)
+
+    uv_loop_t ceu_uv_loop;
+
+    uv_timer_t ceu_uv_timer;
+    s32 ceu_uv_timer_next_us;
+    void ceu_uv_timer_cb (uv_timer_t* timer) {
+        ceu_dbg_assert(timer == &ceu_uv_timer);
+        s32 us = ceu_uv_timer_next_us;
+        ceu_go_ext(CEU_INPUT__WCLOCK, &us);
+    }
+
+    void ceu_uv_init (void) {
+        signal(SIGPIPE, SIG_IGN); // TODO: fails on "uv_write" would crash otherwise
+
+        uv_loop_init(&ceu_uv_loop);
+        uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
+    }
+
+    void ceu_uv_step (void) {
+        // TODO: detect/error if return w/o "escape"
+        uv_run(&ceu_uv_loop, UV_RUN_ONCE);
+    }
+
+    void ceu_uv_wclock (s32 us) {
+        if (us == CEU_WCLOCK_INACTIVE) {
+            uv_timer_stop(&ceu_uv_timer);
+        } else if (us <= 0) {
+            ceu_uv_timer_next_us = 0;
+            uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, 0, 0);
+        } else {
+            ceu_uv_timer_next_us = us;
+            uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, ceu_uv_timer_next_us/1000, 0);
+        }
+    }
+
+    tceu_callback_ret ceu_uv_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
+    {
+        tceu_callback_ret ret;
+
+        switch (cmd) {
+            case CEU_CALLBACK_INIT:
+                ret.is_handled = 1;
+                ceu_uv_init();
+                break;
+            case CEU_CALLBACK_STEP:
+                ret.is_handled = 1;
+                ceu_uv_step();
+                break;
+            case CEU_CALLBACK_WCLOCK_MIN:
+                ret.is_handled = 1;
+                ceu_uv_wclock(p1.num);
+            default:
+                ret.is_handled = 0;
+        }
+
+        return ret;
+    }
+
+/* FS */
+
+    ##define ceu_uv_fs_open(a,b,c,d)    uv_fs_open(&ceu_uv_loop,a,b,c,d,ceu_uv_fs_cb)
+    ##define ceu_uv_fs_close(a,b)       uv_fs_close(&ceu_uv_loop,a,b,ceu_uv_fs_close_cb)
+    ##define ceu_uv_fs_read(a,b,c,d,e)  uv_fs_read(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
+
+    void ceu_uv_fs_cb (uv_fs_t* req) {
+        ceu_go_ext(CEU_INPUT_FS, &req);
+    }
+
+    void ceu_uv_fs_close_cb (uv_fs_t* req) {
+        //TODO???
+        //assert(req->result == 0);
+        uv_fs_req_cleanup(req);
+    }
+
+end
+
+native _ceu_dbg_assert, _printf;
+
+native/const
+        _O_RDONLY,
+;
+
+native/plain
+        _uv_buf_t,
+        _uv_fs_t,
+;
+
+native
+        _ceu_uv_fs_read,
+        _ceu_uv_fs_open,
+;
+
+native/nohold
+        _ceu_uv_fs_close,
+        _uv_buf_init,
+        _uv_fs_req_cleanup,
+;
+
+input _uv_fs_t&& FS;
+
+#if 0
+
+
 // TODO: int, u32 => ssize_t, size_t
 
 #include "c.ceu"
@@ -9,7 +119,6 @@ native @plain
         _sockaddr,
         _sockaddr_in,
         _sockaddr_storage,
-        _uv_buf_t,
         _uv_connect_t,
         _uv_fs_t,
         _uv_handle_t,
@@ -26,7 +135,6 @@ native @pure
 
 native @nohold
         _ceu_uv_close(),
-        _ceu_uv_fs_close(),
         _ceu_uv_fs_close_(),
         _ceu_uv_listen(),       // TODO: unlisten?
         _ceu_uv_tcp_connect(),  // TODO: diconnect?
@@ -34,9 +142,7 @@ native @nohold
         _ceu_uv_tcp_getsockport(),
         _ceu_uv_write(),        // TODO: write_stop?
         _uv_accept(),
-        _uv_buf_init(),
         _uv_close(),
-        _uv_fs_req_cleanup(),
         _uv_inet_ntop(),
         _uv_ip4_addr(),
         _uv_read_stop(),
@@ -81,7 +187,6 @@ end
                                 sizeof(u32),1);     \
     end
 
-input _uv_fs_t&& FS;
 input (_uv_stream_t&&,_ssize_t, _uv_buf_t&&) UV_READ;
 input (_uv_write_t&&,int)   UV_WRITE;
 input (_uv_stream_t&&,int)  UV_LISTEN;
@@ -389,9 +494,9 @@ do
     // WRITE
     var _uv_write_t&? req_write;
     finalize
-	req_write = &_malloc(sizeof(_uv_write_t));
+        req_write = &_malloc(sizeof(_uv_write_t));
     with
-	// free on uv callback
+        // free on uv callback
     end
 
     var _uv_buf_t buf = _uv_buf_init((_char&&)(_byte&&)&&this.bytes, $this.bytes);
@@ -461,4 +566,5 @@ do
     end
 end
 
+#endif
 #endif
