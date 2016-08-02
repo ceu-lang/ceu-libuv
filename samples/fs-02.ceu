@@ -1,24 +1,28 @@
-#include "c.ceu"
 #include "uv.ceu"
 
-var char[] path = [].."fs-01.txt";
-var UV_FS_open o = UV_FS_open.build(&path, _O_RDONLY, 0);
-await o.ok;
-_assert(o.fd >= 0);
+vector[10] byte path = [].."fs-01.txt";
 
-var int offset = 0;
-loop do
-    var byte[1024] buf;
-    var int n = do UV_FS_read.run(&o,&buf,$$buf-1,offset);
-    _assert(n >= 0);
-    $buf := n+1;
-    buf[n] = '\0';
-    _printf("%s", (_char&&)(_byte&&)&&buf);
-    if n == 0 then
-        break;
-    else
-        offset = offset + ($$buf-1);
-    end
-end
+var& UV_FS_file file;
+
+var int? err =
+    watching UV_FS_open(&path, _O_RDONLY, 0) => (file) do
+        await file.ok;
+        _ceu_dbg_assert(file.fd >= 0);
+
+        var usize offset = 0;
+        loop do
+            vector[1024] byte buf;
+            var ssize n = await UV_FS_read(&file,&buf,$$buf-1,offset);
+            _ceu_dbg_assert(n >= 0);
+            buf = buf .. [{'\0'}];
+            _printf("%s", &&buf[0]);
+            if (n as int) == 0 then
+                break;
+            else
+                offset = offset + ($$buf-1);
+            end
+        end
+    end;
+_printf(">>> %d\n", err? as int);
 
 escape 0;

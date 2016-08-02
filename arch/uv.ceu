@@ -4,6 +4,8 @@
 native/pre do
     ##include <uv.h>
 
+    ##define PURIFY(e) e
+
 end
 
 native/pos do
@@ -70,6 +72,8 @@ native/pos do
 
     ##define ceu_uv_fs_open(a,b,c,d)    uv_fs_open(&ceu_uv_loop,a,b,c,d,ceu_uv_fs_cb)
     ##define ceu_uv_fs_close(a,b)       uv_fs_close(&ceu_uv_loop,a,b,ceu_uv_fs_close_cb)
+    ##define ceu_uv_fs_close_(a,b)      uv_fs_close(&ceu_uv_loop,a,b,NULL); \\
+                                        ceu_uv_fs_close_cb(a)
     ##define ceu_uv_fs_read(a,b,c,d,e)  uv_fs_read(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
 
     void ceu_uv_fs_cb (uv_fs_t* req) {
@@ -84,7 +88,8 @@ native/pos do
 
 end
 
-native _ceu_dbg_assert, _printf;
+native _ceu_dbg_assert;
+native/nohold _printf, _ceu_vector_setlen;
 
 native/const
         _O_RDONLY,
@@ -102,11 +107,75 @@ native
 
 native/nohold
         _ceu_uv_fs_close,
+        _ceu_uv_fs_close_,
         _uv_buf_init,
         _uv_fs_req_cleanup,
 ;
 
+native/pure _PURIFY;
+
+/* FS */
+
 input _uv_fs_t&& FS;
+
+data UV_FS_file with
+    event void ok;
+    var   int  fd;
+end
+
+code/await UV_FS_open (vector&[10] byte path, var int flags, var int mode)
+                        => (var& UV_FS_file file)
+                            => int
+do
+    var UV_FS_file file_ = val UV_FS_file(_, -1);
+    file = &file_;
+
+    var _uv_fs_t req_open  = _;
+    var _uv_fs_t req_close = _;
+
+    var int ret;
+    do
+        ret = _ceu_uv_fs_open(&&req_open, _PURIFY(&&path[0]), flags, mode);
+    finalize (req_open) with
+        _ceu_uv_fs_close_(&&req_close, req_open.result);
+        _uv_fs_req_cleanup(&&req_open);
+    end
+    if ret < 0 then
+        escape ret;
+    end
+
+    var _uv_fs_t&& req = await FS until req==&&req_open;
+    file_.fd = req_open.result;
+    emit file_.ok;
+
+    await FOREVER;
+end
+
+code/await UV_FS_read (var& UV_FS_file file, vector&[] byte buf,
+                       var usize size, var usize offset)
+                        => ssize
+do
+    if $buf == 0 then
+        buf = [0];      // avoids "out of bounds" below
+    end
+
+    var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], size);
+    var _uv_fs_t req_read = _;
+
+    var ssize ret;
+    do
+        ret = _ceu_uv_fs_read(&&req_read, file.fd, &&buf_, 1, offset);
+    finalize (req_read, buf_) with
+        _uv_fs_req_cleanup(&&req_read);
+    end
+    if ret < 0 then
+        escape ret;
+    end
+
+    var _uv_fs_t&& req = await FS until req==&&req_read;
+    _ceu_vector_setlen(&&buf, req_read.result, 1);
+    escape req_read.result;
+end
 
 #if 0
 
@@ -192,72 +261,6 @@ input (_uv_write_t&&,int)   UV_WRITE;
 input (_uv_stream_t&&,int)  UV_LISTEN;
 input (_uv_connect_t&&,int) UV_CONNECT;
 input (_uv_stream_t&&,int)  UV_ERROR;
-
-class UV_FS_open with
-output:
-    var int& fd;
-    event void ok;
-    function (char[]& path, int flags, int mode)=>UV_FS_open build;
-
-input:
-    var char[]& path;
-    var int flags, mode;
-do
-    function (char[]& path, int flags, int mode)=>UV_FS_open build do
-        this.path  = &path;
-        this.flags = flags;
-        this.mode  = mode;
-    end
-
-    var int fd_ = -1;
-    this.fd = &fd_;
-
-    var _uv_fs_t req_open  = _uv_fs_t();
-    var _uv_fs_t req_close = _uv_fs_t();
-
-    var int ret = _ceu_uv_fs_open(&&req_open, _UNSAFE_POINTER_TO_ALIAS((_char&&)&&path), flags, mode)
-                    finalize with
-                        _ceu_uv_fs_close_(&&req_close, req_open.result);
-                        _uv_fs_req_cleanup(&&req_open);
-                    end;
-    if this.ret < 0 then
-        async do end
-    else
-        var _uv_fs_t&& req = await FS until req==&&req_open;
-        this.fd = req_open.result;
-    end
-
-    emit this.ok;
-    await FOREVER;
-end
-
-class UV_FS_read with
-    var UV_FS_open& open;
-    var byte[]& buf;
-    var int size, offset;
-    function (UV_FS_open& open, byte[]& buf, int size, int offset)=>UV_FS_read run;
-do
-    function (UV_FS_open& open, byte[]& buf, int size, int offset)=>UV_FS_read run do
-        this.open   = &open;
-        this.buf    = &buf;
-        this.size   = size;
-        this.offset = offset;
-    end
-
-    var _uv_buf_t buf_ = _uv_buf_init((_char&&)(_byte&&)&&this.buf, this.size);
-    var _uv_fs_t req_read = _uv_fs_t();
-
-    var int ret = _ceu_uv_fs_read(&&req_read, this.open.fd, &&buf_, 1, this.offset)
-                    finalize with
-                        _uv_fs_req_cleanup(&&req_read);
-                    end;
-    if ret < 0 then
-        escape ret;
-    end
-    var _uv_fs_t&& req = await FS until req==&&req_read;
-    $this.buf := req_read.result;   // TODO?? try to remove this line
-    escape req_read.result;
-end
 
 class UV_FS_Read_Line with
     var UV_FS_open& open;
