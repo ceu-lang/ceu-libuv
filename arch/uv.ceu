@@ -75,6 +75,7 @@ native/pos do
     ##define ceu_uv_fs_close_(a,b)      uv_fs_close(&ceu_uv_loop,a,b,NULL); \\
                                         ceu_uv_fs_close_cb(a)
     ##define ceu_uv_fs_read(a,b,c,d,e)  uv_fs_read(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
+    ##define ceu_uv_fs_write(a,b,c,d,e) uv_fs_write(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
 
     void ceu_uv_fs_cb (uv_fs_t* req) {
         ceu_go_ext(CEU_INPUT_FS, &req);
@@ -89,13 +90,21 @@ native/pos do
 end
 
 native _ceu_dbg_assert;
-native/nohold _printf, _ceu_vector_setlen;
+native/nohold _fprintf, _stderr, _printf, _ceu_vector_setlen;
 
 native/const
+        _O_CREAT,
         _O_RDONLY,
+        _O_WRONLY,
+        _S_IRUSR,
+        _S_IWUSR,
+        _S_IRGRP,
+        _S_IWGRP,
+        _S_IROTH,
 ;
 
 native/plain
+        _mode_t,
         _uv_buf_t,
         _uv_fs_t,
 ;
@@ -103,6 +112,7 @@ native/plain
 native
         _ceu_uv_fs_read,
         _ceu_uv_fs_open,
+        _ceu_uv_fs_write,
 ;
 
 native/nohold
@@ -110,6 +120,7 @@ native/nohold
         _ceu_uv_fs_close_,
         _uv_buf_init,
         _uv_fs_req_cleanup,
+        _uv_strerror,
 ;
 
 native/pure _PURIFY;
@@ -123,7 +134,7 @@ data UV_FS_file with
     var   int  fd;
 end
 
-code/await UV_FS_open (vector&[10] byte path, var int flags, var int mode)
+code/await UV_FS_open (var _char&& path, var int flags, var int mode)
                         => (var& UV_FS_file file)
                             => int
 do
@@ -175,6 +186,32 @@ do
     var _uv_fs_t&& req = await FS until req==&&req_read;
     _ceu_vector_setlen(&&buf, req_read.result, 1);
     escape req_read.result;
+end
+
+code/await UV_FS_write (var& UV_FS_file file, vector&[] byte buf,
+                        var usize size, var usize offset)
+                        => ssize
+do
+    var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], size);
+
+    var _uv_fs_t req_write = _;
+    do finalize with
+        _uv_fs_req_cleanup(&&req_write);
+    end;
+
+    var ssize ret;
+    do
+        ret = _ceu_uv_fs_write(&&req_write, file.fd, &&buf_, 1, offset);
+    finalize (req_write, buf_) with
+        _uv_fs_req_cleanup(&&req_write);
+    end
+
+    if ret < 0 then
+        escape ret;
+    end
+
+    var _uv_fs_t&& req = await FS until req==&&req_write;
+    escape req_write.result;
 end
 
 #if 0
@@ -291,36 +328,6 @@ do
     end
 
     escape 0;
-end
-
-class UV_FS_write with
-    var UV_FS_open& open;
-    var byte[]& buf;
-    var int size, offset;
-    function (UV_FS_open& open, byte[]& buf, int size, int offset)=>UV_FS_write run;
-do
-    function (UV_FS_open& open, byte[]& buf, int size, int offset)=>UV_FS_write run do
-        this.open   = &open;
-        this.buf    = &buf;
-        this.size   = size;
-        this.offset = offset;
-    end
-
-    var _uv_buf_t buf_ = _uv_buf_init((_char&&)(_byte&&)&&this.buf, this.size);
-    var _uv_fs_t req_write = _uv_fs_t();
-    finalize with
-        _uv_fs_req_cleanup(&&req_write);
-    end
-
-    var int ret = _ceu_uv_fs_write(&&req_write, this.open.fd, &&buf_, 1, this.offset)
-                    finalize with
-                        _uv_fs_req_cleanup(&&req_write);
-                    end;
-    if ret < 0 then
-        escape ret;
-    end
-    var _uv_fs_t&& req = await FS until req==&&req_write;
-    escape req_write.result;
 end
 
 class UV_FS_fstat with

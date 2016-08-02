@@ -1,28 +1,36 @@
-#include "c.ceu"
 #include "uv.ceu"
 
-var char[] path = [].."fs-03.txt";
+vector[] byte path = [].."fs-03.txt";
+
+var& UV_FS_file file;
+
 var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
-var UV_FS_open o = UV_FS_open.build(&path, _O_CREAT|_O_WRONLY, mode);
-await o.ok;
-if o.fd < 0 then
-    _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.fd));
-end
-_assert(o.fd >= 0);
 
-var byte[1025] buf;
-loop i in 1024 do
-    buf = []..buf..['a'+i%25];
-end
-buf = []..buf..['\n'];
-var int n = do UV_FS_write.run(&o,&buf,$$buf,0);
-_assert(n == 1025);
+watching UV_FS_open(&&path[0], _O_CREAT|_O_WRONLY, mode) => (file)
+do
+    await file.ok;
+    if file.fd < 0 then
+        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(file.fd));
+    end
+    _ceu_dbg_assert(file.fd >= 0);
 
-[[
-local src   = io.open('../'..@path):read'*a'
-local build = io.open(@path):read'*a'
-assert(src == build)
-print'DONE'
-]];
+    vector[1025] byte buf;
+    loop i in [0 -> 1024[ do
+        buf = buf..[{'a'}+i%25];
+    end
+    buf = buf..[{'\n'}];
+
+    var ssize n = await UV_FS_write(&file,&buf,$$buf,0);
+    _ceu_dbg_assert((n as int) == 1025);
+
+#if 0
+    [[
+        local src   = io.open('../'..@path):read'*a'
+        local build = io.open(@path):read'*a'
+        assert(src == build)
+        print'DONE'
+    ]];
+#endif
+end
 
 escape 0;

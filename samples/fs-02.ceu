@@ -1,11 +1,9 @@
 #include "uv.ceu"
 
-vector[10] byte path = [].."fs-01.txt";
-
 var& UV_FS_file file;
 
 var int? err =
-    watching UV_FS_open(&path, _O_RDONLY, 0) => (file) do
+    watching UV_FS_open("fs-01.txt", _O_RDONLY, 0) => (file) do
         await file.ok;
         _ceu_dbg_assert(file.fd >= 0);
 
