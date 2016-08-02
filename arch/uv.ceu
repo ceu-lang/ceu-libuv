@@ -76,6 +76,8 @@ native/pos do
                                         ceu_uv_fs_close_cb(a)
     ##define ceu_uv_fs_read(a,b,c,d,e)  uv_fs_read(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
     ##define ceu_uv_fs_write(a,b,c,d,e) uv_fs_write(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
+    ##define ceu_uv_fs_fstat(a,b)       uv_fs_fstat(&ceu_uv_loop,a,b,ceu_uv_fs_cb)
+
 
     void ceu_uv_fs_cb (uv_fs_t* req) {
         ceu_go_ext(CEU_INPUT_FS, &req);
@@ -90,7 +92,7 @@ native/pos do
 end
 
 native _ceu_dbg_assert;
-native/nohold _fprintf, _stderr, _printf, _ceu_vector_setlen;
+native/nohold _fprintf, _stderr, _printf, _ceu_vector_setlen, _strcmp;
 
 native/const
         _O_CREAT,
@@ -107,12 +109,14 @@ native/plain
         _mode_t,
         _uv_buf_t,
         _uv_fs_t,
+        _uv_stat_t,
 ;
 
 native
         _ceu_uv_fs_read,
         _ceu_uv_fs_open,
         _ceu_uv_fs_write,
+        _ceu_uv_fs_fstat,
 ;
 
 native/nohold
@@ -212,6 +216,30 @@ do
 
     var _uv_fs_t&& req = await FS until req==&&req_write;
     escape req_write.result;
+end
+
+code/await UV_FS_fstat (var& UV_FS_file file, var& _uv_stat_t stat) => int
+do
+    var _uv_fs_t req_fstat = _;
+    do finalize with
+        _uv_fs_req_cleanup(&&req_fstat);
+    end
+
+    var int ret;
+    do
+        ret = _ceu_uv_fs_fstat(&&req_fstat, file.fd);
+    finalize (req_fstat) with
+        _uv_fs_req_cleanup(&&req_fstat);
+    end
+
+    if ret < 0 then
+        escape ret;
+    end
+    var _uv_fs_t&& req = await FS until req==&&req_fstat;
+
+    stat = *(req_fstat.ptr as _uv_stat_t&&);
+
+    escape 0;
 end
 
 #if 0
@@ -326,35 +354,6 @@ do
         end
         this.line = []..line..buf;
     end
-
-    escape 0;
-end
-
-class UV_FS_fstat with
-    var UV_FS_open& open;
-    var _uv_stat_t& stat;
-    function (UV_FS_open& open, _uv_stat_t& stat)=>UV_FS_fstat run;
-do
-    function (UV_FS_open& open, _uv_stat_t& stat)=>UV_FS_fstat run do
-        this.open = &open;
-        this.stat = &stat;
-    end
-
-    var _uv_fs_t req_fstat = _uv_fs_t();
-    finalize with
-        _uv_fs_req_cleanup(&&req_fstat);
-    end
-
-    var int ret = _ceu_uv_fs_fstat(&&req_fstat, this.open.fd)
-                    finalize with
-                        _uv_fs_req_cleanup(&&req_fstat);
-                    end;
-    if ret < 0 then
-        escape ret;
-    end
-    var _uv_fs_t&& req = await FS until req==&&req_fstat;
-
-    this.stat = *((_uv_stat_t&&)req_fstat.ptr);
 
     escape 0;
 end

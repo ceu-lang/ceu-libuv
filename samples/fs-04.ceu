@@ -1,28 +1,30 @@
-#include "c.ceu"
 #include "uv.ceu"
 
-var char[] path = [].."fs-03.txt";
-var UV_FS_open o = UV_FS_open.build(&path, _O_RDONLY, 0);
-await o.ok;
-if o.fd < 0 then
-    _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.fd));
+var& UV_FS_file file;
+
+watching UV_FS_open("fs-03.txt", _O_RDONLY, 0) => (file)
+do
+    await file.ok;
+    if file.fd < 0 then
+        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(file.fd));
+    end
+    _ceu_dbg_assert(file.fd >= 0);
+
+    var _uv_stat_t stat = _;
+    await UV_FS_fstat(&file, &stat);
+    var usize size = stat.st_size;
+    _ceu_dbg_assert(size == 1025);
+
+    vector[10] byte buf;
+    var ssize n = await UV_FS_read(&file,&buf,10,size-10);
+    if n < 0 then
+        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(n));
+    end
+    _printf("n = %d\n", n);
+    _ceu_dbg_assert((n as int) == 10);
+
+    _printf(">>> %s\n", &&buf[0]);
+    _ceu_dbg_assert(_strcmp("pqrstuvwx\n",&&buf[0]) == 0);
 end
-_assert(o.fd >= 0);
-
-var _uv_stat_t stat = _uv_stat_t();
-do UV_FS_fstat.run(&o, &stat);
-var u64 size = stat.st_size;
-_assert(size == 1025);
-
-var char[10] buf;
-var int ret = do UV_FS_read.run(&o,&buf,10,size-10);
-if ret < 0 then
-    _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(ret));
-end
-_printf("ret = %d\n", ret);
-_assert(ret == 10);
-
-_printf(">>> %s\n", (_char&&)&&buf);
-_assert(_strcmp("pqrstuvwx\n",(_char&&)&&buf) == 0);
 
 escape 0;
