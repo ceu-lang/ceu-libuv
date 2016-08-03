@@ -1,4 +1,4 @@
-#include "uv.ceu"
+#include "uv/fs.ceu"
 
 var& UV_FS_file file;
 
@@ -20,7 +20,7 @@ do
     if n < 0 then
         _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(n));
     end
-    _printf("n = %d\n", n);
+    _printf("n = %ld\n", n);
     _ceu_dbg_assert((n as int) == 10);
 
     _printf(">>> %s\n", &&buf[0]);

@@ -1,4 +1,4 @@
-#include "uv.ceu"
+#include "uv/fs.ceu"
 
 var& UV_FS_file file;
 
