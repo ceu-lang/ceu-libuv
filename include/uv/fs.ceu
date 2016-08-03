@@ -72,10 +72,6 @@ code/await UV_FS_read (var& UV_FS_file file, vector&[] byte buf,
                        var usize size, var usize offset)
                         => ssize
 do
-    if $buf == 0 then
-        buf = [0];      // avoids "out of bounds" below
-    end
-
     var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], size);
     var _uv_fs_t req_read = _;
 
@@ -142,6 +138,26 @@ do
     stat = *(req_fstat.ptr as _uv_stat_t&&);
 
     escape 0;
+end
+
+native/pos do
+    ##define ceu_uv_fs_open(a,b,c,d)    uv_fs_open(&ceu_uv_loop,a,b,c,d,ceu_uv_fs_cb)
+    ##define ceu_uv_fs_close(a,b)       uv_fs_close(&ceu_uv_loop,a,b,ceu_uv_fs_close_cb)
+    ##define ceu_uv_fs_close_(a,b)      uv_fs_close(&ceu_uv_loop,a,b,NULL); \\
+                                        ceu_uv_fs_close_cb(a)
+    ##define ceu_uv_fs_read(a,b,c,d,e)  uv_fs_read(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
+    ##define ceu_uv_fs_write(a,b,c,d,e) uv_fs_write(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
+    ##define ceu_uv_fs_fstat(a,b)       uv_fs_fstat(&ceu_uv_loop,a,b,ceu_uv_fs_cb)
+
+    void ceu_uv_fs_cb (uv_fs_t* req) {
+        ceu_go_ext(CEU_INPUT_FS, &req);
+    }
+
+    void ceu_uv_fs_close_cb (uv_fs_t* req) {
+        //TODO???
+        //assert(req->result == 0);
+        uv_fs_req_cleanup(req);
+    }
 end
 
 #endif

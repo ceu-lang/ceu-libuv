@@ -1,0 +1,129 @@
+#ifndef _UV_TCP_CEU
+#define _UV_TCP_CEU
+
+#include "c.ceu"
+#include "uv/uv.ceu"
+
+native/plain
+    _uv_handle_t,
+    _uv_stream_t,
+    _uv_tcp_t,
+    _uv_write_t,
+;
+
+native/nohold
+    _ceu_uv_close,
+    _ceu_uv_listen,       // TODO: unlisten?
+    _ceu_uv_write,        // TODO: write_stop?
+    _uv_accept,
+    _uv_close,
+    _uv_ip4_addr,
+    _uv_read_stop,
+    _uv_tcp_bind,         // TODO: unbind?
+;
+
+native
+    _ceu_uv_read_start,
+    _ceu_uv_tcp_init,
+    _uv_tcp_t_ptr,
+;
+
+input (_uv_stream_t&&,int)                 UV_ERROR;
+input (_uv_stream_t&&, int)                UV_LISTEN;
+input (_uv_stream_t&&, ssize, _uv_buf_t&&) UV_READ;
+input (_uv_write_t&&, int)                 UV_WRITE;
+
+native/pre do
+    typedef uv_tcp_t* uv_tcp_t_ptr;
+end
+
+native/pos do
+#if 0
+    ##define ceu_uv_close(a)           if (!uv_is_closing(a)) { uv_close(a,ceu_uv_free); }
+#endif
+    ##define ceu_uv_close(a)           uv_close(a,ceu_uv_free)
+    ##define ceu_uv_tcp_init(a)        uv_tcp_init(&ceu_uv_loop, a);
+    ##define ceu_uv_listen(a,b)        uv_listen(a,b,ceu_uv_listen_cb)
+    ##define ceu_uv_read_start(a)      uv_read_start(a,ceu_uv_read_alloc,ceu_uv_read_start_cb);
+    ##define ceu_uv_write(a,b,c)       uv_write(a,b,c,1,ceu_uv_write_cb)
+
+    void ceu_uv_free (uv_handle_t* h) {
+        // TODO: other stream types
+#if 0
+        if (h->type == UV_TCP) {
+            uv_stream_t* s = (uv_stream_t*)h;
+            if (s->connect_req != NULL) {
+printf(">>> FREE\n");
+                free(s->connect_req);
+                s->connect_req = NULL;
+            }
+        }
+#endif
+        free(h);
+    }
+
+    void ceu_uv_listen_cb (uv_stream_t* s, int err) {
+        ceu_dbg_assert(err >= 0);
+        tceu_input_UV_LISTEN p = { s, err };
+        ceu_go_ext(CEU_INPUT_UV_LISTEN, &p);
+    }
+
+    ##define CEU_UV_READ_ALLOC_DYN_INIT 128
+
+    void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
+        ceu_dbg_assert(h->data != NULL);
+        tceu_vector* vec = (tceu_vector*) h->data;
+
+        // init dynamic vector or
+        // grow dynamic vector if going past half of it
+        if (vec->is_dyn) {
+            if (vec->max == 0) {
+                ceu_vector_setmax(vec, CEU_UV_READ_ALLOC_DYN_INIT, 0);
+            } else if (vec->len*2>vec->max) {
+                ceu_vector_setmax(vec, (vec->max+10)*3/2, 0);
+            }
+        }
+
+        *buf = uv_buf_init((char*)vec->buf+vec->len, vec->max-vec->len);
+    }
+
+    void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
+        ceu_dbg_assert(n != 0); // TODO: if this happens, try to understand why
+
+        ceu_dbg_assert(s->data != NULL);
+        tceu_vector* vec = (tceu_vector*) s->data;
+        //ceu_dbg_assert(vec->buf == (byte*)buf->base);
+        if (n > 0) {
+            if (ceu_vector_setlen_could(vec,vec->len+n,1) == 0) {
+                n = UV_ENOBUFS;
+            } else {
+                ceu_vector_setlen(vec,vec->len+n,1);
+            }
+            //ceu_dbg_assert(vec->buf == (byte*)buf->base);
+        }
+
+        if (n < 0) {
+            tceu_input_UV_ERROR p = { s, n };
+            ceu_go_ext(CEU_INPUT_UV_ERROR, &p);
+        }
+
+        {
+            tceu_input_UV_READ p = { s, n, (uv_buf_t*)buf };
+            ceu_go_ext(CEU_INPUT_UV_READ, &p);
+        }
+    }
+
+    void ceu_uv_write_cb (uv_write_t* req, int err) {
+        if (err < 0) {
+            // if the "assert" fails, see if the error makes sense and extend it
+            ceu_dbg_assert(err == UV__EOF);
+            tceu_input_UV_ERROR p = { req->handle, err };
+            ceu_go_ext(CEU_INPUT_UV_ERROR, &p);
+        }
+        tceu_input_UV_WRITE p = { req, err };
+        ceu_go_ext(CEU_INPUT_UV_WRITE, &p);
+        free(req);
+    }
+end
+
+#endif

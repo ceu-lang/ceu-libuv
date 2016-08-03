@@ -23,9 +23,6 @@ void ceu_sys_log (int mode, long s) {
     }
 }
 
-typedef struct sockaddr         sockaddr;
-typedef struct sockaddr_in      sockaddr_in;
-typedef struct sockaddr_storage sockaddr_storage;
 typedef struct {
     void* vec;
     int   has_pending_data;
@@ -34,61 +31,15 @@ typedef struct {
 #include "_ceu_app.h"
 
 tceu_app CEU_APP;
-uv_loop_t ceu_uv_loop;
-
-void ceu_uv_free (uv_handle_t* h) {
-    // TODO: other stream types
 #if 0
-    if (h->type == UV_TCP) {
-        uv_stream_t* s = (uv_stream_t*)h;
-        if (s->connect_req != NULL) {
-printf(">>> FREE\n");
-            free(s->connect_req);
-            s->connect_req = NULL;
-        }
-    }
+uv_loop_t ceu_uv_loop;
 #endif
-    free(h);
-}
 
 /* FS */
 
-#define ceu_uv_fs_open(a,b,c,d)    uv_fs_open(&ceu_uv_loop,a,b,c,d,ceu_uv_fs_cb)
-#define ceu_uv_fs_read(a,b,c,d,e)  uv_fs_read(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
-#define ceu_uv_fs_write(a,b,c,d,e) uv_fs_write(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
-#define ceu_uv_fs_fstat(a,b)       uv_fs_fstat(&ceu_uv_loop,a,b,ceu_uv_fs_cb)
-#define ceu_uv_fs_close(a,b)       uv_fs_close(&ceu_uv_loop,a,b,ceu_uv_fs_close_cb)
-#define ceu_uv_fs_close_(a,b)      uv_fs_close(&ceu_uv_loop,a,b,NULL); \
-                                   ceu_uv_fs_close_cb(a)
-
-void ceu_uv_fs_cb (uv_fs_t* req) {
-#ifdef CEU_IN_FS
-    ceu_sys_go(&CEU_APP, CEU_IN_FS, &req);
-#endif
-#ifdef CEU_RET
-    if (!CEU_APP.isAlive) {
-        uv_stop(&ceu_uv_loop);
-    }
-#endif
-}
-
-void ceu_uv_fs_close_cb (uv_fs_t* req) {
-//TODO???
-    //assert(req->result == 0);
-    uv_fs_req_cleanup(req);
-}
-
 /* TCP */
 
-#if 0
-#define ceu_uv_close(a)           if (!uv_is_closing(a)) { uv_close(a,ceu_uv_free); }
-#endif
-#define ceu_uv_close(a)           uv_close(a,ceu_uv_free)
-#define ceu_uv_tcp_init(a)        uv_tcp_init(&ceu_uv_loop, a);
 #define ceu_uv_tcp_connect(a,b,c) uv_tcp_connect(a,b,c,ceu_uv_connect_cb)
-#define ceu_uv_listen(a,b)        uv_listen(a,b,ceu_uv_listen_cb)
-#define ceu_uv_read_start(a)      uv_read_start(a,ceu_uv_read_alloc,ceu_uv_read_start_cb);
-#define ceu_uv_write(a,b,c)       uv_write(a,b,c,1,ceu_uv_write_cb)
 
 void ceu_uv_connect_cb (uv_connect_t* c, int err) {
 #ifdef CEU_IN_UV_CONNECT
@@ -103,110 +54,7 @@ void ceu_uv_connect_cb (uv_connect_t* c, int err) {
 #endif
 }
 
-void ceu_uv_listen_cb (uv_stream_t* s, int err) {
-    assert(err >= 0);
-#ifdef CEU_IN_UV_LISTEN
-    tceu__uv_stream_t___int p = { s, err };
-    ceu_sys_go(&CEU_APP, CEU_IN_UV_LISTEN, &p);
-#endif
-#ifdef CEU_RET
-    if (!CEU_APP.isAlive) {
-        uv_stop(&ceu_uv_loop);
-    }
-#endif
-}
-
-#define CEU_UV_READ_ALLOC_DYN_INIT 128
-
-#ifdef CEU_IN_UV_READ
-void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
-    assert(h->data != NULL);
-    tceu_vector* vec = (tceu_vector*) h->data;
-
-    int len = ceu_vector_getlen(vec);
-    {
-        // init dynamic vector or
-        // grow dynamic vector if going past half of it
-        int max = ceu_vector_getmax(vec);
-        if (max <= 0) {
-            if (max == 0) {
-                ceu_vector_setmax(vec, CEU_UV_READ_ALLOC_DYN_INIT, 0);
-            } else if (max<0 && len*2>(-max)) {
-                ceu_vector_setmax(vec, (-max+10)*3/2, 0);
-            }
-        }
-    }
-    {
-        int max = ceu_vector_getmax(vec);
-        *buf = uv_buf_init((char*)vec->mem+len, ((max<0) ? -max : max)-len);
-    }
-}
-
-void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
-    assert(n != 0); // TODO: if this happens, try to understand why
-
-    assert(s->data != NULL);
-    tceu_vector* vec = (tceu_vector*) s->data;
-    //assert(vec->mem == (byte*)buf->base);
-    if (n > 0) {
-        if (ceu_vector_setlen(vec, ceu_vector_getlen(vec)+n,1) == 0) {
-            n = UV_ENOBUFS;
-        }
-        //assert(vec->mem == (byte*)buf->base);
-    }
-
-#ifdef CEU_IN_UV_ERROR
-    if (n < 0) {
-        tceu__uv_stream_t___int p = { s, n };
-        ceu_sys_go(&CEU_APP, CEU_IN_UV_ERROR, &p);
-#ifdef CEU_RET
-        if (!CEU_APP.isAlive) {
-            uv_stop(&ceu_uv_loop);
-        }
-#endif
-    }
-#endif
-
-#ifdef CEU_IN_UV_READ
-    {
-        tceu__uv_stream_t___ssize_t__uv_buf_t_ p = { s, n, (uv_buf_t*)buf };
-        ceu_sys_go(&CEU_APP, CEU_IN_UV_READ, &p);
-#ifdef CEU_RET
-        if (!CEU_APP.isAlive) {
-            uv_stop(&ceu_uv_loop);
-        }
-#endif
-    }
-#endif
-}
-#endif
-
 #ifdef CEU_IN_UV_WRITE
-void ceu_uv_write_cb (uv_write_t* req, int err) {
-#ifdef CEU_IN_UV_ERROR
-    if (err < 0) {
-        // if the "assert" fails, see if the error makes sense and extend it
-        assert(err == UV__EOF);
-        tceu__uv_stream_t___int p = { req->handle, err };
-        ceu_sys_go(&CEU_APP, CEU_IN_UV_ERROR, &p);
-    }
-#ifdef CEU_RET
-    if (!CEU_APP.isAlive) {
-        uv_stop(&ceu_uv_loop);
-    }
-#endif
-#endif
-#ifdef CEU_IN_UV_WRITE
-    tceu__uv_write_t___int p = { req, err };
-    ceu_sys_go(&CEU_APP, CEU_IN_UV_WRITE, &p);
-#ifdef CEU_RET
-    if (!CEU_APP.isAlive) {
-        uv_stop(&ceu_uv_loop);
-    }
-#endif
-#endif
-    free(req);
-}
 #endif
 
 /* ASYNCS */
@@ -230,6 +78,7 @@ void ceu_uv_idle_cb (uv_idle_t* idler) {
 
 /* WCLOCKS */
 
+#if 0
 #ifdef CEU_WCLOCKS
 uv_timer_t ceu_uv_timer;
 s32 ceu_uv_timer_next_us;
@@ -255,6 +104,7 @@ void ceu_uv_timer_cb (uv_timer_t* timer) {
 #endif
 }
 #endif
+#endif
 
 /* THREADS */
 
@@ -279,14 +129,18 @@ static char CEU_DATA[sizeof(CEU_Main)];
 
 int main (int argc, char *argv[])
 {
+#if 0
     signal(SIGPIPE, SIG_IGN); // TODO: fails on "uv_write" would crash otherwise
 
     uv_loop_init(&ceu_uv_loop);
+#endif
 #ifdef CEU_ASYNCS
     uv_idle_init(&ceu_uv_loop, &ceu_uv_idle);
 #endif
+#if 0
 #ifdef CEU_WCLOCKS
     uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
+#endif
 #endif
 #ifdef CEU_THREADS
     uv_prepare_init(&ceu_uv_loop, &ceu_uv_prepare);
@@ -330,8 +184,10 @@ int main (int argc, char *argv[])
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
 #endif
 
+#if 0
     // TODO: detect/error if return w/o "escape"
     uv_run(&ceu_uv_loop, UV_RUN_DEFAULT);
+#endif
 
 #ifdef CEU_ASYNCS
     uv_close((uv_handle_t*)&ceu_uv_idle, NULL);

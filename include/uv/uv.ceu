@@ -74,28 +74,6 @@ native/pos do
 
         return ret;
     }
-
-/* FS */
-
-    ##define ceu_uv_fs_open(a,b,c,d)    uv_fs_open(&ceu_uv_loop,a,b,c,d,ceu_uv_fs_cb)
-    ##define ceu_uv_fs_close(a,b)       uv_fs_close(&ceu_uv_loop,a,b,ceu_uv_fs_close_cb)
-    ##define ceu_uv_fs_close_(a,b)      uv_fs_close(&ceu_uv_loop,a,b,NULL); \\
-                                        ceu_uv_fs_close_cb(a)
-    ##define ceu_uv_fs_read(a,b,c,d,e)  uv_fs_read(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
-    ##define ceu_uv_fs_write(a,b,c,d,e) uv_fs_write(&ceu_uv_loop,a,b,c,d,e,ceu_uv_fs_cb)
-    ##define ceu_uv_fs_fstat(a,b)       uv_fs_fstat(&ceu_uv_loop,a,b,ceu_uv_fs_cb)
-
-
-    void ceu_uv_fs_cb (uv_fs_t* req) {
-        ceu_go_ext(CEU_INPUT_FS, &req);
-    }
-
-    void ceu_uv_fs_close_cb (uv_fs_t* req) {
-        //TODO???
-        //assert(req->result == 0);
-        uv_fs_req_cleanup(req);
-    }
-
 end
 
 #if 0
@@ -106,16 +84,9 @@ end
 #include "c.ceu"
 
 native @plain
-        _sockaddr,
-        _sockaddr_in,
-        _sockaddr_storage,
         _uv_connect_t,
         _uv_fs_t,
-        _uv_handle_t,
         _uv_stat_t,
-        _uv_stream_t,
-        _uv_tcp_t,
-        _uv_write_t;
 
 native @pure
         _GET_HOST_U32(),
@@ -124,19 +95,11 @@ native @pure
         _uv_strerror();
 
 native @nohold
-        _ceu_uv_close(),
         _ceu_uv_fs_close_(),
-        _ceu_uv_listen(),       // TODO: unlisten?
         _ceu_uv_tcp_connect(),  // TODO: diconnect?
         _ceu_uv_tcp_getpeerport(),
         _ceu_uv_tcp_getsockport(),
-        _ceu_uv_write(),        // TODO: write_stop?
-        _uv_accept(),
-        _uv_close(),
         _uv_inet_ntop(),
-        _uv_ip4_addr(),
-        _uv_read_stop(),
-        _uv_tcp_bind(),         // TODO: unbind?
         _uv_tcp_getpeername(),
         _uv_tcp_getsockname();
 
@@ -181,7 +144,6 @@ input (_uv_stream_t&&,_ssize_t, _uv_buf_t&&) UV_READ;
 input (_uv_write_t&&,int)   UV_WRITE;
 input (_uv_stream_t&&,int)  UV_LISTEN;
 input (_uv_connect_t&&,int) UV_CONNECT;
-input (_uv_stream_t&&,int)  UV_ERROR;
 
 class UV_FS_Read_Line with
     var UV_FS_open& open;

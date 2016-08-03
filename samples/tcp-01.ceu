@@ -20,66 +20,62 @@
 #@  - UV_LISTEN, UV_READ, UV_WRITE
 #endif
 
-#include "c.ceu"
-#include "uv.ceu"
-
-input (_uv_stream_t&&,int) UV_LISTEN;
-input (_uv_stream_t&&,_ssize_t, _uv_buf_t&&) UV_READ;
-input (_uv_write_t&&,int) UV_WRITE;
+#include "uv/tcp.ceu"
 
 #define DEFAULT_PORT    7000
 #define DEFAULT_BACKLOG 128
 #define BUFFER_MAX      10
 
-var _uv_tcp_t server = _uv_tcp_t();
-_ceu_uv_tcp_init(&&server)
-    finalize with
-        _uv_close((_uv_handle_t&&)&&server, null);
-    end;
-
-var _sockaddr_in addr = _sockaddr_in();
-_uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
-_uv_tcp_bind(&&server, (_sockaddr&&)&&addr, 0);
+var _uv_tcp_t server = _;
 do
-    var int ret = _ceu_uv_listen((_uv_stream_t&&)&&server, DEFAULT_BACKLOG);
-    _assert(ret == 0);
+    _ceu_uv_tcp_init(&&server);
+finalize (server) with
+    _uv_close(&&server as _uv_handle_t&&, null);
+end
+
+var _sockaddr_in addr = _;
+_uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
+_uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
+do
+    var int ret = _ceu_uv_listen(&&server as _uv_stream_t&&, DEFAULT_BACKLOG);
+    _ceu_dbg_assert(ret == 0);
 end
 
 _printf("I will terminate after two connections...\n");
 
-loop i in 2 do
+loop i in [0 -> 2[ do
     // ACCEPT
-    var _uv_tcp_t&? client_;
-    finalize
-        client_ = &_malloc(sizeof(_uv_tcp_t));
-    with
-        // free after uv_close
-    end
-    var _uv_tcp_t& client = &client_!;
-    _ceu_uv_tcp_init(&&client)
-        finalize with
-            _ceu_uv_close((_uv_handle_t&&)&&client);
+    var& _uv_tcp_t_ptr? client_ = &_malloc(sizeof(_uv_tcp_t))
+        finalize (client_) with
+            // free after uv_close
         end;
+    var& _uv_tcp_t_ptr client = &client_!;
+    _ceu_uv_tcp_init(client);
+    do finalize with
+        _ceu_uv_close(client as _uv_handle_t&&);
+    end
 
     loop do
-        var int ret = _uv_accept((_uv_stream_t&&)&&server,(_uv_stream_t&&)&&client);
+        var int ret = _uv_accept(&&server as _uv_stream_t&&,client as _uv_stream_t&&);
         if ret == 0 then
             break;
         else
             // LISTEN
             var _uv_stream_t&& s;
             var int status;
-            (s,status) = await UV_LISTEN until s==(_uv_stream_t&&)&&server;
-            _assert(status >= 0);
+            (s,status) = await UV_LISTEN until s==&&server;
+            _ceu_dbg_assert(status >= 0);
         end
     end
 
     // READ/WRITE LOOP
 
-    var byte[BUFFER_MAX] buf;
-    var _ssize_t n_read = 0;
+    vector[BUFFER_MAX] byte buf;
+    var ssize n_read = 0 as ssize;
 
     spawn do
+        var _uv_stream_t&& s;
+        var int            err;
         every (s,err) in UV_ERROR do
             _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err));
         end
@@ -89,41 +85,42 @@ loop i in 2 do
         // READ
         do
             $buf = 0;
-            client.data = &&buf;
-            var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client)
-                            finalize with end;
-            finalize with
+            client:_data = _PURIFY(&&buf);   // finalize below
+            var int ret;
+            do
+                ret = _ceu_uv_read_start(client as _uv_stream_t&&);
+            finalize (client) with
                 // finalize after each UV_READ
-                _uv_read_stop((_uv_stream_t&&)&&client);
-            end;
+                _uv_read_stop(client as _uv_stream_t&&);
+            end
             //_printf("error: %s\n", _uv_strerror(ret));
-            _assert(ret == 0);
+            _ceu_dbg_assert(ret == 0);
 
             var _uv_buf_t&& buf_r;
             var _uv_stream_t&& s;
-            (s,n_read,buf_r) = await UV_READ until s==(_uv_stream_t&&)&&client;
-            //_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
-            //_assert(buf_r:len == $$buf);
+            (s,n_read,buf_r) = await UV_READ until s==client;
+            //_ceu_dbg_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
+            //_ceu_dbg_assert(buf_r:len == $$buf);
         end
-        //_assert(n_read >= 0);  // connection closed?
+        //_ceu_dbg_assert(n_read >= 0);  // connection closed?
         if n_read < 0 then
             _fprintf(_stderr, "[read]: %s\n", _uv_strerror(n_read));
             break;
-        else/if n_read == 0 then
-            _assert(0);
+        else/if (n_read as int) == 0 then
+            _ceu_dbg_assert(0);
         end
 
         // not reading anymore
 
         // WRITE
-        buf = []..buf..['\0'];
-        var _uv_write_t req_write = _uv_write_t();
-        var _uv_buf_t buf_ = _uv_buf_init((_byte&&)&&buf, n_read);
-        _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf_);
+        buf = buf..[{'\0'}];
+        var _uv_write_t req_write = _;
+        var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], n_read);
+        _ceu_uv_write(&&req_write, client as _uv_stream_t&&, &&buf_);
         var _uv_write_t&& w;
         var int status;
         (w, status) = await UV_WRITE until w==&&req_write;
-        _assert(status == 0);
+        _ceu_dbg_assert(status == 0);
     end
 end
 
