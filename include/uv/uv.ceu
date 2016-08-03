@@ -101,7 +101,6 @@ native @nohold
         _ceu_uv_tcp_getsockport(),
         _uv_inet_ntop(),
         _uv_tcp_getpeername(),
-        _uv_tcp_getsockname();
 
 native/pre do
 end
@@ -208,36 +207,6 @@ do
         end
     end
 
-    escape -1;
-end
-
-class UV_Stream_ReadLine with
-    var _uv_stream_t& stream;
-    var char[]&       string;
-    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_ReadLine build;
-do
-    function (_uv_stream_t& stream, char[]& string)=>UV_Stream_ReadLine build do
-        this.stream = &stream;
-        this.string = &string;
-    end
-
-    var UV_Stream_Read r = UV_Stream_Read.build(&this.stream,&this.string);
-
-    watching r do
-        loop do
-            await r.ok;
-            var char n=0, c=0;
-            var int ret = _sscanf((_char&&)&&this.string, "%*[^\n]%[\n]%c", &&n,&&c);
-            _assert(ret < 2);
-            if ret == 1 then
-                _assert(n == '\n');
-                escape 0;
-            end
-        end
-    end
-
-    // client code must enclose with UV_ERROR
-    _assert(0);
     escape -1;
 end
 

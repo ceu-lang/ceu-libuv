@@ -26,6 +26,7 @@ native/nohold
     _uv_ip4_addr,
     _uv_read_stop,
     _uv_tcp_bind,         // TODO: unbind?
+    _uv_tcp_getsockname,
 ;
 
 native
@@ -82,7 +83,7 @@ do
         var _uv_stream_t&& s;
         var int err_;
         (s,err_) = await UV_ERROR until (s==stream);
-        //escape err;
+        escape (err as ssize);
     with
         loop do
             var _uv_buf_t&& buf_r;
@@ -99,6 +100,28 @@ do
             emit ok_(n);
         end
     end
+end
+
+code/await UV_Stream_ReadLine (var& _uv_stream_t_ptr stream, vector&[] byte string)
+            => ssize
+do
+    event& ssize ok;
+    watching UV_Stream_Read(&stream,&string) => (ok) do
+        loop do
+            await ok;
+            var byte n=0, c=0;
+            var int ret = _sscanf(&&string[0], "%*[^\n]%[\n]%c", &&n,&&c);
+            _ceu_dbg_assert(ret < 2);
+            if ret == 1 then
+                _ceu_dbg_assert(n == {'\n'});
+                escape (0 as ssize);
+            end
+        end
+    end
+
+    // client code must enclose with UV_ERROR
+    _ceu_dbg_assert(0);
+    escape ((-1) as ssize);
 end
 
 code/await UV_Stream_Write (var& _uv_stream_t_ptr stream, vector&[] byte bytes)
