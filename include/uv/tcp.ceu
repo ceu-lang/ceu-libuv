@@ -12,6 +12,7 @@ native/plain
 ;
 
 native/pure
+    _uv_is_readable,
     _uv_is_writable,
 ;
 
@@ -47,6 +48,57 @@ native/pre do
     typedef uv_write_t*  uv_write_t_ptr;
 
     ##define UV_STREAM_ALIAS(x) ((uv_stream_t*)x)
+end
+
+code/await UV_Stream_Read (var& _uv_stream_t_ptr stream, vector&[] byte bytes)
+                            => (event& ssize ok)
+                                => ssize
+do
+    var   usize next = 0;
+    event ssize ok_;
+    ok = &ok_;
+
+#if 0
+    function (void)=>void reset;
+    function (void)=>void reset do
+        $this.bytes = 0;
+        this.next = 0;
+    end
+#endif
+
+    $bytes = 0;
+
+    stream:_data = _PURIFY(&&bytes);
+    _ceu_dbg_assert(_uv_is_readable(stream));
+    var int err = _ceu_uv_read_start(stream);
+    do finalize with
+        _uv_read_stop(stream);
+    end
+
+    //_fprintf(_stderr, "uv-error: %s\n", _uv_strerror(err));
+    _ceu_dbg_assert(err == 0);
+
+    par do
+        var _uv_stream_t&& s;
+        var int err_;
+        (s,err_) = await UV_ERROR until (s==stream);
+        //escape err;
+    with
+        loop do
+            var _uv_buf_t&& buf_r;
+            var _uv_stream_t&& s;
+            var ssize n;
+            (s,n,buf_r) = await UV_READ
+                          until s == stream;// and
+                                //((_byte&&)buf_r:base == ((_byte&&)&&this.bytes));
+
+            _ceu_dbg_assert((n as int) != 0); // TODO: if this happens, try to understand why
+            _ceu_dbg_assert((n as int) >= 0); // UV_ERROR aborts me
+
+            next = next + (n as usize);
+            emit ok_(n);
+        end
+    end
 end
 
 code/await UV_Stream_Write (var& _uv_stream_t_ptr stream, vector&[] byte bytes)

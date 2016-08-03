@@ -2,7 +2,7 @@
 #@ Description: Parallel "echo" servers.
 #@  - same as `tcp-03.ceu`
 #@ Features:
-#@  - class Read & ReadLine & Write
+#@  - class Read & Write
 #endif
 
 #include "uv/tcp.ceu"
@@ -44,43 +44,22 @@ do
     end
 
     loop do
-        //var char[] string;
-        //do UV_Stream_ReadLine.build(&_UV_STREAM_ALIAS(client), &string);
-        //_printf("[read] %s", (_char&&)&&string);
-        //do UV_Stream_Write.build(&_UV_STREAM_ALIAS(client), &string);
-
-        // READ
+        vector[] byte string;
         do
-            $buf = 0;
-            client:_data = _PURIFY(&&buf);
-            var int ret;
+            event& ssize ok;
+            watching UV_Stream_Read(&_UV_STREAM_ALIAS(client),&string)
+                        => (ok)
             do
-                ret = _ceu_uv_read_start(client as _uv_stream_t&&);
-            finalize (client) with
-                // finalize after each UV_READ
-                _uv_read_stop(client as _uv_stream_t&&);
+                var ssize n = await ok;
+                if n < 0 then
+                    _fprintf(_stderr, "[read]: %s\n", _uv_strerror(n));
+                    break;
+                else/if (n as int) == 0 then
+                    _ceu_dbg_assert(0);
+                end
             end
-            //_printf("error: %s\n", _uv_strerror(ret));
-            _ceu_dbg_assert(ret == 0);
-
-            var _uv_buf_t&& buf_r;
-            var _uv_stream_t&& s;
-            (s,n_read,buf_r) = await UV_READ until s==(client as _uv_stream_t&&);
-            //_ceu_dbg_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
-            //_ceu_dbg_assert(buf_r:len == $$buf);
         end
-        //_ceu_dbg_assert(n_read >= 0);  // connection closed?
-        if n_read < 0 then
-            _fprintf(_stderr, "[read]: %s\n", _uv_strerror(n_read));
-            break;
-        else/if (n_read as int) == 0 then
-            _ceu_dbg_assert(0);
-        end
-
-        // not reading anymore
-
-        // WRITE
-        await UV_Stream_Write(&_UV_STREAM_ALIAS(client), &buf);
+        await UV_Stream_Write(&_UV_STREAM_ALIAS(client), &string);
     end
 end
 
@@ -122,4 +101,5 @@ spawn Server("0.0.0.0", DEFAULT_PORT+1, DEFAULT_BACKLOG);
 _printf("I will terminate after 10s...\n");
 await 10s;
 _printf("DONE!\n");
+
 escape 0;

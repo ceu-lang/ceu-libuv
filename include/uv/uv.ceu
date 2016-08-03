@@ -179,59 +179,6 @@ end
 // TODO: function to signal "consumption", if the org is finalized w/ pending
 //       consumption, then error
 
-class UV_Stream_Read with
-    var _uv_stream_t& stream;
-    var byte[]&       bytes;
-    var u32           next = 0;
-    function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Read build;
-    event int ok;
-    function (void)=>void reset;
-do
-    function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Read build do
-        this.stream = &stream;
-        this.bytes  = &bytes;
-    end
-    function (void)=>void reset do
-        $this.bytes = 0;
-        this.next = 0;
-    end
-
-    $bytes = 0;
-
-    this.stream.data = &&this.bytes;
-    _assert(_uv_is_readable(&&this.stream));
-    var int err = _ceu_uv_read_start(&&this.stream)
-                    finalize with
-                        _uv_read_stop(&&this.stream);
-                    end;
-    //_fprintf(_stderr, "uv-error: %s\n", _uv_strerror(err));
-    _assert(err == 0);
-
-    par/or do
-        var _uv_stream_t&& s;
-        var int err_;
-        (s,err_) = await UV_ERROR until (s==&&this.stream);
-        err = err_;
-        emit this.ok => err;
-    with
-        loop do
-            var _uv_buf_t&& buf_r;
-            var _uv_stream_t&& s;
-            var u32 n;
-            (s,n,buf_r) = await UV_READ
-                          until s == &&this.stream;// and
-                                //((_byte&&)buf_r:base == ((_byte&&)&&this.bytes));
-
-            _assert(n != 0); // TODO: if this happens, try to understand why
-            _assert(n >= 0); // UV_ERROR aborts me
-
-            next = next + n;
-            emit this.ok => n;
-        end
-    end
-    escape err;
-end
-
 class UV_Stream_ReadUntil with
     var UV_Stream_Read& reader;
     var u32             limit;
