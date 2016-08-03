@@ -50,8 +50,9 @@ loop i in [0 -> 2[ do
             // free after uv_close
         end;
     var& _uv_tcp_t_ptr client = &client_!;
-    _ceu_uv_tcp_init(client);
-    do finalize with
+    do
+        _ceu_uv_tcp_init(client);
+    finalize (client) with
         _ceu_uv_close(client as _uv_handle_t&&);
     end
 
@@ -71,7 +72,7 @@ loop i in [0 -> 2[ do
     // READ/WRITE LOOP
 
     vector[BUFFER_MAX] byte buf;
-    var ssize n_read = 0 as ssize;
+    var ssize n_read = 0;
 
     spawn do
         var _uv_stream_t&& s;
@@ -106,7 +107,7 @@ loop i in [0 -> 2[ do
         if n_read < 0 then
             _fprintf(_stderr, "[read]: %s\n", _uv_strerror(n_read));
             break;
-        else/if (n_read as int) == 0 then
+        else/if n_read == 0 then
             _ceu_dbg_assert(0);
         end
 

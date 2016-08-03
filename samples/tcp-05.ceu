@@ -23,9 +23,9 @@ do
                         => (ok)
             do
                 var ssize n = await ok;
-                _ceu_dbg_assert((n as int) != 0);
-                if (n as int) < 0 then
-                    escape (n as int);
+                _ceu_dbg_assert(n != 0);
+                if n < 0 then
+                    escape n;
                 end
             end
         end

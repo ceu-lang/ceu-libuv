@@ -1,0 +1,250 @@
+#ifndef _UV_STREAM_CEU
+#define _UV_STREAM_CEU
+
+#include "c.ceu"
+#include "uv/uv.ceu"
+
+native/plain
+    _uv_handle_t,
+    _uv_stream_t,
+    _uv_write_t,
+;
+
+native/pure
+    _uv_is_readable,
+    _uv_is_writable,
+;
+
+native/nohold
+    _ceu_uv_close,
+    _ceu_uv_free,
+    _ceu_uv_listen,       // TODO: unlisten?
+    _ceu_uv_write,        // TODO: write_stop?
+    _uv_accept,
+    _uv_close,
+    _uv_ip4_addr,
+    _uv_read_stop,
+;
+
+native
+    _ceu_uv_read_start,
+    _uv_stream_t_ptr,
+    _UV_STREAM_ALIAS,
+    _uv_write_t_ptr,
+;
+
+input (_uv_stream_t&&, int)                UV_ERROR;
+input (_uv_stream_t&&, int)                UV_LISTEN;
+input (_uv_stream_t&&, ssize, _uv_buf_t&&) UV_READ;
+input (_uv_write_t&&,  int)                UV_WRITE;
+
+native/pre do
+    typedef uv_stream_t* uv_stream_t_ptr;
+    typedef uv_write_t*  uv_write_t_ptr;
+
+    ##define UV_STREAM_ALIAS(x) ((uv_stream_t*)x)
+end
+
+#if 0
+data UV_Stream with
+    var& _uv_stream_t_ptr stream;
+    event int         ok_error;
+    event int         ok_listen;
+    event _uv_buf_t&& ok_read;
+    event int         ok_write;
+end
+#endif
+
+code/await UV_Stream_Read (var& _uv_stream_t_ptr stream, vector&[] byte bytes)
+                            => (event& ssize ok)
+                                => ssize
+do
+    var   usize next = 0;
+    event ssize ok_;
+    ok = &ok_;
+
+#if 0
+    function (void)=>void reset;
+    function (void)=>void reset do
+        $this.bytes = 0;
+        this.next = 0;
+    end
+#endif
+
+    $bytes = 0;
+
+    stream:_data = _PURIFY(&&bytes);
+    _ceu_dbg_assert(_uv_is_readable(stream));
+    var int err;
+    do
+        err = _ceu_uv_read_start(stream);
+    finalize (stream) with
+        _uv_read_stop(stream);
+    end
+
+    //_fprintf(_stderr, "uv-error: %s\n", _uv_strerror(err));
+    _ceu_dbg_assert(err == 0);
+
+    par do
+        var _uv_stream_t&& s;
+        var int err_;
+        (s,err_) = await UV_ERROR until (s==stream);
+        escape err;
+    with
+        loop do
+            var _uv_buf_t&& buf_r;
+            var _uv_stream_t&& s;
+            var ssize n;
+            (s,n,buf_r) = await UV_READ
+                          until s == stream;// and
+                                //((_byte&&)buf_r:base == ((_byte&&)&&this.bytes));
+
+            _ceu_dbg_assert(n != 0); // TODO: if this happens, try to understand why
+            _ceu_dbg_assert(n >= 0); // UV_ERROR aborts me
+
+            next = next + (n as usize);
+            emit ok_(n);
+        end
+    end
+end
+
+code/await UV_Stream_ReadLine (var& _uv_stream_t_ptr stream, vector&[] byte string)
+            => ssize
+do
+    event& ssize ok;
+    watching UV_Stream_Read(&stream,&string) => (ok) do
+        loop do
+            await ok;
+            var byte n=0, c=0;
+            var int ret = _sscanf(&&string[0], "%*[^\n]%[\n]%c", &&n,&&c);
+            _ceu_dbg_assert(ret < 2);
+            if ret == 1 then
+                _ceu_dbg_assert(n == {'\n'});
+                escape 0;
+            end
+        end
+    end
+
+    // client code must enclose with UV_ERROR
+    _ceu_dbg_assert(0);
+    escape -1;
+end
+
+code/await UV_Stream_Write (var& _uv_stream_t_ptr stream, vector&[] byte bytes)
+                                => void
+do
+    var usize starting  = 0;
+    var usize excluding = $bytes;
+    _ceu_dbg_assert($bytes >= excluding);
+    _ceu_dbg_assert(starting <= excluding);
+
+    var& _uv_write_t_ptr? req_write = &_malloc(sizeof(_uv_write_t))
+        finalize (req_write) with
+            // free on uv callback
+        end;
+
+    var _uv_buf_t buf = _uv_buf_init(&&bytes[0], $bytes);
+                  buf.base = buf.base+starting;
+                  buf.len  = excluding-starting;
+
+    _ceu_dbg_assert(_uv_is_writable(stream));
+
+    var int ret = _ceu_uv_write(req_write!, stream, &&buf);
+    _ceu_dbg_assert(ret >= 0);
+    var _uv_write_t&& w;
+    var int status;
+    (w, status) = await UV_WRITE until w==req_write!;
+
+    // force external UV_ERROR
+    _ceu_dbg_assert(status == 0);
+end
+
+native/pos do
+#if 0
+    ##define ceu_uv_close(a)           if (!uv_is_closing(a)) { uv_close(a,ceu_uv_free); }
+#endif
+    ##define ceu_uv_close(a)           uv_close(a,ceu_uv_free)
+    ##define ceu_uv_listen(a,b)        uv_listen(a,b,ceu_uv_listen_cb)
+    ##define ceu_uv_read_start(a)      uv_read_start(a,ceu_uv_read_alloc,ceu_uv_read_start_cb);
+    ##define ceu_uv_write(a,b,c)       uv_write(a,b,c,1,ceu_uv_write_cb)
+
+    void ceu_uv_free (uv_handle_t* h) {
+        // TODO: other stream types
+#if 0
+        if (h->type == UV_TCP) {
+            uv_stream_t* s = (uv_stream_t*)h;
+            if (s->connect_req != NULL) {
+printf(">>> FREE\n");
+                free(s->connect_req);
+                s->connect_req = NULL;
+            }
+        }
+#endif
+        free(h);
+    }
+
+    void ceu_uv_listen_cb (uv_stream_t* s, int err) {
+        ceu_dbg_assert(err >= 0);
+        tceu_input_UV_LISTEN p = { s, err };
+        ceu_go_ext(CEU_INPUT_UV_LISTEN, &p);
+    }
+
+    ##define CEU_UV_READ_ALLOC_DYN_INIT 128
+
+    void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
+        ceu_dbg_assert(h->data != NULL);
+        tceu_vector* vec = (tceu_vector*) h->data;
+
+        // init dynamic vector or
+        // grow dynamic vector if going past half of it
+        if (vec->is_dyn) {
+            if (vec->max == 0) {
+                ceu_vector_setmax(vec, CEU_UV_READ_ALLOC_DYN_INIT, 0);
+            } else if (vec->len*2>vec->max) {
+                ceu_vector_setmax(vec, (vec->max+10)*3/2, 0);
+            }
+        }
+
+        *buf = uv_buf_init((char*)vec->buf+vec->len, vec->max-vec->len);
+    }
+
+    void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
+        ceu_dbg_assert(n != 0); // TODO: if this happens, try to understand why
+
+        ceu_dbg_assert(s->data != NULL);
+        tceu_vector* vec = (tceu_vector*) s->data;
+        //ceu_dbg_assert(vec->buf == (byte*)buf->base);
+        if (n > 0) {
+            if (ceu_vector_setlen_could(vec,vec->len+n,1) == 0) {
+                n = UV_ENOBUFS;
+            } else {
+                ceu_vector_setlen(vec,vec->len+n,1);
+            }
+            //ceu_dbg_assert(vec->buf == (byte*)buf->base);
+        }
+
+        if (n < 0) {
+            tceu_input_UV_ERROR p = { s, n };
+            ceu_go_ext(CEU_INPUT_UV_ERROR, &p);
+        }
+
+        {
+            tceu_input_UV_READ p = { s, n, (uv_buf_t*)buf };
+            ceu_go_ext(CEU_INPUT_UV_READ, &p);
+        }
+    }
+
+    void ceu_uv_write_cb (uv_write_t* req, int err) {
+        if (err < 0) {
+            // if the "assert" fails, see if the error makes sense and extend it
+            ceu_dbg_assert(err == UV__EOF);
+            tceu_input_UV_ERROR p = { req->handle, err };
+            ceu_go_ext(CEU_INPUT_UV_ERROR, &p);
+        }
+        tceu_input_UV_WRITE p = { req, err };
+        ceu_go_ext(CEU_INPUT_UV_WRITE, &p);
+        free(req);
+    }
+end
+
+#endif

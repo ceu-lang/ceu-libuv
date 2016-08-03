@@ -21,7 +21,7 @@ do
     buf = buf..[{'\n'}];
 
     var ssize n = await UV_FS_write(&file,&buf,$$buf,0);
-    _ceu_dbg_assert((n as int) == 1025);
+    _ceu_dbg_assert(n == 1025);
 
 #if 0
     [[

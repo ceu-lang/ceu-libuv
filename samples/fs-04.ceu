@@ -21,7 +21,7 @@ do
         _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(n));
     end
     _printf("n = %ld\n", n);
-    _ceu_dbg_assert((n as int) == 10);
+    _ceu_dbg_assert(n == 10);
 
     _printf(">>> %s\n", &&buf[0]);
     _ceu_dbg_assert(_strcmp("pqrstuvwx\n",&&buf[0]) == 0);

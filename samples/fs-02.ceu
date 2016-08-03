@@ -14,7 +14,7 @@ var int? err =
             _ceu_dbg_assert(n >= 0);
             buf = buf .. [{'\0'}];
             _printf("%s", &&buf[0]);
-            if (n as int) == 0 then
+            if n == 0 then
                 break;
             else
                 offset = offset + ($$buf-1);

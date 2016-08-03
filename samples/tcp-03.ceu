@@ -38,7 +38,7 @@ do
     // READ/WRITE LOOP
 
     vector[BUFFER_MAX] byte buf;
-    var ssize n_read = (0 as ssize);
+    var ssize n_read = 0;
 
     spawn do
         var _uv_stream_t&& s;
@@ -73,7 +73,7 @@ do
         if n_read < 0 then
             _fprintf(_stderr, "[read]: %s\n", _uv_strerror(n_read));
             break;
-        else/if (n_read as int) == 0 then
+        else/if n_read == 0 then
             _ceu_dbg_assert(0);
         end
 
