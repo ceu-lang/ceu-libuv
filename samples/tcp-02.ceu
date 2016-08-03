@@ -17,9 +17,8 @@
 #define DEFAULT_BACKLOG 128
 #define BUFFER_MAX      10
 
-code/await Connect (var& _uv_tcp_t_ptr server) => void
+code/await Client (var& _uv_tcp_t_ptr server) => void
 do
-    // CLIENT
     var& _uv_tcp_t_ptr client;
     var int? err =
         watching UV_TCP_Open() => (client) do
@@ -53,21 +52,12 @@ do
 
                 // WRITE
                 buf = buf..[{'\0'}];
-                var& _uv_write_t_ptr? req_write = &_malloc(sizeof(_uv_write_t))
-                    finalize (req_write) with
-                        // free on uv callback
-                    end;
-                var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], n_read);
-                _ceu_uv_write(req_write!, client as _uv_stream_t_ptr, &&buf_);
-                var _uv_write_t&& w;
-                var int status;
-                (w, status) = await UV_WRITE until w==req_write!;
-                _ceu_dbg_assert(status == 0);
+                await UV_Stream_Write(&(client as _uv_stream_t_ptr), &buf);
             end
         end;
 
     if err? then
-        _fprintf(_stderr, "[connect]: %s\n", _uv_strerror(err!));
+        _fprintf(_stderr, "[client]: %s\n", _uv_strerror(err!));
     end
 end
 
@@ -80,15 +70,13 @@ do
     _uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
     _uv_tcp_bind(server, &&addr as _sockaddr&&, 0);
 
-    event& int ok_listen;
+    event& void ok_listen;
     watching UV_Stream_Listen(&(server as _uv_stream_t_ptr), DEFAULT_BACKLOG) => (ok_listen)
     do
-        pool[10] Connect cs;
+        pool[10] Client cs;
         watching 10s do
-            var int status;
-            every status in ok_listen do
-                _ceu_dbg_assert(status >= 0);
-                spawn Connect(&server) in cs;
+            every ok_listen do
+                spawn Client(&server) in cs;
             end
         end
     end
