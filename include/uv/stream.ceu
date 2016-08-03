@@ -13,7 +13,7 @@ native/plain
 native/pure
     _uv_is_readable,
     _uv_is_writable,
-    _UV_STREAM_ALIAS,
+    _UV_STREAM_CAST,
 ;
 
 native/nohold
@@ -41,19 +41,16 @@ input (_uv_write_t&&,  int)                UV_WRITE;
 native/pre do
     typedef uv_stream_t* uv_stream_t_ptr;
     typedef uv_write_t*  uv_write_t_ptr;
-
-    ##define UV_STREAM_ALIAS(x) ((uv_stream_t*)x)
+    ##define UV_STREAM_CAST(x) ((uv_stream_t_ptr)x)
 end
 
-#if 0
 data UV_Stream with
-    var& _uv_stream_t_ptr stream;
-    event int         ok_error;
-    event int         ok_listen;
-    event _uv_buf_t&& ok_read;
-    event int         ok_write;
+    var& _uv_stream_t_ptr handle;
+    event int   ok_error;
+    event int   ok_listen;
+    event ssize ok_read;
+    event int   ok_write;
 end
-#endif
 
 code/await UV_Stream_Read (var& _uv_stream_t_ptr stream, vector&[] byte bytes)
                             => (event& ssize ok)

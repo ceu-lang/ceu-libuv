@@ -17,7 +17,7 @@
 #define DEFAULT_BACKLOG 128
 #define BUFFER_MAX      10
 
-code/await Connect (var& _uv_tcp_t server) => void
+code/await Connect (var& UV_Stream server) => void
 do
     // CLIENT
     var& _uv_tcp_t_ptr? client_ = &_malloc(sizeof(_uv_tcp_t))
@@ -33,7 +33,7 @@ do
 
     // ACCEPT
     do
-        var int ret = _uv_accept(&&server as _uv_stream_t&&,client as _uv_stream_t&&);
+        var int ret = _uv_accept(server.handle,client as _uv_stream_t&&);
         _ceu_dbg_assert(ret == 0);
     end
 
@@ -98,28 +98,22 @@ end
 
 _printf("I will terminate after 10s...\n");
 
-var _uv_tcp_t server = _;
-do
-    _ceu_uv_tcp_init(&&server);
-finalize (server) with
-    _uv_close(&&server as _uv_handle_t&&, null);
-end
+var& UV_Stream server;
 
-var _sockaddr_in addr = _;
-_uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
-_uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
-do
-    var int ret = _ceu_uv_listen(&&server as _uv_stream_t&&, DEFAULT_BACKLOG);
-    _ceu_dbg_assert(ret == 0);
-end
+watching UV_TCP_Open() => (server) do
+    var _sockaddr_in addr = _;
+    _uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
+    _uv_tcp_bind(_UV_TCP_CAST(server.handle), &&addr as _sockaddr&&, 0);
+    do
+        var int ret = _ceu_uv_listen(server.handle, DEFAULT_BACKLOG);
+        _ceu_dbg_assert(ret == 0);
+    end
 
-pool[10] Connect cs;
+    pool[10] Connect cs;
 
-watching 10s do
-    var _uv_stream_t&& s;
-    var int status;
-    every (s,status) in UV_LISTEN do
-        if s == (&&server as _uv_stream_t&&) then
+    watching 10s do
+        var int status;
+        every status in server.ok_listen do
             _ceu_dbg_assert(status >= 0);
             spawn Connect(&server) in cs;
         end

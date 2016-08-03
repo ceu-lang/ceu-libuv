@@ -1,6 +1,10 @@
 #ifndef _UV_CEU
 #define _UV_CEU
 
+native/const
+    _UV_EAI_MEMORY,
+;
+
 native/plain
     _mode_t,
     _uv_buf_t,
