@@ -25,7 +25,7 @@ do
                 var ssize n = await ok;
                 _ceu_dbg_assert(n != 0);
                 if n < 0 then
-                    escape n;
+                    escape (n as int);
                 end
             end
         end
@@ -75,8 +75,9 @@ do
             // free after uv_close
         end;
     var& _uv_tcp_t_ptr client = &client_!;
-    _ceu_uv_tcp_init(client);
-    do finalize with
+    do
+        _ceu_uv_tcp_init(client);
+    finalize (client) with
         _ceu_uv_close(client as _uv_handle_t&&);
     end
 
@@ -96,8 +97,9 @@ do
             // free after uv_close
         end;
     var& _uv_tcp_t_ptr server = &server_!;
-    _ceu_uv_tcp_init(server);
-    do finalize with
+    do
+        _ceu_uv_tcp_init(server);
+    finalize (server) with
         _uv_close(server as _uv_handle_t&&, _ceu_uv_free);
     end
 

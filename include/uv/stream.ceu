@@ -13,6 +13,7 @@ native/plain
 native/pure
     _uv_is_readable,
     _uv_is_writable,
+    _UV_STREAM_ALIAS,
 ;
 
 native/nohold
@@ -29,7 +30,6 @@ native/nohold
 native
     _ceu_uv_read_start,
     _uv_stream_t_ptr,
-    _UV_STREAM_ALIAS,
     _uv_write_t_ptr,
 ;
 

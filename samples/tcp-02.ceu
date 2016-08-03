@@ -9,10 +9,6 @@
 #@ Features:
 #@  - class Connection
 #@  - spawn Connection
-#@ Bugs:
-#@  - SEGFAULT after first write back.
-#@      (no problem "req_write" is static and the library now expects
-#@       everything to be dynamic)
 #endif
 
 #include "uv/tcp.ceu"
@@ -29,8 +25,9 @@ do
             // free after uv_close
         end;
     var& _uv_tcp_t_ptr client = &client_!;
-    _ceu_uv_tcp_init(client);
-    do finalize with
+    do
+        _ceu_uv_tcp_init(client);
+    finalize (client) with
         _ceu_uv_close(client as _uv_handle_t&&);
     end
 
