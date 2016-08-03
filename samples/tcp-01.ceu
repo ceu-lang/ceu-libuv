@@ -97,9 +97,8 @@ loop i in [0 -> 2[ do
             //_printf("error: %s\n", _uv_strerror(ret));
             _ceu_dbg_assert(ret == 0);
 
-            var _uv_buf_t&& buf_r;
             var _uv_stream_t&& s;
-            (s,n_read,buf_r) = await UV_READ until s==(client as _uv_stream_t&&);
+            (s,n_read) = await UV_READ until s==(client as _uv_stream_t&&);
             //_ceu_dbg_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
             //_ceu_dbg_assert(buf_r:len == $$buf);
         end

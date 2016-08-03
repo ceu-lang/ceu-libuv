@@ -20,102 +20,76 @@
 code/await Connect (var& UV_Stream server) => void
 do
     // CLIENT
-    var& _uv_tcp_t_ptr? client_ = &_malloc(sizeof(_uv_tcp_t))
-        finalize (client_) with
-            // free after uv_close
-        end;
-    var& _uv_tcp_t_ptr client = &client_!;
-    do
-        _ceu_uv_tcp_init(client);
-    finalize (client) with
-        _ceu_uv_close(client as _uv_handle_t&&);
-    end
-
-    // ACCEPT
-    do
-        var int ret = _uv_accept(server.handle,client as _uv_stream_t&&);
-        _ceu_dbg_assert(ret == 0);
-    end
-
-    // READ/WRITE LOOP
-
-    vector[BUFFER_MAX] byte buf;
-    var ssize n_read = 0;
-
-    spawn do
-        var _uv_stream_t&& s;
-        var int            err;
-        every (s,err) in UV_ERROR do
-            _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err));
-        end
-    end
-
-    loop do
-        // READ
-        do
-            $buf = 0;
-            client:_data = _PURIFY(&&buf);
-            var int ret;
-            do
-                ret = _ceu_uv_read_start(client as _uv_stream_t&&);
-            finalize (client) with
-                // finalize after each UV_READ
-                _uv_read_stop(client as _uv_stream_t&&);
-            end
-            //_printf("error: %s\n", _uv_strerror(ret));
+    var& UV_Stream client;
+    var int? err =
+        watching UV_TCP_Open() => (client) do
+            var int ret = _uv_accept(server.handle,client.handle);
             _ceu_dbg_assert(ret == 0);
 
-            var _uv_buf_t&& buf_r;
-            var _uv_stream_t&& s;
-            (s,n_read,buf_r) = await UV_READ until s==(client as _uv_stream_t&&);
-            //_ceu_dbg_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
-            //_ceu_dbg_assert(buf_r:len == $$buf);
-        end
-        //_ceu_dbg_assert(n_read >= 0);  // connection closed?
-        if n_read < 0 then
-            _fprintf(_stderr, "[read]: %s\n", _uv_strerror(n_read));
-            break;
-        else/if n_read == 0 then
-            _ceu_dbg_assert(0);
-        end
+            // READ/WRITE LOOP
 
-        // not reading anymore
+            vector[BUFFER_MAX] byte buf;
+            var ssize n_read = 0;
 
-        // WRITE
-        buf = buf..[{'\0'}];
-        var& _uv_write_t_ptr? req_write = &_malloc(sizeof(_uv_write_t))
-            finalize (req_write) with
-                // free on uv callback
-            end;
-        var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], n_read);
-        _ceu_uv_write(req_write!, client as _uv_stream_t&&, &&buf_);
-        var _uv_write_t&& w;
-        var int status;
-        (w, status) = await UV_WRITE until w==req_write!;
-        _ceu_dbg_assert(status == 0);
+            spawn do
+                var _uv_stream_t&& s;
+                var int            err;
+                every (s,err) in UV_ERROR do
+                    _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err));
+                end
+            end
+
+            loop do
+                var ssize n_read = 0;
+
+                do
+                    event& ssize ok_read;
+                    var int? err =
+                        watching UV_Stream_Read(&client,&buf) => (ok_read) do
+                            n_read = await ok_read;
+                        end;
+                    _ceu_dbg_assert(not err?);
+                end
+
+                // WRITE
+                buf = buf..[{'\0'}];
+                var& _uv_write_t_ptr? req_write = &_malloc(sizeof(_uv_write_t))
+                    finalize (req_write) with
+                        // free on uv callback
+                    end;
+                var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], n_read);
+                _ceu_uv_write(req_write!, client.handle, &&buf_);
+                var _uv_write_t&& w;
+                var int status;
+                (w, status) = await UV_WRITE until w==req_write!;
+                _ceu_dbg_assert(status == 0);
+            end
+        end;
+
+    if err? then
+        _fprintf(_stderr, "[connect]: %s\n", _uv_strerror(err!));
     end
 end
 
 _printf("I will terminate after 10s...\n");
 
 var& UV_Stream server;
-
-watching UV_TCP_Open() => (server) do
+watching UV_TCP_Open() => (server)
+do
     var _sockaddr_in addr = _;
     _uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
     _uv_tcp_bind(_UV_TCP_CAST(server.handle), &&addr as _sockaddr&&, 0);
+
+    event& int ok_listen;
+    watching UV_Stream_Listen(&server, DEFAULT_BACKLOG) => (ok_listen)
     do
-        var int ret = _ceu_uv_listen(server.handle, DEFAULT_BACKLOG);
-        _ceu_dbg_assert(ret == 0);
-    end
-
-    pool[10] Connect cs;
-
-    watching 10s do
-        var int status;
-        every status in server.ok_listen do
-            _ceu_dbg_assert(status >= 0);
-            spawn Connect(&server) in cs;
+        pool[10] Connect cs;
+        watching 10s do
+            var int status;
+            every status in ok_listen do
+                _ceu_dbg_assert(status >= 0);
+                spawn Connect(&server) in cs;
+            end
         end
     end
 end

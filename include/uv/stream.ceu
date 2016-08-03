@@ -33,10 +33,10 @@ native
     _uv_write_t_ptr,
 ;
 
-input (_uv_stream_t&&, int)                UV_ERROR;
-input (_uv_stream_t&&, int)                UV_LISTEN;
-input (_uv_stream_t&&, ssize, _uv_buf_t&&) UV_READ;
-input (_uv_write_t&&,  int)                UV_WRITE;
+input (_uv_stream_t&&, int)   UV_ERROR;
+input (_uv_stream_t&&, int)   UV_LISTEN;
+input (_uv_stream_t&&, ssize) UV_READ;
+input (_uv_write_t&&,  int)   UV_WRITE;
 
 native/pre do
     typedef uv_stream_t* uv_stream_t_ptr;
@@ -52,6 +52,59 @@ data UV_Stream with
     event int   ok_write;
 end
 
+code/await UV_Stream_Listen (var& UV_Stream stream, var int backlog)
+                                => (event& int ok)
+                                    => int // err
+do
+    event int ok_;
+    ok = &ok_;
+
+    var int err = _ceu_uv_listen(stream.handle, backlog);
+    if err != 0 then
+        escape err;
+    end
+
+    var _uv_stream_t&& s;
+    var int status;
+    every (s,status) in UV_LISTEN do
+        if s == stream.handle then
+            _ceu_dbg_assert(status >= 0);   // UV_ERROR already aborted me
+            emit ok_(status);
+        end
+    end
+end
+
+code/await UV_Stream_Read (var& UV_Stream stream, vector&[] byte buf)
+                            => (event& ssize ok)
+                                => int // err
+do
+    event ssize ok_;
+    ok = &ok_;
+
+    $buf = 0;
+    stream.handle:_data = _PURIFY(&&buf);
+
+    var int err;
+    do
+        err = _ceu_uv_read_start(stream.handle);
+    finalize (stream.handle) with
+        _uv_read_stop(stream.handle);   // finalize after each UV_READ
+    end
+    if err != 0 then
+        escape err;
+    end
+
+    var _uv_stream_t&& s;
+    var ssize n_read;
+    every (s, n_read) in UV_READ do
+        if s == stream.handle then
+            _ceu_dbg_assert(n_read >= 0);   // UV_ERROR already aborted me
+            emit ok_(n_read);
+        end
+    end
+end
+
+#if 0
 code/await UV_Stream_Read (var& _uv_stream_t_ptr stream, vector&[] byte bytes)
                             => (event& ssize ok)
                                 => ssize
@@ -59,14 +112,6 @@ do
     var   usize next = 0;
     event ssize ok_;
     ok = &ok_;
-
-#if 0
-    function (void)=>void reset;
-    function (void)=>void reset do
-        $this.bytes = 0;
-        this.next = 0;
-    end
-#endif
 
     $bytes = 0;
 
@@ -89,13 +134,9 @@ do
         escape err;
     with
         loop do
-            var _uv_buf_t&& buf_r;
             var _uv_stream_t&& s;
             var ssize n;
-            (s,n,buf_r) = await UV_READ
-                          until s == stream;// and
-                                //((_byte&&)buf_r:base == ((_byte&&)&&this.bytes));
-
+            (s,n) = await UV_READ until s == stream;
             _ceu_dbg_assert(n != 0); // TODO: if this happens, try to understand why
             _ceu_dbg_assert(n >= 0); // UV_ERROR aborts me
 
@@ -126,6 +167,7 @@ do
     _ceu_dbg_assert(0);
     escape -1;
 end
+#endif
 
 code/await UV_Stream_Write (var& _uv_stream_t_ptr stream, vector&[] byte bytes)
                                 => void
@@ -205,19 +247,17 @@ printf(">>> FREE\n");
         *buf = uv_buf_init((char*)vec->buf+vec->len, vec->max-vec->len);
     }
 
-    void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* buf) {
+    void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* _) {
         ceu_dbg_assert(n != 0); // TODO: if this happens, try to understand why
 
         ceu_dbg_assert(s->data != NULL);
         tceu_vector* vec = (tceu_vector*) s->data;
-        //ceu_dbg_assert(vec->buf == (byte*)buf->base);
         if (n > 0) {
             if (ceu_vector_setlen_could(vec,vec->len+n,1) == 0) {
                 n = UV_ENOBUFS;
             } else {
                 ceu_vector_setlen(vec,vec->len+n,1);
             }
-            //ceu_dbg_assert(vec->buf == (byte*)buf->base);
         }
 
         if (n < 0) {
@@ -226,7 +266,7 @@ printf(">>> FREE\n");
         }
 
         {
-            tceu_input_UV_READ p = { s, n, (uv_buf_t*)buf };
+            tceu_input_UV_READ p = { s, n };
             ceu_go_ext(CEU_INPUT_UV_READ, &p);
         }
     }

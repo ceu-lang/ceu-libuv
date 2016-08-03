@@ -37,8 +37,7 @@ do
             // free after "uv_close" below
         end;
     if not tcp_? then
-// TODO
-        //escape _UV_EAI_MEMORY;
+        escape _UV_EAI_MEMORY;
     end
 
     var UV_Stream stream_ = val UV_Stream(&_UV_STREAM_CAST(tcp_!),_,_,_,_);
@@ -66,6 +65,14 @@ do
             if s == stream_.handle then
                 _ceu_dbg_assert(status >= 0);
                 emit stream_.ok_listen(status);
+            end
+        end
+    with
+        var _uv_stream_t&& s;
+        var ssize n_read;
+        every (s, n_read) in UV_READ do
+            if s == stream_.handle then
+                emit stream_.ok_read(n_read);
             end
         end
     end
