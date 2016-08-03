@@ -104,7 +104,6 @@ native @nohold
         _uv_tcp_getsockname();
 
 native/pre do
-    ##define UV_STREAM_ALIAS(x) ((uv_stream_t*)&x)
 end
 
 native do
@@ -293,51 +292,6 @@ do
     // client code must enclose with UV_ERROR
     _assert(0);
     escape -1;
-end
-
-class UV_Stream_Write with
-input:
-    var _uv_stream_t& stream;
-    var byte[]&       bytes;
-    var u32           starting, excluding;
-    function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Write build;
-    function (_uv_stream_t& stream, byte[]& bytes, u32 starting, u32 excluding)=>UV_Stream_Write build2;
-do
-    function (_uv_stream_t& stream, byte[]& bytes)=>UV_Stream_Write build do
-        this.stream    = &stream;
-        this.bytes     = &bytes;
-        this.starting  = 0;
-        this.excluding = $bytes;
-    end
-    function (_uv_stream_t& stream, byte[]& bytes, u32 starting, u32 excluding)=>UV_Stream_Write build2 do
-        this.stream    = &stream;
-        this.bytes     = &bytes;
-        this.starting  = starting;
-        this.excluding = excluding;
-    end
-    _assert($bytes >= this.excluding);
-    _assert(this.starting <= this.excluding);
-
-    // WRITE
-    var _uv_write_t&? req_write;
-    finalize
-        req_write = &_malloc(sizeof(_uv_write_t));
-    with
-        // free on uv callback
-    end
-
-    var _uv_buf_t buf = _uv_buf_init((_char&&)(_byte&&)&&this.bytes, $this.bytes);
-                  buf.base = buf.base+starting;
-                  buf.len  = excluding-starting;
-    _assert(_uv_is_writable(&&this.stream));
-    var int ret = _ceu_uv_write(&&req_write!, &&this.stream, &&buf);
-    _assert(ret >= 0);
-    var _uv_write_t&& w;
-    var int status;
-    (w, status) = await UV_WRITE until w==&&req_write!;
-
-    // force external UV_ERROR
-    _assert(status == 0);
 end
 
 class UV_TCP_Client with

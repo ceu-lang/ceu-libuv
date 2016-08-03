@@ -11,6 +11,10 @@ native/plain
     _uv_write_t,
 ;
 
+native/pure
+    _uv_is_writable,
+;
+
 native/nohold
     _ceu_uv_close,
     _ceu_uv_free,
@@ -26,18 +30,52 @@ native/nohold
 native
     _ceu_uv_read_start,
     _ceu_uv_tcp_init,
+    _uv_stream_t_ptr,
+    _UV_STREAM_ALIAS,
     _uv_tcp_t_ptr,
     _uv_write_t_ptr,
 ;
 
-input (_uv_stream_t&&,int)                 UV_ERROR;
+input (_uv_stream_t&&, int)                UV_ERROR;
 input (_uv_stream_t&&, int)                UV_LISTEN;
 input (_uv_stream_t&&, ssize, _uv_buf_t&&) UV_READ;
-input (_uv_write_t&&, int)                 UV_WRITE;
+input (_uv_write_t&&,  int)                UV_WRITE;
 
 native/pre do
-    typedef uv_tcp_t*   uv_tcp_t_ptr;
-    typedef uv_write_t* uv_write_t_ptr;
+    typedef uv_stream_t* uv_stream_t_ptr;
+    typedef uv_tcp_t*    uv_tcp_t_ptr;
+    typedef uv_write_t*  uv_write_t_ptr;
+
+    ##define UV_STREAM_ALIAS(x) ((uv_stream_t*)x)
+end
+
+code/await UV_Stream_Write (var& _uv_stream_t_ptr stream, vector&[] byte bytes)
+                                => void
+do
+    var usize starting  = 0;
+    var usize excluding = $bytes;
+    _ceu_dbg_assert($bytes >= excluding);
+    _ceu_dbg_assert(starting <= excluding);
+
+    var& _uv_write_t_ptr? req_write = &_malloc(sizeof(_uv_write_t))
+        finalize (req_write) with
+            // free on uv callback
+        end;
+
+    var _uv_buf_t buf = _uv_buf_init(&&bytes[0], $bytes);
+                  buf.base = buf.base+starting;
+                  buf.len  = excluding-starting;
+
+    _ceu_dbg_assert(_uv_is_writable(stream));
+
+    var int ret = _ceu_uv_write(req_write!, stream, &&buf);
+    _ceu_dbg_assert(ret >= 0);
+    var _uv_write_t&& w;
+    var int status;
+    (w, status) = await UV_WRITE until w==req_write!;
+
+    // force external UV_ERROR
+    _ceu_dbg_assert(status == 0);
 end
 
 native/pos do
