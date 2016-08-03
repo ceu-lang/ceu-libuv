@@ -13,6 +13,7 @@ native/plain
 
 native/nohold
     _ceu_uv_close,
+    _ceu_uv_free,
     _ceu_uv_listen,       // TODO: unlisten?
     _ceu_uv_write,        // TODO: write_stop?
     _uv_accept,

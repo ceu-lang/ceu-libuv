@@ -10,50 +10,39 @@
 #@  - class Server
 #endif
 
-#include "c.ceu"
-#include "uv.ceu"
-
-input (_uv_stream_t&&,int) UV_LISTEN;
-input (_uv_stream_t&&,_ssize_t, _uv_buf_t&&) UV_READ;
-input (_uv_write_t&&,int) UV_WRITE;
+#include "uv/tcp.ceu"
 
 #define DEFAULT_PORT    7000
 #define DEFAULT_BACKLOG 128
 #define BUFFER_MAX      10
 
-class Connection with
-    function (_uv_tcp_t& server)=>Connection build;
-    var _uv_tcp_t& server;
+code/await Connect (var& _uv_tcp_t server) => void
 do
-    function (_uv_tcp_t& server)=>Connection build do
-        this.server = &server;
-    end
-
     // CLIENT
-    var _uv_tcp_t&? client_;
-    finalize
-        client_ = &_malloc(sizeof(_uv_tcp_t));
-    with
-        // free after uv_close
-    end
-    var _uv_tcp_t& client = &client_!;
-    _ceu_uv_tcp_init(&&client)
-        finalize with
-            _uv_close((_uv_handle_t&&)&&client, _ceu_uv_free);
+    var& _uv_tcp_t_ptr? client_ = &_malloc(sizeof(_uv_tcp_t))
+        finalize (client_) with
+            // free after uv_close
         end;
+    var& _uv_tcp_t_ptr client = &client_!;
+    _ceu_uv_tcp_init(client);
+    do finalize with
+        _ceu_uv_close(client as _uv_handle_t&&);
+    end
 
     // ACCEPT
     do
-        var int ret = _uv_accept((_uv_stream_t&&)&&server,(_uv_stream_t&&)&&client);
-        _assert(ret == 0);
+        var int ret = _uv_accept(&&server as _uv_stream_t&&,client as _uv_stream_t&&);
+        _ceu_dbg_assert(ret == 0);
     end
 
     // READ/WRITE LOOP
 
-    var byte[BUFFER_MAX] buf;
-    var _ssize_t n_read = 0;
+    vector[BUFFER_MAX] byte buf;
+    var ssize n_read = (0 as ssize);
 
     spawn do
+        var _uv_stream_t&& s;
+        var int            err;
         every (s,err) in UV_ERROR do
             _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err));
         end
@@ -63,86 +52,82 @@ do
         // READ
         do
             $buf = 0;
-            client.data = &&buf;
-            var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client)
-                            finalize with end;
-            finalize with
+            client:_data = _PURIFY(&&buf);
+            var int ret;
+            do
+                ret = _ceu_uv_read_start(client as _uv_stream_t&&);
+            finalize (client) with
                 // finalize after each UV_READ
-                _uv_read_stop((_uv_stream_t&&)&&client);
-            end;
+                _uv_read_stop(client as _uv_stream_t&&);
+            end
             //_printf("error: %s\n", _uv_strerror(ret));
-            _assert(ret == 0);
+            _ceu_dbg_assert(ret == 0);
 
             var _uv_buf_t&& buf_r;
             var _uv_stream_t&& s;
-            (s,n_read,buf_r) = await UV_READ until s==(_uv_stream_t&&)&&client;
-            //_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
-            //_assert(buf_r:len == $$buf);
+            (s,n_read,buf_r) = await UV_READ until s==(client as _uv_stream_t&&);
+            //_ceu_dbg_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
+            //_ceu_dbg_assert(buf_r:len == $$buf);
         end
-        //_assert(n_read >= 0);  // connection closed?
+        //_ceu_dbg_assert(n_read >= 0);  // connection closed?
         if n_read < 0 then
             _fprintf(_stderr, "[read]: %s\n", _uv_strerror(n_read));
             break;
-        else/if n_read == 0 then
-            _assert(0);
+        else/if (n_read as int) == 0 then
+            _ceu_dbg_assert(0);
         end
 
         // not reading anymore
 
         // WRITE
-        buf = []..buf..['\0'];
-        var _uv_write_t req_write = _uv_write_t();
-        var _uv_buf_t buf_ = _uv_buf_init((_byte&&)&&buf, n_read);
-        _ceu_uv_write(&&req_write, (_uv_stream_t&&)&&client, &&buf_);
+        buf = buf..[{'\0'}];
+        var& _uv_write_t_ptr? req_write = &_malloc(sizeof(_uv_write_t))
+            finalize (req_write) with
+                // free on uv callback
+            end;
+        var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], n_read);
+        _ceu_uv_write(req_write!, client as _uv_stream_t&&, &&buf_);
         var _uv_write_t&& w;
         var int status;
-        (w, status) = await UV_WRITE until w==&&req_write;
-        _assert(status == 0);
+        (w, status) = await UV_WRITE until w==req_write!;
+        _ceu_dbg_assert(status == 0);
     end
 end
 
-class Server with
-    var _char&& ip;
-    var int port;
-    var int backlog;
-    function (@hold _char&& ip, int port, int backlog)=>Server build;
+code/await Server (var _char&& ip, var int port, var int backlog) => void
 do
-    function (@hold _char&& ip, int port, int backlog)=>Server build do
-        this.ip     := ip;
-        this.port    = port;
-        this.backlog = backlog;
-    end
-
-    var _uv_tcp_t&? server_;
-    finalize
-        server_ = &_malloc(sizeof(_uv_tcp_t));
-    with
-        // free after uv_close
-    end
-    var _uv_tcp_t& server = &server_!;
-    _ceu_uv_tcp_init(&&server)
-        finalize with
-            _uv_close((_uv_handle_t&&)&&server, _ceu_uv_free);
+    var& _uv_tcp_t_ptr? server_ = &_malloc(sizeof(_uv_tcp_t))
+        finalize (server_) with
+            // free after uv_close
         end;
-
-    var _sockaddr_in addr = _sockaddr_in();
-    _uv_ip4_addr(this.ip, this.port, &&addr);
-    _uv_tcp_bind(&&server, (_sockaddr&&)&&addr, 0);
-    do
-        var int ret = _ceu_uv_listen((_uv_stream_t&&)&&server, this.backlog);
-        _assert(ret == 0);
+    var& _uv_tcp_t_ptr server = &server_!;
+    _ceu_uv_tcp_init(server);
+    do finalize with
+        _uv_close(server as _uv_handle_t&&, _ceu_uv_free);
     end
 
+    var _sockaddr_in addr = _;
+    _uv_ip4_addr(&&ip[0], port, &&addr);
+    _uv_tcp_bind(server, &&addr as _sockaddr&&, 0);
+    do
+        var int ret = _ceu_uv_listen(server as _uv_stream_t&&, backlog);
+        _ceu_dbg_assert(ret == 0);
+    end
+
+    pool[10] Connect cs;
+
+    var _uv_stream_t&& s;
+    var int status;
     every (s,status) in UV_LISTEN do
-        if s == (_uv_stream_t&&)&&server then
-            _assert(status >= 0);
-            spawn Connection.build(&server);
+        if s == (server as _uv_stream_t&&) then
+            _ceu_dbg_assert(status >= 0);
+            spawn Connect(&server) in cs;
         end
     end
 end
 
-var Server _ = Server.build("0.0.0.0", DEFAULT_PORT+0, DEFAULT_BACKLOG);
-var Server _ = Server.build("0.0.0.0", DEFAULT_PORT+1, DEFAULT_BACKLOG);
+spawn Server("0.0.0.0", DEFAULT_PORT+0, DEFAULT_BACKLOG);
+spawn Server("0.0.0.0", DEFAULT_PORT+1, DEFAULT_BACKLOG);
 
 _printf("I will terminate after 10s...\n");
 await 10s;
