@@ -15,7 +15,7 @@
 #@      - close first client
 #@      - read the "echo"
 #@  - write long string
-#@      - ERROR!
+#@      - ERROR! ("out of bounds")
 #@ Features:
 #@  - UV_LISTEN, UV_READ, UV_WRITE
 #endif
@@ -63,7 +63,7 @@ loop i in [0 -> 2[ do
             // LISTEN
             var _uv_stream_t&& s;
             var int status;
-            (s,status) = await UV_LISTEN until s==&&server;
+            (s,status) = await UV_LISTEN until s==(&&server as _uv_stream_t&&);
             _ceu_dbg_assert(status >= 0);
         end
     end
@@ -98,7 +98,7 @@ loop i in [0 -> 2[ do
 
             var _uv_buf_t&& buf_r;
             var _uv_stream_t&& s;
-            (s,n_read,buf_r) = await UV_READ until s==client;
+            (s,n_read,buf_r) = await UV_READ until s==(client as _uv_stream_t&&);
             //_ceu_dbg_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
             //_ceu_dbg_assert(buf_r:len == $$buf);
         end
@@ -114,12 +114,15 @@ loop i in [0 -> 2[ do
 
         // WRITE
         buf = buf..[{'\0'}];
-        var _uv_write_t req_write = _;
+        var& _uv_write_t_ptr? req_write = &_malloc(sizeof(_uv_write_t))
+            finalize (req_write) with
+                // free on uv callback
+            end;
         var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], n_read);
-        _ceu_uv_write(&&req_write, client as _uv_stream_t&&, &&buf_);
+        _ceu_uv_write(req_write!, client as _uv_stream_t&&, &&buf_);
         var _uv_write_t&& w;
         var int status;
-        (w, status) = await UV_WRITE until w==&&req_write;
+        (w, status) = await UV_WRITE until w==req_write!;
         _ceu_dbg_assert(status == 0);
     end
 end

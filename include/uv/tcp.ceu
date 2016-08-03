@@ -26,6 +26,7 @@ native
     _ceu_uv_read_start,
     _ceu_uv_tcp_init,
     _uv_tcp_t_ptr,
+    _uv_write_t_ptr,
 ;
 
 input (_uv_stream_t&&,int)                 UV_ERROR;
@@ -34,7 +35,8 @@ input (_uv_stream_t&&, ssize, _uv_buf_t&&) UV_READ;
 input (_uv_write_t&&, int)                 UV_WRITE;
 
 native/pre do
-    typedef uv_tcp_t* uv_tcp_t_ptr;
+    typedef uv_tcp_t*   uv_tcp_t_ptr;
+    typedef uv_write_t* uv_write_t_ptr;
 end
 
 native/pos do
