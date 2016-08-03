@@ -13,7 +13,6 @@ native/plain
 native/pure
     _uv_is_readable,
     _uv_is_writable,
-    _UV_STREAM_CAST,
 ;
 
 native/nohold
@@ -41,25 +40,16 @@ input (_uv_write_t&&,  int)   UV_WRITE;
 native/pre do
     typedef uv_stream_t* uv_stream_t_ptr;
     typedef uv_write_t*  uv_write_t_ptr;
-    ##define UV_STREAM_CAST(x) ((uv_stream_t_ptr)x)
 end
 
-data UV_Stream with
-    var& _uv_stream_t_ptr handle;
-    event int   ok_error;
-    event int   ok_listen;
-    event ssize ok_read;
-    event int   ok_write;
-end
-
-code/await UV_Stream_Listen (var& UV_Stream stream, var int backlog)
+code/await UV_Stream_Listen (var& _uv_stream_t_ptr stream, var int backlog)
                                 => (event& int ok)
                                     => int // err
 do
     event int ok_;
     ok = &ok_;
 
-    var int err = _ceu_uv_listen(stream.handle, backlog);
+    var int err = _ceu_uv_listen(stream, backlog);
     if err != 0 then
         escape err;
     end
@@ -67,14 +57,14 @@ do
     var _uv_stream_t&& s;
     var int status;
     every (s,status) in UV_LISTEN do
-        if s == stream.handle then
+        if s == stream then
             _ceu_dbg_assert(status >= 0);   // UV_ERROR already aborted me
             emit ok_(status);
         end
     end
 end
 
-code/await UV_Stream_Read (var& UV_Stream stream, vector&[] byte buf)
+code/await UV_Stream_Read (var& _uv_stream_t_ptr stream, vector&[] byte buf)
                             => (event& ssize ok)
                                 => int // err
 do
@@ -82,13 +72,13 @@ do
     ok = &ok_;
 
     $buf = 0;
-    stream.handle:_data = _PURIFY(&&buf);
+    stream:_data = _PURIFY(&&buf);
 
     var int err;
     do
-        err = _ceu_uv_read_start(stream.handle);
-    finalize (stream.handle) with
-        _uv_read_stop(stream.handle);   // finalize after each UV_READ
+        err = _ceu_uv_read_start(stream);
+    finalize (stream) with
+        _uv_read_stop(stream);   // finalize after each UV_READ
     end
     if err != 0 then
         escape err;
@@ -97,7 +87,7 @@ do
     var _uv_stream_t&& s;
     var ssize n_read;
     every (s, n_read) in UV_READ do
-        if s == stream.handle then
+        if s == stream then
             _ceu_dbg_assert(n_read >= 0);   // UV_ERROR already aborted me
             emit ok_(n_read);
         end

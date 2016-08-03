@@ -17,13 +17,13 @@
 #define DEFAULT_BACKLOG 128
 #define BUFFER_MAX      10
 
-code/await Connect (var& UV_Stream server) => void
+code/await Connect (var& _uv_tcp_t_ptr server) => void
 do
     // CLIENT
-    var& UV_Stream client;
+    var& _uv_tcp_t_ptr client;
     var int? err =
         watching UV_TCP_Open() => (client) do
-            var int ret = _uv_accept(server.handle,client.handle);
+            var int ret = _uv_accept(server as _uv_stream_t_ptr, client as _uv_stream_t_ptr);
             _ceu_dbg_assert(ret == 0);
 
             // READ/WRITE LOOP
@@ -45,7 +45,7 @@ do
                 do
                     event& ssize ok_read;
                     var int? err =
-                        watching UV_Stream_Read(&client,&buf) => (ok_read) do
+                        watching UV_Stream_Read(&(client as _uv_stream_t_ptr),&buf) => (ok_read) do
                             n_read = await ok_read;
                         end;
                     _ceu_dbg_assert(not err?);
@@ -58,7 +58,7 @@ do
                         // free on uv callback
                     end;
                 var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], n_read);
-                _ceu_uv_write(req_write!, client.handle, &&buf_);
+                _ceu_uv_write(req_write!, client as _uv_stream_t_ptr, &&buf_);
                 var _uv_write_t&& w;
                 var int status;
                 (w, status) = await UV_WRITE until w==req_write!;
@@ -73,15 +73,15 @@ end
 
 _printf("I will terminate after 10s...\n");
 
-var& UV_Stream server;
+var& _uv_tcp_t_ptr server;
 watching UV_TCP_Open() => (server)
 do
     var _sockaddr_in addr = _;
     _uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
-    _uv_tcp_bind(_UV_TCP_CAST(server.handle), &&addr as _sockaddr&&, 0);
+    _uv_tcp_bind(server, &&addr as _sockaddr&&, 0);
 
     event& int ok_listen;
-    watching UV_Stream_Listen(&server, DEFAULT_BACKLOG) => (ok_listen)
+    watching UV_Stream_Listen(&(server as _uv_stream_t_ptr), DEFAULT_BACKLOG) => (ok_listen)
     do
         pool[10] Connect cs;
         watching 10s do

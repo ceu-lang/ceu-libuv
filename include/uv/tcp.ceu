@@ -7,10 +7,6 @@ native/plain
     _uv_tcp_t,
 ;
 
-native/pure
-    _UV_TCP_CAST,
-;
-
 native/nohold
     _uv_tcp_bind,         // TODO: unbind?
     _uv_tcp_getsockname,
@@ -23,14 +19,13 @@ native
 
 native/pre do
     typedef uv_tcp_t* uv_tcp_t_ptr;
-    ##define UV_TCP_CAST(x) ((uv_tcp_t_ptr)x)
 end
 
 native/pos do
     ##define ceu_uv_tcp_init(a) uv_tcp_init(&ceu_uv_loop, a);
 end
 
-code/await UV_TCP_Open (void) => (var& UV_Stream stream) => int // err
+code/await UV_TCP_Open (void) => (var& _uv_tcp_t_ptr tcp) => int // err
 do
     var& _uv_tcp_t_ptr? tcp_ = &_malloc(sizeof(_uv_tcp_t))
         finalize (tcp_) with
@@ -40,8 +35,7 @@ do
         escape _UV_EAI_MEMORY;
     end
 
-    var UV_Stream stream_ = val UV_Stream(&_UV_STREAM_CAST(tcp_!),_,_,_,_);
-    stream = &stream_;
+    tcp = &tcp_!;
 
     var int err;
     do
@@ -53,29 +47,10 @@ do
         escape err;
     end
 
-    par do
-        var _uv_stream_t&& s;
-        var int err;
-        (s,err) = await UV_ERROR until (s==stream_.handle);
-        escape err;
-    with
-        var _uv_stream_t&& s;
-        var int status;
-        every (s,status) in UV_LISTEN do
-            if s == stream_.handle then
-                _ceu_dbg_assert(status >= 0);
-                emit stream_.ok_listen(status);
-            end
-        end
-    with
-        var _uv_stream_t&& s;
-        var ssize n_read;
-        every (s, n_read) in UV_READ do
-            if s == stream_.handle then
-                emit stream_.ok_read(n_read);
-            end
-        end
-    end
+    var _uv_stream_t_ptr s;
+    var int err;
+    (s,err) = await UV_ERROR until (s==(tcp_! as _uv_stream_t_ptr));
+    escape err;
 end
 
 #endif
