@@ -7,7 +7,7 @@
 #@  - write long string
 #@      - ERROR!
 #@ Features:
-#@  - class Server
+#@  - code Server
 #endif
 
 #include "uv/tcp.ceu"

@@ -17,7 +17,7 @@
 #@  - write long string
 #@      - ERROR! ("out of bounds")
 #@ Features:
-#@  - UV_LISTEN, UV_READ, UV_WRITE
+#@  - UV_ERROR, UV_LISTEN, UV_READ, UV_WRITE
 #endif
 
 #include "uv/tcp.ceu"

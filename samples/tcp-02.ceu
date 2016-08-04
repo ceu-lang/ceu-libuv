@@ -7,8 +7,8 @@
 #@  - write long string
 #@      - ERROR!
 #@ Features:
-#@  - class Connection
-#@  - spawn Connection
+#@  - code Client
+#@  - uses UV_Open/Listen/Read/Write
 #endif
 
 #include "uv/tcp.ceu"
