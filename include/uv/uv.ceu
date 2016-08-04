@@ -124,58 +124,5 @@ end
                                 sizeof(u32),1);     \
     end
 
-class UV_TCP_Client with
-    var char[]& ip;
-    var int port;
-    event int ok;
-output:
-    var _uv_tcp_t& tcp;
-
-    function (char[]& ip, int port)=>UV_TCP_Client build;
-do
-    function (char[]& ip, int port)=>UV_TCP_Client build do
-        this.ip   = &ip;
-        this.port = port;
-    end
-
-    // CLIENT
-    var _uv_tcp_t&? tcp_;
-    finalize
-        tcp_ = &_malloc(sizeof(_uv_tcp_t));
-    with
-        // free after uv_close
-    end
-    this.tcp = &tcp_!;
-    _ceu_uv_tcp_init(&&tcp)
-        finalize with
-            _ceu_uv_close((_uv_handle_t&&)&&tcp);
-        end;
-
-    var _uv_connect_t&? connect_;
-    finalize
-        connect_ = &_malloc(sizeof(_uv_connect_t));
-    with
-        // free on uv callback
-    end
-
-    var _sockaddr_in dest = _sockaddr_in();
-    _uv_ip4_addr((_char&&)&&this.ip, this.port, &&dest);
-    _ceu_uv_tcp_connect(&&connect_!, &&tcp, (_sockaddr&&)&&dest);
-
-    do
-        var _uv_connect_t&& c;
-        var int err;
-        (c,err) = await UV_CONNECT until c==&&connect_!;
-        emit this.ok => err;
-    end
-
-    do
-        var _uv_stream_t&& s;
-        var int err;
-        (s,err) = await UV_ERROR until (s==(_uv_stream_t&&)&&this.tcp);
-        escape err;
-    end
-end
-
 #endif
 #endif
