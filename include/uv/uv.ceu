@@ -82,32 +82,14 @@ end
 
 #if 0
 
-
-// TODO: int, u32 => ssize_t, size_t
-
-#include "c.ceu"
-
-native @plain
-        _uv_connect_t,
-        _uv_fs_t,
-        _uv_stat_t,
-
 native @pure
         _GET_HOST_U32(),
-        _uv_is_readable(),
-        _uv_is_writable(),
-        _uv_strerror();
 
 native @nohold
-        _ceu_uv_fs_close_(),
-        _ceu_uv_tcp_connect(),  // TODO: diconnect?
         _ceu_uv_tcp_getpeerport(),
         _ceu_uv_tcp_getsockport(),
         _uv_inet_ntop(),
         _uv_tcp_getpeername(),
-
-native/pre do
-end
 
 native do
     int ceu_uv_tcp_getpeerport (uv_tcp_t* tcp) {
@@ -141,78 +123,6 @@ end
                                 (byte&&)&&network,  \
                                 sizeof(u32),1);     \
     end
-
-input (_uv_stream_t&&,_ssize_t, _uv_buf_t&&) UV_READ;
-input (_uv_write_t&&,int)   UV_WRITE;
-input (_uv_stream_t&&,int)  UV_LISTEN;
-input (_uv_connect_t&&,int) UV_CONNECT;
-
-class UV_FS_Read_Line with
-    var UV_FS_open& open;
-    var char[]&     line;
-    var u32&        offset;
-    function (UV_FS_open& open, byte[]& line, u32& offset)=>UV_FS_Read_Line run;
-do
-    function (UV_FS_open& open, byte[]& line, u32& offset)=>UV_FS_Read_Line run do
-        this.open   = &open;
-        this.line   = &line;
-        this.offset = &offset;
-    end
-
-    // TODO: reading 1-by-1
-    loop do
-        var char[1] buf;
-        var int ret = do UV_FS_read.run(&open, &buf, 1, this.offset);
-        this.offset = offset + 1;
-        if ret == 0 then
-            escape _UV_EOF;
-        else
-            _assert(ret == 1);
-        end
-        if buf[0] == '\n' then
-            break;
-        end
-        this.line = []..line..buf;
-    end
-
-    escape 0;
-end
-
-// TODO: rename UV_Stream_Reader/Writer? build->run?
-// TODO: function to signal "consumption", if the org is finalized w/ pending
-//       consumption, then error
-
-class UV_Stream_ReadUntil with
-    var UV_Stream_Read& reader;
-    var u32             limit;
-    function (UV_Stream_Read& reader, u32 limit)=>UV_Stream_ReadUntil run;
-do
-    function (UV_Stream_Read& reader, u32 limit)=>UV_Stream_ReadUntil run do
-        this.reader = &reader;
-        this.limit  = limit;
-    end
-
-    if reader.next >= this.limit then
-        escape 0;
-    end
-
-    watching this.reader do
-        loop do
-            var int dt = await this.reader.ok;
-            if dt < 0 then
-                // TODO: versions w/ assert/escape
-                _printf("error[%d]: %s\n", dt, _uv_strerror(dt));
-                _assert(0);
-                escape dt;
-            end
-            if this.reader.next >= this.limit then
-                escape 0;
-            end
-        end
-    end
-
-    escape -1;
-end
 
 class UV_TCP_Client with
     var char[]& ip;

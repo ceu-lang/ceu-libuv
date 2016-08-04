@@ -1,0 +1,10 @@
+#include "c.ceu"
+#include "uv/uv.ceu"
+
+loop i in [0 -> 5[ do
+    _printf(">>> 1s\n");
+    await 1s;
+    _printf("<<< 1s\n");
+end
+
+escape 0;

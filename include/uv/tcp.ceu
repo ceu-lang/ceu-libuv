@@ -8,7 +8,8 @@ native/plain
 ;
 
 native/nohold
-    _uv_tcp_bind,         // TODO: unbind?
+    _ceu_uv_tcp_connect,    // TODO: diconnect?
+    _uv_tcp_bind,           // TODO: unbind?
     _uv_tcp_getsockname,
 ;
 
@@ -23,6 +24,13 @@ end
 
 native/pos do
     ##define ceu_uv_tcp_init(a) uv_tcp_init(&ceu_uv_loop, a);
+    ##define ceu_uv_tcp_connect(a,b,c) uv_tcp_connect(a,b,c,ceu_uv_connect_cb)
+
+    void ceu_uv_connect_cb (uv_connect_t* c, int err) {
+        tceu_input_UV_CONNECT p = { c, err };
+        ceu_go_ext(CEU_INPUT_UV_CONNECT, &p);
+        free(c);
+    }
 end
 
 code/await UV_TCP_Open (void) => (var& _uv_tcp_t_ptr tcp) => int // err

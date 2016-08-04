@@ -5,6 +5,7 @@
 #include "uv/uv.ceu"
 
 native/plain
+    _uv_connect_t,
     _uv_handle_t,
     _uv_stream_t,
     _uv_write_t,
@@ -28,18 +29,21 @@ native/nohold
 
 native
     _ceu_uv_read_start,
+    _uv_connect_t_ptr,
     _uv_stream_t_ptr,
     _uv_write_t_ptr,
 ;
 
 input (_uv_stream_t&&, int)   UV_ERROR;
 input (_uv_stream_t&&, int)   UV_LISTEN;
+input (_uv_connect_t&&,int)   UV_CONNECT;
 input (_uv_stream_t&&, ssize) UV_READ;
 input (_uv_write_t&&,  int)   UV_WRITE;
 
 native/pre do
-    typedef uv_stream_t* uv_stream_t_ptr;
-    typedef uv_write_t*  uv_write_t_ptr;
+    typedef uv_connect_t* uv_connect_t_ptr;
+    typedef uv_stream_t*  uv_stream_t_ptr;
+    typedef uv_write_t*   uv_write_t_ptr;
 end
 
 code/await UV_Stream_Listen (var& _uv_stream_t_ptr stream, var int backlog)
