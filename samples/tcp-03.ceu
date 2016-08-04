@@ -27,7 +27,6 @@ do
             // READ/WRITE LOOP
 
             vector[BUFFER_MAX] byte buf;
-            var ssize n_read = 0;
 
             spawn do
                 var _uv_stream_t&& s;
@@ -38,13 +37,11 @@ do
             end
 
             loop do
-                var ssize n_read = 0;
-
                 do
-                    event& ssize ok_read;
+                    event& usize ok_read;
                     var int? err =
                         watching UV_Stream_Read(&(client as _uv_stream_t_ptr),&buf) => (ok_read) do
-                            n_read = await ok_read;
+                            await ok_read;
                         end;
                     _ceu_dbg_assert(not err?);
                 end

@@ -65,10 +65,10 @@ do
 end
 
 code/await UV_Stream_Read (var& _uv_stream_t_ptr stream, vector&[] byte buf)
-                            => (event& ssize ok)
+                            => (event& usize ok)
                                 => int // err
 do
-    event ssize ok_;
+    event usize ok_;
     ok = &ok_;
 
     $buf = 0;
@@ -89,16 +89,15 @@ do
     every (s, n_read) in UV_READ do
         if s == stream then
             _ceu_dbg_assert(n_read >= 0);   // UV_ERROR has already aborted me
-            emit ok_(n_read);
+            emit ok_(n_read as usize);
         end
     end
 end
 
-#if 0
 code/await UV_Stream_ReadLine (var& _uv_stream_t_ptr stream, vector&[] byte string)
-            => ssize
+                                => void
 do
-    event& ssize ok;
+    event& usize ok;
     watching UV_Stream_Read(&stream,&string) => (ok) do
         loop do
             await ok;
@@ -107,16 +106,12 @@ do
             _ceu_dbg_assert(ret < 2);
             if ret == 1 then
                 _ceu_dbg_assert(n == {'\n'});
-                escape 0;
+                escape;
             end
         end
     end
-
-    // client code must enclose with UV_ERROR
-    _ceu_dbg_assert(0);
-    escape -1;
+    _ceu_dbg_assert(0);   // UV_ERROR has already aborted me
 end
-#endif
 
 code/await UV_Stream_Write (var& _uv_stream_t_ptr stream, vector&[] byte bytes)
                                 => int // err

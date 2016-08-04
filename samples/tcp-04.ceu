@@ -1,0 +1,101 @@
+#if 0
+#@ Description: Parallel "echo" servers.
+#@  - same as `tcp-03.ceu`
+#@  - server "7000" echoes back on every character
+#@  - server "7001" echoes back on every line
+#@ Features:
+#@  - class Handler0, Handler1
+#@  - uses UV_Read_Line
+#endif
+
+#include "uv/tcp.ceu"
+
+#define DEFAULT_PORT    7000
+#define DEFAULT_BACKLOG 128
+#define BUFFER_MAX      10
+
+code/await Handler0 (var& _uv_stream_t_ptr stream) => int
+do
+    loop do
+        vector[] byte string;
+        do
+            event& usize ok_read;
+            watching UV_Stream_Read(&stream, &string)
+                        => (ok_read)
+            do
+                await ok_read;
+            end
+        end
+        string = string..[{'\0'}];
+        _printf("[handler-0] %s\n", &&string[0]);
+        await UV_Stream_Write(&stream, &string);
+    end
+end
+
+code/await Handler1 (var& _uv_stream_t_ptr stream) => int
+do
+    loop do
+        vector[] byte string;
+        await UV_Stream_ReadLine(&stream, &string);
+        string = string..[{'\0'}];
+        _printf("[handler-1] %s", &&string[0]);
+        await UV_Stream_Write(&stream, &string);
+    end
+end
+
+code/await Client (var& _uv_tcp_t_ptr server) => void
+do
+    var& _uv_tcp_t_ptr client;
+    var int? err =
+        watching UV_TCP_Open() => (client) do
+            var int ret = _uv_accept(server as _uv_stream_t_ptr, client as _uv_stream_t_ptr);
+            _ceu_dbg_assert(ret == 0);
+
+            var _sockaddr_in sock = _;
+            var int len = sizeof(_sockaddr_in) as int;
+            var int ret = _uv_tcp_getsockname(client, (&&sock as _sockaddr&&), &&len);
+            _ceu_dbg_assert(ret == 0);
+            var int port = _ntohs(sock.sin_port);
+
+            if port == DEFAULT_PORT then
+                await Handler0(&(client as _uv_stream_t_ptr));
+            else/if port == DEFAULT_PORT+1 then
+                await Handler1(&(client as _uv_stream_t_ptr));
+            else
+                _ceu_dbg_assert(0);
+            end
+        end;
+
+    if err? then
+        _fprintf(_stderr, "[client]: %s\n", _uv_strerror(err!));
+    end
+end
+
+code/await Server (var _char&& ip, var int port, var int backlog) => void
+do
+    var _sockaddr_in addr = _;
+    _uv_ip4_addr(&&ip[0], port, &&addr);
+
+    var& _uv_tcp_t_ptr server;
+    watching UV_TCP_Open() => (server)
+    do
+        _uv_tcp_bind(server, &&addr as _sockaddr&&, 0);
+
+        event& void ok_listen;
+        watching UV_Stream_Listen(&(server as _uv_stream_t_ptr), DEFAULT_BACKLOG) => (ok_listen)
+        do
+            pool[10] Client cs;
+            every ok_listen do
+                spawn Client(&server) in cs;
+            end
+        end
+    end
+end
+
+spawn Server("0.0.0.0", DEFAULT_PORT+0, DEFAULT_BACKLOG);
+spawn Server("0.0.0.0", DEFAULT_PORT+1, DEFAULT_BACKLOG);
+
+_printf("I will terminate after 10s...\n");
+await 10s;
+_printf("DONE!\n");
+escape 0;
