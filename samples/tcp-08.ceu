@@ -1,0 +1,64 @@
+#if 0
+#@ Description: 2 "echo" servers & 4 "echo" clients
+#@  - stop 1 server after 5s
+#@      - 2 clients terminate
+#@ Features:
+#@  - UV_TCP_Server, UV_TCP_Client
+#endif
+
+#include "uv/tcp.ceu"
+#define UV_TCP_SERVER_HANDLER_CEU tcp-07-handler.inc
+#include "uv/tcp-server.ceu"
+
+#define PORT    7000
+#define BACKLOG 128
+
+code/await Client (var int port) => void do
+    var& _uv_tcp_t_ptr tcp;
+    event& void ok_connected;
+    watching UV_TCP_Connect("127.0.0.1", port) => (tcp, ok_connected)
+    do
+        await ok_connected;
+
+        _printf("I will terminate after 10s...\n");
+
+        loop do
+            await 1s;
+            vector[20] byte string = [] .. "Alo mundo!\n";
+            await UV_Stream_Write(&(tcp as _uv_stream_t_ptr), &string);
+// change to 0 to generate "write" errors instead of "read" errors
+#if 1
+            await UV_Stream_ReadLine(&(tcp as _uv_stream_t_ptr), &string);
+#endif
+            _printf("[client] %s", &&string[0]);
+        end
+    end
+end
+
+_printf("I will terminate after 10s...\n");
+
+watching 10s do
+    par do
+        await UV_TCP_Server("0.0.0.0", PORT+0, BACKLOG);
+    with
+        watching 5s do
+            await UV_TCP_Server("0.0.0.0", PORT+1, BACKLOG);
+        end
+        _printf("[server %d] stop\n", PORT+1);
+    with
+        await Client(PORT+0);
+        _printf("[client %d] stop\n", PORT+0);
+    with
+        await Client(PORT+0);
+        _printf("[client %d] stop\n", PORT+0);
+    with
+        await Client(PORT+1);
+        _printf("[client %d] stop\n", PORT+1);
+    with
+        await Client(PORT+1);
+        _printf("[client %d] stop\n", PORT+1);
+    end
+end
+
+_printf("DONE!\n");
+escape 0;
