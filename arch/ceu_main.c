@@ -1,61 +1,4 @@
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <uv.h>
-
-#define ceu_out_assert(v) ceu_sys_assert(v)
-void ceu_sys_assert (int v) {
-    assert(v);
-}
-
-#define ceu_out_log(m,s) ceu_sys_log(m,s)
-void ceu_sys_log (int mode, long s) {
-    switch (mode) {
-        case 0:
-            fprintf(stderr, "%s", (char*)s);
-            break;
-        case 1:
-            fprintf(stderr, "%lX", s);
-            break;
-        case 2:
-            fprintf(stderr, "%ld", s);
-            break;
-    }
-}
-
-typedef struct {
-    void* vec;
-    int   has_pending_data;
-} ceu_uv_read_t;
-
 #include "_ceu_app.h"
-
-tceu_app CEU_APP;
-#if 0
-uv_loop_t ceu_uv_loop;
-#endif
-
-/* FS */
-
-/* TCP */
-
-#define ceu_uv_tcp_connect(a,b,c) uv_tcp_connect(a,b,c,ceu_uv_connect_cb)
-
-void ceu_uv_connect_cb (uv_connect_t* c, int err) {
-#ifdef CEU_IN_UV_CONNECT
-    tceu__uv_connect_t___int p = { c, err };
-    ceu_sys_go(&CEU_APP, CEU_IN_UV_CONNECT, &p);
-#endif
-    free(c);
-#ifdef CEU_RET
-    if (!CEU_APP.isAlive) {
-        uv_stop(&ceu_uv_loop);
-    }
-#endif
-}
-
-#ifdef CEU_IN_UV_WRITE
-#endif
 
 /* ASYNCS */
 
@@ -76,36 +19,6 @@ void ceu_uv_idle_cb (uv_idle_t* idler) {
 }
 #endif
 
-/* WCLOCKS */
-
-#if 0
-#ifdef CEU_WCLOCKS
-uv_timer_t ceu_uv_timer;
-s32 ceu_uv_timer_next_us;
-#define ceu_out_wclock_set(us)         \
-    if (us == CEU_WCLOCK_INACTIVE) {   \
-        uv_timer_stop(&ceu_uv_timer);  \
-    } else if (us <= 0) {              \
-        ceu_uv_timer_next_us = 0;      \
-        uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, 0, 0); \
-    } else {                           \
-        ceu_uv_timer_next_us = us;     \
-        uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, ceu_uv_timer_next_us/1000, 0); \
-    }
-
-void ceu_uv_timer_cb (uv_timer_t* timer) {
-    assert(timer == &ceu_uv_timer);
-    s32 now = ceu_uv_timer_next_us;
-    ceu_sys_go(&CEU_APP, CEU_IN__WCLOCK, &now);
-#ifdef CEU_RET
-    if (!CEU_APP.isAlive) {
-        uv_stop(&ceu_uv_loop);
-    }
-#endif
-}
-#endif
-#endif
-
 /* THREADS */
 
 #ifdef CEU_THREADS
@@ -122,10 +35,6 @@ void ceu_uv_check_cb (uv_check_t* check) {
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
 }
 #endif
-
-#include "_ceu_app.c"
-
-static char CEU_DATA[sizeof(CEU_Main)];
 
 int main (int argc, char *argv[])
 {
