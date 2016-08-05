@@ -22,6 +22,7 @@ end
 native/pos do
     ##define ceu_callback_env(cmd,evt,params) ceu_uv_callback(cmd,evt,params)
 
+    int ceu_pending_async = 0;
     uv_loop_t ceu_uv_loop;
 
     uv_timer_t ceu_uv_timer;
@@ -41,7 +42,11 @@ native/pos do
 
     void ceu_uv_step (void) {
         // TODO: detect/error if return w/o "escape"
-        uv_run(&ceu_uv_loop, UV_RUN_ONCE);
+        if (ceu_pending_async) {
+            uv_run(&ceu_uv_loop, UV_RUN_NOWAIT);
+        } else {
+            uv_run(&ceu_uv_loop, UV_RUN_ONCE);
+        }
     }
 
     void ceu_uv_wclock (s32 us) {
@@ -58,20 +63,22 @@ native/pos do
 
     tceu_callback_ret ceu_uv_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
     {
-        tceu_callback_ret ret;
+        tceu_callback_ret ret = { .is_handled=1 };
 
         switch (cmd) {
             case CEU_CALLBACK_INIT:
-                ret.is_handled = 1;
                 ceu_uv_init();
                 break;
             case CEU_CALLBACK_STEP:
-                ret.is_handled = 1;
                 ceu_uv_step();
                 break;
+            case CEU_CALLBACK_PENDING_ASYNC:
+                ceu_pending_async = 1;
+                ret.is_handled = 0;
+                break;
             case CEU_CALLBACK_WCLOCK_MIN:
-                ret.is_handled = 1;
                 ceu_uv_wclock(p1.num);
+                break;
             default:
                 ret.is_handled = 0;
         }

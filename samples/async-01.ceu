@@ -1,0 +1,22 @@
+#include "c.ceu"
+#include "uv/uv.ceu"
+
+var int ret = 0;
+
+par/or do
+    loop i in [0 -> 10[ do
+        async (ret) do
+            loop j in [0 -> 10[ do
+                ret = ret + 1;
+            end
+        end
+    end
+with
+    await 1s;
+end
+
+_ceu_dbg_assert(ret == 100);
+_printf("ok\n");
+
+escape 0;
+       
