@@ -1,26 +1,29 @@
-#include "c.ceu"
-#include "uv.ceu"
+#include "uv/fs.ceu"
 
-var char[] path = [].."fs-01.txt";
-var UV_FS_open o = UV_FS_open.build(&path, _O_RDONLY, 0);
-await o.ok;
-if o.fd < 0 then
-    _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.fd));
-end
-_assert(o.fd >= 0);
+var& UV_FS_File file;
 
-var _uv_stat_t stat = _uv_stat_t();
-do UV_FS_fstat.run(&o, &stat);
-var u64 size = stat.st_size;
-
-var u32 off = 0;
-loop do
-    var char[] line;
-    var int ret = do UV_FS_Read_Line.run(&o,&line,&off);
-    if ret == _UV_EOF then
-        break;
+watching UV_FS_Open("fs-01.txt", _O_RDONLY, 0) => (file)
+do
+    await file.ok;
+    if file.fd < 0 then
+        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(file.fd));
     end
-    _printf("line = %s\n", (_char&&)&&line);
+    _ceu_dbg_assert(file.fd >= 0);
+
+    var _uv_stat_t stat = _;
+    await UV_FS_Fstat(&file, &stat);
+    var usize size = stat.st_size;
+
+    var usize off = 0;
+    loop do
+        vector[] byte line;
+        var ssize n = await UV_FS_ReadLine(&file,&line,off);
+        if n <= 0 then
+            break;
+        end
+        _printf("line = %s [%d]\n", &&line[0], n as int);
+        off = off + ((n+1) as usize);
+    end
 end
 
 escape 0;

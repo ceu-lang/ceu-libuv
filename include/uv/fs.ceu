@@ -35,16 +35,16 @@ native/nohold
 
 input _uv_fs_t&& FS;
 
-data UV_FS_file with
+data UV_FS_File with
     event void ok;
     var   int  fd;
 end
 
-code/await UV_FS_open (var _char&& path, var int flags, var int mode)
-                        => (var& UV_FS_file file)
+code/await UV_FS_Open (var _char&& path, var int flags, var int mode)
+                        => (var& UV_FS_File file)
                             => int
 do
-    var UV_FS_file file_ = val UV_FS_file(_, -1);
+    var UV_FS_File file_ = val UV_FS_File(_, -1);
     file = &file_;
 
     var _uv_fs_t req_open  = _;
@@ -68,7 +68,7 @@ do
     await FOREVER;
 end
 
-code/await UV_FS_read (var& UV_FS_file file, vector&[] byte buf,
+code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf,
                        var usize size, var usize offset)
                         => ssize
 do
@@ -90,7 +90,31 @@ do
     escape req_read.result;
 end
 
-code/await UV_FS_write (var& UV_FS_file file, vector&[] byte buf,
+code/await UV_FS_ReadLine (var& UV_FS_File file, vector&[] byte buf,
+                           var usize offset)
+                            => ssize
+do
+    _ceu_dbg_assert($buf == 0);
+
+    // TODO: reading 1-by-1
+    loop do
+        vector[1] byte c;
+        var ssize n = await UV_FS_Read(&file, &c, 1, offset);
+        offset = offset + 1;
+        if n <= 0 then
+            escape n;
+        end
+        _ceu_dbg_assert(n == 1);
+        if c[0] == {'\n'} then
+            break;
+        end
+        buf = buf..c;
+    end
+
+    escape $buf as ssize;
+end
+
+code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf,
                         var usize size, var usize offset)
                         => ssize
 do
@@ -116,7 +140,7 @@ do
     escape req_write.result;
 end
 
-code/await UV_FS_fstat (var& UV_FS_file file, var& _uv_stat_t stat) => int
+code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat) => int
 do
     var _uv_fs_t req_fstat = _;
     do finalize with

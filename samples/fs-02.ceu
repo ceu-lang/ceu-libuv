@@ -1,16 +1,16 @@
 #include "uv/fs.ceu"
 
-var& UV_FS_file file;
+var& UV_FS_File file;
 
 var int? err =
-    watching UV_FS_open("fs-01.txt", _O_RDONLY, 0) => (file) do
+    watching UV_FS_Open("fs-01.txt", _O_RDONLY, 0) => (file) do
         await file.ok;
         _ceu_dbg_assert(file.fd >= 0);
 
         var usize offset = 0;
         loop do
             vector[1024] byte buf;
-            var ssize n = await UV_FS_read(&file,&buf,$$buf-1,offset);
+            var ssize n = await UV_FS_Read(&file,&buf,$$buf-1,offset);
             _ceu_dbg_assert(n >= 0);
             buf = buf .. [{'\0'}];
             _printf("%s", &&buf[0]);

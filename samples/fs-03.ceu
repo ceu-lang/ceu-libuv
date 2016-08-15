@@ -2,11 +2,11 @@
 
 vector[] byte path = [].."fs-03.txt";
 
-var& UV_FS_file file;
+var& UV_FS_File file;
 
 var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
 
-watching UV_FS_open(&&path[0], _O_CREAT|_O_WRONLY, mode) => (file)
+watching UV_FS_Open(&&path[0], _O_CREAT|_O_WRONLY, mode) => (file)
 do
     await file.ok;
     if file.fd < 0 then
@@ -20,7 +20,7 @@ do
     end
     buf = buf..[{'\n'}];
 
-    var ssize n = await UV_FS_write(&file,&buf,$$buf,0);
+    var ssize n = await UV_FS_Write(&file,&buf,$$buf,0);
     _ceu_dbg_assert(n == 1025);
 
     [[

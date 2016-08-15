@@ -3,6 +3,7 @@
 
 native/const
     _UV_EAI_MEMORY,
+    _UV_EOF,
 ;
 
 native/plain
