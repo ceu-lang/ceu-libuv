@@ -22,7 +22,7 @@ do
             break;
         end
         _printf("line = %s [%d]\n", &&line[0], n as int);
-        off = off + ((n+1) as usize);
+        off = off + (n as usize);
     end
 end
 

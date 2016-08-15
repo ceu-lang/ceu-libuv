@@ -97,9 +97,11 @@ do
     _ceu_dbg_assert($buf == 0);
 
     // TODO: reading 1-by-1
+    var usize tot = 0;
     loop do
         vector[1] byte c;
         var ssize n = await UV_FS_Read(&file, &c, 1, offset);
+        tot = tot + 1;
         offset = offset + 1;
         if n <= 0 then
             escape n;
@@ -111,7 +113,7 @@ do
         buf = buf..c;
     end
 
-    escape $buf as ssize;
+    escape tot as ssize;
 end
 
 code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf,
