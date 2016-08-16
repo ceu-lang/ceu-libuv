@@ -33,7 +33,7 @@ native/nohold
     _uv_fs_req_cleanup,
 ;
 
-input _uv_fs_t&& FS;
+input _uv_fs_t&& UV_FS;
 
 data UV_FS_File with
     event void ok;
@@ -61,7 +61,7 @@ do
         escape ret;
     end
 
-    var _uv_fs_t&& req = await FS until req==&&req_open;
+    var _uv_fs_t&& req = await UV_FS until req==&&req_open;
     file_.fd = req_open.result;
     emit file_.ok;
 
@@ -85,7 +85,7 @@ do
         escape ret;
     end
 
-    var _uv_fs_t&& req = await FS until req==&&req_read;
+    var _uv_fs_t&& req = await UV_FS until req==&&req_read;
     _ceu_vector_setlen(&&buf, req_read.result, 1);
     escape req_read.result;
 end
@@ -138,7 +138,7 @@ do
         escape ret;
     end
 
-    var _uv_fs_t&& req = await FS until req==&&req_write;
+    var _uv_fs_t&& req = await UV_FS until req==&&req_write;
     escape req_write.result;
 end
 
@@ -159,7 +159,7 @@ do
     if ret < 0 then
         escape ret;
     end
-    var _uv_fs_t&& req = await FS until req==&&req_fstat;
+    var _uv_fs_t&& req = await UV_FS until req==&&req_fstat;
 
     stat = *(req_fstat.ptr as _uv_stat_t&&);
 
@@ -176,7 +176,7 @@ native/pos do
     ##define ceu_uv_fs_fstat(a,b)       uv_fs_fstat(&ceu_uv_loop,a,b,ceu_uv_fs_cb)
 
     void ceu_uv_fs_cb (uv_fs_t* req) {
-        ceu_go_ext(CEU_INPUT_FS, &req);
+        ceu_go_ext(CEU_INPUT_UV_FS, &req);
     }
 
     void ceu_uv_fs_close_cb (uv_fs_t* req) {

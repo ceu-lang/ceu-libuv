@@ -16,7 +16,7 @@ finalize (req_open) with
     _ceu_uv_fs_close(&&req_close, req_open.result);
 end
 
-var _uv_fs_t&& req1 = await FS until req1==&&req_open;
+var _uv_fs_t&& req1 = await UV_FS until req1==&&req_open;
 _ceu_dbg_assert(req_open.result >= 0);
 
 vector[1024] _char buf_ = _;
@@ -35,7 +35,7 @@ loop do
         _uv_fs_req_cleanup(&&req_read);
     end
 
-    var _uv_fs_t&& req2 = await FS until req2==&&req_read;
+    var _uv_fs_t&& req2 = await UV_FS until req2==&&req_read;
     _ceu_dbg_assert(req_read.result >= 0);
     if req_read.result == 0 then
         break;
