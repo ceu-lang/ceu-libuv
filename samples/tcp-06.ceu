@@ -1,6 +1,6 @@
 #if 0
 #@ Description: Sequential "echo" client.
-#@  - same as `tcp-06.ceu`
+#@  - same as `tcp-05.ceu`
 #@ Features:
 #@  - uses UV_Connect
 #endif

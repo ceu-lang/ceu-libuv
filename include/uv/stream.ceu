@@ -185,14 +185,8 @@ printf(">>> FREE\n");
         ceu_dbg_assert(h->data != NULL);
         tceu_vector* vec = (tceu_vector*) h->data;
 
-        // init dynamic vector or
-        // grow dynamic vector if going past half of it
         if (vec->is_dyn) {
-            if (vec->max == 0) {
-                ceu_vector_setmax(vec, CEU_UV_READ_ALLOC_DYN_INIT, 0);
-            } else if (vec->len*2>vec->max) {
-                ceu_vector_setmax(vec, (vec->max+10)*3/2, 0);
-            }
+            ceu_vector_setmax(vec, CEU_UV_READ_ALLOC_DYN_INIT, 0);
         }
 
         *buf = uv_buf_init((char*)vec->buf+vec->len, vec->max-vec->len);
