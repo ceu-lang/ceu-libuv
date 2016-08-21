@@ -16,12 +16,12 @@
 #define DEFAULT_BACKLOG 128
 #define BUFFER_MAX      10
 
-code/await Client (var& _uv_tcp_t_ptr server) => void
+code/await Client (var& _uv_tcp_t server) => void
 do
-    var& _uv_tcp_t_ptr client;
+    var& _uv_tcp_t client;
     var int? err =
         watching UV_TCP_Open() => (client) do
-            var int ret = _uv_accept(server as _uv_stream_t_ptr, client as _uv_stream_t_ptr);
+            var int ret = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
             _ceu_dbg_assert(ret == 0);
 
             // READ/WRITE LOOP
@@ -40,7 +40,7 @@ do
                 do
                     event& usize ok_read;
                     var int? err =
-                        watching UV_Stream_Read(&(client as _uv_stream_t_ptr),&buf) => (ok_read) do
+                        watching UV_Stream_Read((&client as _uv_stream_t&&),&buf) => (ok_read) do
                             await ok_read;
                         end;
                     _ceu_dbg_assert(not err?);
@@ -48,7 +48,7 @@ do
 
                 // WRITE
                 buf = buf..[{'\0'}];
-                await UV_Stream_Write(&(client as _uv_stream_t_ptr), &buf);
+                await UV_Stream_Write((&client as _uv_stream_t&&), &buf);
             end
         end;
 
@@ -62,13 +62,13 @@ do
     var _sockaddr_in addr = _;
     _uv_ip4_addr(&&ip[0], port, &&addr);
 
-    var& _uv_tcp_t_ptr server;
+    var& _uv_tcp_t server;
     watching UV_TCP_Open() => (server)
     do
-        _uv_tcp_bind(server, &&addr as _sockaddr&&, 0);
+        _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
 
         event& void ok_listen;
-        watching UV_Stream_Listen(&(server as _uv_stream_t_ptr), DEFAULT_BACKLOG) => (ok_listen)
+        watching UV_Stream_Listen((&server as _uv_stream_t&&), DEFAULT_BACKLOG) => (ok_listen)
         do
             pool[10] Client cs;
             every ok_listen do

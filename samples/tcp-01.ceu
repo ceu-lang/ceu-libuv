@@ -45,19 +45,19 @@ _printf("I will terminate after two connections...\n");
 
 loop i in [0 -> 2[ do
     // ACCEPT
-    var& _uv_tcp_t_ptr? client_ = &_malloc(sizeof(_uv_tcp_t))
+    var&? _uv_tcp_t client_ = &_malloc(sizeof(_uv_tcp_t))
         finalize (client_) with
             // free after uv_close
         end;
-    var& _uv_tcp_t_ptr client = &client_!;
+    var& _uv_tcp_t client = &client_!;
     do
-        _ceu_uv_tcp_init(client);
+        _ceu_uv_tcp_init(&&client);
     finalize (client) with
-        _ceu_uv_close(client as _uv_handle_t&&);
+        _ceu_uv_close(&&client as _uv_handle_t&&);
     end
 
     loop do
-        var int ret = _uv_accept(&&server as _uv_stream_t&&,client as _uv_stream_t&&);
+        var int ret = _uv_accept(&&server as _uv_stream_t&&,&&client as _uv_stream_t&&);
         if ret == 0 then
             break;
         else
@@ -86,19 +86,19 @@ loop i in [0 -> 2[ do
         // READ
         do
             $buf = 0;
-            client:_data = _PURIFY(&&buf);   // finalize below
+            client._data = _PURIFY(&&buf);   // finalize below
             var int ret;
             do
-                ret = _ceu_uv_read_start(client as _uv_stream_t&&);
+                ret = _ceu_uv_read_start(&&client as _uv_stream_t&&);
             finalize (client) with
                 // finalize after each UV_READ
-                _uv_read_stop(client as _uv_stream_t&&);
+                _uv_read_stop(&&client as _uv_stream_t&&);
             end
             //_printf("error: %s\n", _uv_strerror(ret));
             _ceu_dbg_assert(ret == 0);
 
             var _uv_stream_t&& s;
-            (s,n_read) = await UV_READ until s==(client as _uv_stream_t&&);
+            (s,n_read) = await UV_READ until s==(&&client as _uv_stream_t&&);
             //_ceu_dbg_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
             //_ceu_dbg_assert(buf_r:len == $$buf);
         end
@@ -114,15 +114,15 @@ loop i in [0 -> 2[ do
 
         // WRITE
         buf = buf..[{'\0'}];
-        var& _uv_write_t_ptr? req_write = &_malloc(sizeof(_uv_write_t))
+        var&? _uv_write_t req_write = &_malloc(sizeof(_uv_write_t))
             finalize (req_write) with
                 // free on uv callback
             end;
         var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], n_read);
-        _ceu_uv_write(req_write!, client as _uv_stream_t&&, &&buf_);
+        _ceu_uv_write(&&req_write!, &&client as _uv_stream_t&&, &&buf_);
         var _uv_write_t&& w;
         var int status;
-        (w, status) = await UV_WRITE until w==req_write!;
+        (w, status) = await UV_WRITE until w==&&req_write!;
         _ceu_dbg_assert(status == 0);
     end
 end

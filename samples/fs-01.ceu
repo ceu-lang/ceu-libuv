@@ -1,5 +1,5 @@
 #if 0
-ceu --pre --pre-args="-I/data/ceu/ceu/include -I/data/ceu/ceu-libuv/include" --pre-input="samples/fs-01.ceu" --ceu --env --env-header=/data/ceu/ceu/env/header.h --env-main=/data/ceu/ceu/env/main.c --env-output=/tmp/x.c --cc --cc-args="-luv -llua5.3 -g" --cc-output=/tmp/x.exe
+ceu --pre --pre-args="-I/data/ceu/ceu/include -I/data/ceu/ceu-libuv/include -I." --pre-input="fs-01.ceu" --ceu --env --env-header=/data/ceu/ceu/env/header.h --env-main=/data/ceu/ceu/env/main.c --env-output=/tmp/x.c --cc --cc-args="-luv -llua5.3 -g" --cc-output=/tmp/x.exe
 #endif
 
 #include "c.ceu"

@@ -29,9 +29,6 @@ native/nohold
 
 native
     _ceu_uv_read_start,
-    _uv_connect_t_ptr,
-    _uv_stream_t_ptr,
-    _uv_write_t_ptr,
 ;
 
 input (_uv_stream_t&&, int)   UV_ERROR;
@@ -40,20 +37,14 @@ input (_uv_connect_t&&,int)   UV_CONNECT;
 input (_uv_stream_t&&, ssize) UV_READ;
 input (_uv_write_t&&,  int)   UV_WRITE;
 
-native/pre do
-    typedef uv_connect_t* uv_connect_t_ptr;
-    typedef uv_stream_t*  uv_stream_t_ptr;
-    typedef uv_write_t*   uv_write_t_ptr;
-end
-
-code/await UV_Stream_Listen (var& _uv_stream_t_ptr stream, var int backlog)
+code/await UV_Stream_Listen (var& _uv_stream_t stream, var int backlog)
                                 => (event& void ok)
                                     => int // err
 do
     event void ok_;
     ok = &ok_;
 
-    var int err = _ceu_uv_listen(stream, backlog);
+    var int err = _ceu_uv_listen(&&stream, backlog);
     if err != 0 then
         escape err;
     end
@@ -61,14 +52,14 @@ do
     var _uv_stream_t&& s;
     var int err;
     every (s,err) in UV_LISTEN do
-        if s == stream then
+        if s == &&stream then
             _ceu_dbg_assert(err == 0);   // UV_ERROR already aborted me
             emit ok_;
         end
     end
 end
 
-code/await UV_Stream_Read (var& _uv_stream_t_ptr stream, vector&[] byte buf)
+code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
                             => (event& usize ok)
                                 => int // err
 do
@@ -76,13 +67,13 @@ do
     ok = &ok_;
 
     $buf = 0;
-    stream:_data = _PURIFY(&&buf);
+    stream._data = _PURIFY(&&buf);
 
     var int err;
     do
-        err = _ceu_uv_read_start(stream);
+        err = _ceu_uv_read_start(&&stream);
     finalize (stream) with
-        _uv_read_stop(stream);   // finalize after each UV_READ
+        _uv_read_stop(&&stream);   // finalize after each UV_READ
     end
     if err != 0 then
         escape err;
@@ -91,14 +82,14 @@ do
     var _uv_stream_t&& s;
     var ssize n_read;
     every (s, n_read) in UV_READ do
-        if s == stream then
+        if s == &&stream then
             _ceu_dbg_assert(n_read >= 0);   // UV_ERROR has already aborted me
             emit ok_(n_read as usize);
         end
     end
 end
 
-code/await UV_Stream_ReadLine (var& _uv_stream_t_ptr stream, vector&[] byte string)
+code/await UV_Stream_ReadLine (var& _uv_stream_t stream, vector&[] byte string)
                                 => void
 do
     event& usize ok;
@@ -117,7 +108,7 @@ do
     _ceu_dbg_assert(0);   // UV_ERROR has already aborted me
 end
 
-code/await UV_Stream_Write (var& _uv_stream_t_ptr stream, vector&[] byte bytes)
+code/await UV_Stream_Write (var& _uv_stream_t stream, vector&[] byte bytes)
                                 => int // err
 do
     var usize starting  = 0;
@@ -125,7 +116,7 @@ do
     _ceu_dbg_assert($bytes >= excluding);
     _ceu_dbg_assert(starting <= excluding);
 
-    var& _uv_write_t_ptr? req_write = &_malloc(sizeof(_uv_write_t))
+    var&? _uv_write_t req_write = &_malloc(sizeof(_uv_write_t))
         finalize (req_write) with
             // free on uv callback
         end;
@@ -137,13 +128,13 @@ do
                   buf.base = buf.base+starting;
                   buf.len  = excluding-starting;
 
-    _ceu_dbg_assert(_uv_is_writable(stream));
+    _ceu_dbg_assert(_uv_is_writable(&&stream));
 
-    var int ret = _ceu_uv_write(req_write!, stream, &&buf);
+    var int ret = _ceu_uv_write(&&req_write!, &&stream, &&buf);
     _ceu_dbg_assert(ret >= 0);
     var _uv_write_t&& w;
     var int err;
-    (w, err) = await UV_WRITE until w==req_write!;
+    (w, err) = await UV_WRITE until w==&&req_write!;
     _ceu_dbg_assert(err == 0);   // UV_ERROR has already aborted me
 
     escape 0;

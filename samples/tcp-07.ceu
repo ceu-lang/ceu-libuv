@@ -13,7 +13,7 @@
 
 spawn UV_TCP_Server("0.0.0.0", PORT+0, BACKLOG);
 
-var& _uv_tcp_t_ptr tcp;
+var& _uv_tcp_t tcp;
 event& void ok_connected;
 watching UV_TCP_Connect("127.0.0.1", PORT) => (tcp, ok_connected)
 do
@@ -24,8 +24,8 @@ do
     loop i in [0 -> 10[ do
         await 1s;
         vector[] byte string = [] .. "Alo mundo!\n";
-        await UV_Stream_Write(&(tcp as _uv_stream_t_ptr), &string);
-        await UV_Stream_ReadLine(&(tcp as _uv_stream_t_ptr), &string);
+        await UV_Stream_Write((&tcp as _uv_stream_t&&), &string);
+        await UV_Stream_ReadLine((&tcp as _uv_stream_t&&), &string);
         _printf("[client] %s", &&string[0]);
     end
 end

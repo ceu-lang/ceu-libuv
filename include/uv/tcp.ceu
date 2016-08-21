@@ -15,12 +15,7 @@ native/nohold
 
 native
     _ceu_uv_tcp_init,
-    _uv_tcp_t_ptr,
 ;
-
-native/pre do
-    typedef uv_tcp_t* uv_tcp_t_ptr;
-end
 
 native/pos do
     ##define ceu_uv_tcp_init(a) uv_tcp_init(&ceu_uv_loop, a);
@@ -33,9 +28,9 @@ native/pos do
     }
 end
 
-code/await UV_TCP_Open (void) => (var& _uv_tcp_t_ptr tcp) => int // err
+code/await UV_TCP_Open (void) => (var& _uv_tcp_t tcp) => int // err
 do
-    var& _uv_tcp_t_ptr? tcp_ = &_malloc(sizeof(_uv_tcp_t))
+    var&? _uv_tcp_t tcp_ = &_malloc(sizeof(_uv_tcp_t))
         finalize (tcp_) with
             // free after "uv_close" below
         end;
@@ -47,25 +42,25 @@ do
 
     var int err;
     do
-        err = _ceu_uv_tcp_init(tcp_!);
+        err = _ceu_uv_tcp_init(&&tcp_!);
     finalize (tcp_) with
-        _ceu_uv_close(tcp_! as _uv_handle_t&&);
+        _ceu_uv_close(&&tcp_! as _uv_handle_t&&);
     end
     if err != 0 then
         escape err;
     end
 
-    var _uv_stream_t_ptr s;
+    var _uv_stream_t&& s;
     var int err;
-    (s,err) = await UV_ERROR until (s==(tcp_! as _uv_stream_t_ptr));
+    (s,err) = await UV_ERROR until (s==(&&tcp_! as _uv_stream_t&&));
     escape err;
 end
 
 code/await UV_TCP_Connect (var _char&& ip, var int port)
-                            => (var& _uv_tcp_t_ptr tcp, event& void ok)
+                            => (var& _uv_tcp_t tcp, event& void ok)
                                 => int  // err
 do
-    var& _uv_tcp_t_ptr tcp_;
+    var& _uv_tcp_t tcp_;
     event void ok_;
     ok = &ok_;
 
@@ -76,16 +71,16 @@ do
         watching UV_TCP_Open() => (tcp_) do
             tcp = &tcp_;
 
-            var& _uv_connect_t_ptr? connect = &_malloc(sizeof(_uv_connect_t))
+            var&? _uv_connect_t connect = &_malloc(sizeof(_uv_connect_t))
                 finalize (connect) with
                     // free on uv callback
                 end
 
-            _ceu_uv_tcp_connect(connect!, tcp_, (&&dest as _sockaddr&&));
+            _ceu_uv_tcp_connect(&&connect!, &&tcp_, (&&dest as _sockaddr&&));
 
             var _uv_connect_t&& c;
             var int err;
-            (c,err) = await UV_CONNECT until c==connect!;
+            (c,err) = await UV_CONNECT until c==&&connect!;
             _ceu_dbg_assert(err == 0);
 
             emit ok_;
