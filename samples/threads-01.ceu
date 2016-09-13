@@ -1,3 +1,6 @@
+#include "c.ceu"
+#include "uv/uv.ceu"
+
 par/or do
     async do
         loop i do
@@ -6,8 +9,8 @@ par/or do
         end
     end
 with
-    async/thread do
-        loop i in 5 do
+    await async/thread do
+        loop i in [0->5[ do
             _sleep(1);
             _printf("[%d] thread\n", i);
         end

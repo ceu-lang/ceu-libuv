@@ -24,7 +24,7 @@ do
     _ceu_dbg_assert(n == 1025);
 
     [[
-        local src   = io.open('../'..@path):read'*a'
+        local src   = io.open(@path):read'*a'
         local build = io.open(@path):read'*a'
         assert(src == build)
         print'DONE'
