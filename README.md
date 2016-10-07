@@ -2,7 +2,7 @@
 
 https://github.com/fsantanna/ceu-sdl/
 
-[libuv](http://www.http://libuv.org/) libuv is a multi-platform support library
+[libuv](http://www.libuv.org/) libuv is a multi-platform support library
 with a focus on asynchronous I/O.
 
 Céu is a reactive language that aims to offer a higher-level and safer 
