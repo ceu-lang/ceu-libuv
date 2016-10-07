@@ -30,7 +30,7 @@ native/pos do
     void ceu_uv_timer_cb (uv_timer_t* timer) {
         ceu_dbg_assert(timer == &ceu_uv_timer);
         s32 us = ceu_uv_timer_next_us;
-        ceu_go_ext(CEU_INPUT__WCLOCK, &us);
+        ceu_input(CEU_INPUT__WCLOCK, &us);
     }
 
     void ceu_uv_init (void) {

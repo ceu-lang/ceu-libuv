@@ -23,7 +23,7 @@ native/pos do
 
     void ceu_uv_connect_cb (uv_connect_t* c, int err) {
         tceu_input_UV_CONNECT p = { c, err };
-        ceu_go_ext(CEU_INPUT_UV_CONNECT, &p);
+        ceu_input(CEU_INPUT_UV_CONNECT, &p);
         free(c);
     }
 end
