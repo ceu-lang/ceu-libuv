@@ -3,14 +3,6 @@
 
 #include "uv/tcp.ceu"
 
-#ifdef UV_TCP_SERVER_HANDLER_CEU
-    #define _UV_STRINGIFY(X) #X
-    #define UV_STRINGIFY(X) _UV_STRINGIFY(X)
-    #include UV_STRINGIFY(UV_TCP_SERVER_HANDLER_CEU)
-#else
-    _ceu_dbg_assert(0);
-#endif
-
 code/await UV_TCP_Server_Client (var& _uv_tcp_t server) => void
 do
     var& _uv_tcp_t client;

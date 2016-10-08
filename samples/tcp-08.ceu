@@ -7,7 +7,18 @@
 #endif
 
 #include "uv/tcp.ceu"
-#define UV_TCP_SERVER_HANDLER_CEU tcp-07-handler.inc
+
+code/await UV_TCP_Server_Handler (var& _uv_tcp_t tcp) => int
+do
+    loop do
+        vector[] byte string;
+        await UV_TCP_ReadLine(&tcp, &string);
+        string = string..[{'\0'}];
+        _printf("[server %p] %s", &&tcp, &&string[0]);
+        await UV_TCP_Write(&tcp, &string);
+    end
+end
+
 #include "uv/tcp-server.ceu"
 
 #define PORT    7000
