@@ -40,7 +40,7 @@ do
                 do
                     event& usize ok_read;
                     var int? err =
-                        watching UV_Stream_Read((&client as _uv_stream_t&&),&buf) => (ok_read) do
+                        watching UV_TCP_Read(&client,&buf) => (ok_read) do
                             await ok_read;
                         end;
                     _ceu_dbg_assert(not err?);
@@ -48,7 +48,7 @@ do
 
                 // WRITE
                 buf = buf..[{'\0'}];
-                await UV_Stream_Write((&client as _uv_stream_t&&), &buf);
+                await UV_TCP_Write(&client, &buf);
             end
         end;
 
@@ -68,7 +68,7 @@ do
         _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
 
         event& void ok_listen;
-        watching UV_Stream_Listen((&server as _uv_stream_t&&), DEFAULT_BACKLOG) => (ok_listen)
+        watching UV_TCP_Listen(&server,DEFAULT_BACKLOG) => (ok_listen)
         do
             pool[10] Client cs;
             every ok_listen do

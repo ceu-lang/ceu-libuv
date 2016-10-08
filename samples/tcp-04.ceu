@@ -14,13 +14,13 @@
 #define DEFAULT_BACKLOG 128
 #define BUFFER_MAX      10
 
-code/await Handler0 (var& _uv_stream_t stream) => int
+code/await Handler0 (var& _uv_tcp_t tcp) => int
 do
     loop do
         vector[] byte string;
         do
             event& usize ok_read;
-            watching UV_Stream_Read(&stream, &string)
+            watching UV_TCP_Read(&tcp, &string)
                         => (ok_read)
             do
                 await ok_read;
@@ -28,18 +28,18 @@ do
         end
         string = string..[{'\0'}];
         _printf("[handler-0] %s\n", &&string[0]);
-        await UV_Stream_Write(&stream, &string);
+        await UV_TCP_Write(&tcp, &string);
     end
 end
 
-code/await Handler1 (var& _uv_stream_t stream) => int
+code/await Handler1 (var& _uv_tcp_t tcp) => int
 do
     loop do
         vector[] byte string;
-        await UV_Stream_ReadLine(&stream, &string);
+        await UV_TCP_ReadLine(&tcp, &string);
         string = string..[{'\0'}];
         _printf("[handler-1] %s", &&string[0]);
-        await UV_Stream_Write(&stream, &string);
+        await UV_TCP_Write(&tcp, &string);
     end
 end
 
@@ -58,9 +58,9 @@ do
             var int port = _ntohs(sock.sin_port);
 
             if port == DEFAULT_PORT then
-                await Handler0((&client as _uv_stream_t&&));
+                await Handler0(&client);
             else/if port == DEFAULT_PORT+1 then
-                await Handler1((&client as _uv_stream_t&&));
+                await Handler1(&client);
             else
                 _ceu_dbg_assert(0);
             end
@@ -82,7 +82,7 @@ do
         _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
 
         event& void ok_listen;
-        watching UV_Stream_Listen((&server as _uv_stream_t&&), DEFAULT_BACKLOG) => (ok_listen)
+        watching UV_TCP_Listen(&server, DEFAULT_BACKLOG) => (ok_listen)
         do
             pool[10] Client cs;
             every ok_listen do

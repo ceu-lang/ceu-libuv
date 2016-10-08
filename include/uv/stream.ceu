@@ -151,7 +151,7 @@ native/pos do
 
     void ceu_uv_free (uv_handle_t* h) {
         // TODO: other stream types
-#if 0
+/*
         if (h->type == UV_TCP) {
             uv_stream_t* s = (uv_stream_t*)h;
             if (s->connect_req != NULL) {
@@ -160,7 +160,7 @@ printf(">>> FREE\n");
                 s->connect_req = NULL;
             }
         }
-#endif
+*/
         free(h);
     }
 

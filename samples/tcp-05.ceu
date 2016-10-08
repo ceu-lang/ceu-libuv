@@ -37,8 +37,8 @@ var int? err =
         loop i in [0 -> 10[ do
             await 1s;
             vector[] byte string = [] .. "Alo mundo!\n";
-            await UV_Stream_Write((&client as _uv_stream_t&&), &string);
-            await UV_Stream_ReadLine((&client as _uv_stream_t&&), &string);
+            await UV_TCP_Write(&client, &string);
+            await UV_TCP_ReadLine(&client, &string);
             _printf("%s", &&string[0]);
         end
     end;

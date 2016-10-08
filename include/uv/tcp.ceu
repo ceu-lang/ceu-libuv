@@ -28,6 +28,11 @@ native/pos do
     }
 end
 
+#define UV_TCP_Listen(tcp, backlog) UV_Stream_Listen((tcp) as _uv_stream_t&&, backlog)
+#define UV_TCP_Read(tcp, bytes) UV_Stream_Read((tcp) as _uv_stream_t&&, bytes)
+#define UV_TCP_ReadLine(tcp, bytes) UV_Stream_ReadLine((tcp) as _uv_stream_t&&, bytes)
+#define UV_TCP_Write(tcp, bytes) UV_Stream_Write((tcp) as _uv_stream_t&&, bytes)
+
 code/await UV_TCP_Open (void) => (var& _uv_tcp_t tcp) => int // err
 do
     var&? _uv_tcp_t tcp_ = &_malloc(sizeof(_uv_tcp_t))

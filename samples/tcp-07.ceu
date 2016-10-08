@@ -24,8 +24,8 @@ do
     loop i in [0 -> 10[ do
         await 1s;
         vector[] byte string = [] .. "Alo mundo!\n";
-        await UV_Stream_Write((&tcp as _uv_stream_t&&), &string);
-        await UV_Stream_ReadLine((&tcp as _uv_stream_t&&), &string);
+        await UV_TCP_Write(&tcp, &string);
+        await UV_TCP_ReadLine(&tcp, &string);
         _printf("[client] %s", &&string[0]);
     end
 end

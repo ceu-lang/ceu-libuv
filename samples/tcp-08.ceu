@@ -25,10 +25,10 @@ code/await Client (var int port) => void do
         loop do
             await 1s;
             vector[] byte string = [] .. "Alo mundo!\n";
-            await UV_Stream_Write((&tcp as _uv_stream_t&&), &string);
+            await UV_TCP_Write(&tcp, &string);
 // change to 0 to generate "write" errors instead of "read" errors
 #if 1
-            await UV_Stream_ReadLine((&tcp as _uv_stream_t&&), &string);
+            await UV_TCP_ReadLine(&tcp, &string);
 #endif
             _printf("[client] %s", &&string[0]);
         end
