@@ -22,8 +22,8 @@ end
 native/pos do
     ##define ceu_callback_env(cmd,evt,params) ceu_uv_callback(cmd,evt,params)
 
-    int ceu_pending_async = 0;
-    uv_loop_t ceu_uv_loop;
+    uv_loop_t  ceu_uv_loop;
+    uv_async_t ceu_uv_async;
 
     uv_timer_t ceu_uv_timer;
     s32 ceu_uv_timer_next_us;
@@ -33,52 +33,48 @@ native/pos do
         ceu_input(CEU_INPUT__WCLOCK, &us);
     }
 
-    void ceu_uv_init (void) {
-        signal(SIGPIPE, SIG_IGN); // TODO: fails on "uv_write" would crash otherwise
-
-        uv_loop_init(&ceu_uv_loop);
-        uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
-    }
-
-    void ceu_uv_step (void) {
-        // TODO: detect/error if return w/o "escape"
-        if (ceu_pending_async) {
-            uv_run(&ceu_uv_loop, UV_RUN_NOWAIT);
-        } else {
-            uv_run(&ceu_uv_loop, UV_RUN_ONCE);
-        }
-    }
-
-    void ceu_uv_wclock (s32 us) {
-        if (us == CEU_WCLOCK_INACTIVE) {
-            uv_timer_stop(&ceu_uv_timer);
-        } else if (us <= 0) {
-            ceu_uv_timer_next_us = 0;
-            uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, 0, 0);
-        } else {
-            ceu_uv_timer_next_us = us;
-            uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, ceu_uv_timer_next_us/1000, 0);
-        }
-    }
-
     tceu_callback_ret ceu_uv_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
     {
         tceu_callback_ret ret = { .is_handled=1 };
 
         switch (cmd) {
             case CEU_CALLBACK_INIT:
-                ceu_uv_init();
+                signal(SIGPIPE, SIG_IGN); // TODO: fails on "uv_write" would crash otherwise
+                uv_loop_init(&ceu_uv_loop);
+                uv_async_init(&ceu_uv_loop, &ceu_uv_async, NULL);
+                uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
                 break;
+
             case CEU_CALLBACK_STEP:
-                ceu_uv_step();
+                // TODO: detect/error if return w/o "escape"
+                uv_run(&ceu_uv_loop, UV_RUN_ONCE);
                 break;
-            case CEU_CALLBACK_PENDING_ASYNC:
-                ceu_pending_async = 1;
+
+            case CEU_CALLBACK_ASYNC_PENDING:
+                uv_async_send(&ceu_uv_async);
                 ret.is_handled = 0;
                 break;
-            case CEU_CALLBACK_WCLOCK_MIN:
-                ceu_uv_wclock(p1.num);
+
+            case CEU_CALLBACK_THREAD_TERMINATING:
+                uv_async_send(&ceu_uv_async);
+                ret.is_handled = 0;
                 break;
+
+            case CEU_CALLBACK_WCLOCK_MIN: {
+                s32 us = p1.num;
+                if (us == CEU_WCLOCK_INACTIVE) {
+                    uv_timer_stop(&ceu_uv_timer);
+                } else if (us <= 0) {
+                    ceu_uv_timer_next_us = 0;
+                    uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, 0, 0);
+                } else {
+                    ceu_uv_timer_next_us = us;
+                    uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb,
+                                   ceu_uv_timer_next_us/1000, 0);
+                }
+                break;
+            }
+
             default:
                 ret.is_handled = 0;
         }
