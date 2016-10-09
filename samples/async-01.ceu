@@ -5,7 +5,7 @@ var int ret = 0;
 
 par/or do
     loop i in [0 -> 10[ do
-        async (ret) do
+        await async (ret) do
             loop j in [0 -> 10[ do
                 ret = ret + 1;
             end

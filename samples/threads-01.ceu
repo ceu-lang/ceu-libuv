@@ -2,7 +2,7 @@
 #include "uv/uv.ceu"
 
 par/or do
-    async do
+    await async do
         loop i do
             _sleep(1);
             _printf("[%d] async\n", i);
