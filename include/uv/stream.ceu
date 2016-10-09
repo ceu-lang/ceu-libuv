@@ -44,16 +44,16 @@ do
     event void ok_;
     ok = &ok_;
 
-    var int err = _ceu_uv_listen(&&stream, backlog);
-    if err != 0 then
-        escape err;
+    var int err1 = _ceu_uv_listen(&&stream, backlog);
+    if err1 != 0 then
+        escape err1;
     end
 
     var _uv_stream_t&& s;
-    var int err;
-    every (s,err) in UV_LISTEN do
+    var int err2;
+    every (s,err2) in UV_LISTEN do
         if s == &&stream then
-            _ceu_dbg_assert(err == 0);   // UV_ERROR already aborted me
+            _ceu_dbg_assert(err2 == 0);   // UV_ERROR already aborted me
             emit ok_;
         end
     end

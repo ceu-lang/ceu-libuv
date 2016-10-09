@@ -19,7 +19,7 @@
 code/await Client (var& _uv_tcp_t server) => void
 do
     var& _uv_tcp_t client;
-    var int? err =
+    var int? err1 =
         watching UV_TCP_Open() => (client) do
             var int ret = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
             _ceu_dbg_assert(ret == 0);
@@ -30,20 +30,20 @@ do
 
             spawn do
                 var _uv_stream_t&& s;
-                var int            err;
-                every (s,err) in UV_ERROR do
-                    _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err));
+                var int            err2;
+                every (s,err2) in UV_ERROR do
+                    _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err2));
                 end
             end
 
             loop do
                 do
                     event& usize ok_read;
-                    var int? err =
+                    var int? err2 =
                         watching UV_TCP_Read(&client,&buf) => (ok_read) do
                             await ok_read;
                         end;
-                    _ceu_dbg_assert(not err?);
+                    _ceu_dbg_assert(not err2?);
                 end
 
                 // WRITE
@@ -52,8 +52,8 @@ do
             end
         end;
 
-    if err? then
-        _fprintf(_stderr, "[client]: %s\n", _uv_strerror(err!));
+    if err1? then
+        _fprintf(_stderr, "[client]: %s\n", _uv_strerror(err1!));
     end
 end
 

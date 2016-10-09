@@ -48,13 +48,13 @@ do
     var& _uv_tcp_t client;
     var int? err =
         watching UV_TCP_Open() => (client) do
-            var int ret = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
-            _ceu_dbg_assert(ret == 0);
+            var int ret1 = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
+            _ceu_dbg_assert(ret1 == 0);
 
             var _sockaddr_in sock = _;
             var int len = sizeof(_sockaddr_in) as int;
-            var int ret = _uv_tcp_getsockname(&&client, (&&sock as _sockaddr&&), &&len);
-            _ceu_dbg_assert(ret == 0);
+            var int ret2 = _uv_tcp_getsockname(&&client, (&&sock as _sockaddr&&), &&len);
+            _ceu_dbg_assert(ret2 == 0);
             var int port = _ntohs(sock.sin_port);
 
             if port == DEFAULT_PORT then
