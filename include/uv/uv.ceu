@@ -38,7 +38,7 @@ native/pos do
         tceu_callback_ret ret = { .is_handled=1 };
 
         switch (cmd) {
-            case CEU_CALLBACK_INIT:
+            case CEU_CALLBACK_START:
                 signal(SIGPIPE, SIG_IGN); // TODO: fails on "uv_write" would crash otherwise
                 uv_loop_init(&ceu_uv_loop);
                 uv_async_init(&ceu_uv_loop, &ceu_uv_async, NULL);
