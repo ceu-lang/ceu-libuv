@@ -1,4 +1,4 @@
-CEU_DIR = /home/rcms/workspace/tmp/ceu
+CEU_DIR = $(error set absolute path to "<ceu>" repository)
 
 LUA_FLAGS = `pkg-config lua5.3 --libs --cflags`
 
