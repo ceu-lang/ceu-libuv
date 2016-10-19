@@ -15,6 +15,7 @@ do
     _ceu_dbg_assert(file.fd >= 0);
 
     vector[1025] byte buf;
+    var int i;
     loop i in [0 -> 1024[ do
         buf = buf..[{'a'}+i%25];
     end

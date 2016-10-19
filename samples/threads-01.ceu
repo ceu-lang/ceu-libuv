@@ -3,6 +3,7 @@
 
 par/or do
     await async do
+        var int i;
         loop i do
             _sleep(1);
             _printf("[%d] async\n", i);
@@ -10,12 +11,14 @@ par/or do
     end
 with
     await async/thread do
+        var int i;
         loop i in [0->5[ do
             _sleep(1);
             _printf("[%d] thread\n", i);
         end
     end
 with
+    var int i;
     loop i do
         await 1s;
         _printf("[%d] sync\n", i);

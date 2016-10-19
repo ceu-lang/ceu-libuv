@@ -34,6 +34,7 @@ var int? err =
 
         _printf("I will terminate after 10s...\n");
 
+        var int i;
         loop i in [0 -> 10[ do
             await 1s;
             vector[] byte string = [] .. "Alo mundo!\n";

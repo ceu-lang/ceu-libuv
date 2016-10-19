@@ -1,6 +1,7 @@
 #include "c.ceu"
 #include "uv/uv.ceu"
 
+var int i;
 loop i in [0 -> 5[ do
     _printf(">>> 1s\n");
     await 1s;

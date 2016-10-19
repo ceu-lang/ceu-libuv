@@ -43,6 +43,7 @@ end
 
 _printf("I will terminate after two connections...\n");
 
+var int i;
 loop i in [0 -> 2[ do
     // ACCEPT
     var&? _uv_tcp_t client_ = &_malloc(sizeof(_uv_tcp_t))
