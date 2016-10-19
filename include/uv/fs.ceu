@@ -41,8 +41,8 @@ data UV_FS_File with
 end
 
 code/await UV_FS_Open (var _char&& path, var int flags, var int mode)
-                        => (var& UV_FS_File file)
-                            => int
+                        -> (var& UV_FS_File file)
+                            -> int
 do
     var UV_FS_File file_ = val UV_FS_File(_, -1);
     file = &file_;
@@ -70,7 +70,7 @@ end
 
 code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf,
                        var usize size, var usize offset)
-                        => ssize
+                        -> ssize
 do
     var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], size);
     var _uv_fs_t req_read = _;
@@ -92,7 +92,7 @@ end
 
 code/await UV_FS_ReadLine (var& UV_FS_File file, vector&[] byte buf,
                            var usize offset)
-                            => ssize
+                            -> ssize
 do
     _ceu_dbg_assert($buf == 0);
 
@@ -118,7 +118,7 @@ end
 
 code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf,
                         var usize size, var usize offset)
-                        => ssize
+                        -> ssize
 do
     var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], size);
 
@@ -142,7 +142,7 @@ do
     escape req_write.result;
 end
 
-code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat) => int
+code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat) -> int
 do
     var _uv_fs_t req_fstat = _;
     do finalize with

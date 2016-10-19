@@ -2,7 +2,7 @@
 
 var& UV_FS_File file;
 
-watching UV_FS_Open("fs-01.txt", _O_RDONLY, 0) => (file)
+watching UV_FS_Open("fs-01.txt", _O_RDONLY, 0) -> (file)
 do
     await file.ok;
     if file.fd < 0 then

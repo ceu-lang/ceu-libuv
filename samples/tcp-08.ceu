@@ -8,7 +8,7 @@
 
 #include "uv/tcp.ceu"
 
-code/await UV_TCP_Server_Handler (var& _uv_tcp_t tcp) => int
+code/await UV_TCP_Server_Handler (var& _uv_tcp_t tcp) -> int
 do
     loop do
         vector[] byte string;
@@ -24,10 +24,10 @@ end
 #define PORT    7000
 #define BACKLOG 128
 
-code/await Client (var int port) => void do
+code/await Client (var int port) -> void do
     var& _uv_tcp_t tcp;
     event& void ok_connected;
-    watching UV_TCP_Connect("127.0.0.1", port) => (tcp, ok_connected)
+    watching UV_TCP_Connect("127.0.0.1", port) -> (tcp, ok_connected)
     do
         await ok_connected;
 

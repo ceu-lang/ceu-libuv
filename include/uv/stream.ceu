@@ -38,8 +38,8 @@ input (_uv_stream_t&&, ssize) UV_READ;
 input (_uv_write_t&&,  int)   UV_WRITE;
 
 code/await UV_Stream_Listen (var& _uv_stream_t stream, var int backlog)
-                                => (event& void ok)
-                                    => int // err
+                                -> (event& void ok)
+                                    -> int // err
 do
     event void ok_;
     ok = &ok_;
@@ -60,8 +60,8 @@ do
 end
 
 code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
-                            => (event& usize ok)
-                                => int // err
+                            -> (event& usize ok)
+                                -> int // err
 do
     event usize ok_;
     ok = &ok_;
@@ -90,10 +90,10 @@ do
 end
 
 code/await UV_Stream_ReadLine (var& _uv_stream_t stream, vector&[] byte string)
-                                => void
+                                -> void
 do
     event& usize ok;
-    watching UV_Stream_Read(&stream,&string) => (ok) do
+    watching UV_Stream_Read(&stream,&string) -> (ok) do
         loop do
             await ok;
             var byte n=0, c=0;
@@ -109,7 +109,7 @@ do
 end
 
 code/await UV_Stream_Write (var& _uv_stream_t stream, vector&[] byte bytes)
-                                => int // err
+                                -> int // err
 do
     var usize starting  = 0;
     var usize excluding = $bytes;

@@ -33,7 +33,7 @@ end
 #define UV_TCP_ReadLine(tcp, bytes) UV_Stream_ReadLine((tcp) as _uv_stream_t&&, bytes)
 #define UV_TCP_Write(tcp, bytes) UV_Stream_Write((tcp) as _uv_stream_t&&, bytes)
 
-code/await UV_TCP_Open (void) => (var& _uv_tcp_t tcp) => int // err
+code/await UV_TCP_Open (void) -> (var& _uv_tcp_t tcp) -> int // err
 do
     var&? _uv_tcp_t tcp_ = &_malloc(sizeof(_uv_tcp_t))
         finalize (tcp_) with
@@ -62,8 +62,8 @@ do
 end
 
 code/await UV_TCP_Connect (var _char&& ip, var int port)
-                            => (var& _uv_tcp_t tcp, event& void ok)
-                                => int  // err
+                            -> (var& _uv_tcp_t tcp, event& void ok)
+                                -> int  // err
 do
     var& _uv_tcp_t tcp_;
     event void ok_;
@@ -73,7 +73,7 @@ do
     _uv_ip4_addr(ip, port, &&dest);
 
     var int? err1 =
-        watching UV_TCP_Open() => (tcp_) do
+        watching UV_TCP_Open() -> (tcp_) do
             tcp = &tcp_;
 
             var&? _uv_connect_t connect = &_malloc(sizeof(_uv_connect_t))
