@@ -6,7 +6,7 @@ var& UV_FS_File file;
 
 var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
 
-watching UV_FS_Open(&&path[0], _O_CREAT|_O_WRONLY, mode) -> (file)
+watching UV_FS_Open(&&path[0], _O_CREAT|_O_WRONLY, mode) -> (&file)
 do
     await file.ok;
     if file.fd < 0 then

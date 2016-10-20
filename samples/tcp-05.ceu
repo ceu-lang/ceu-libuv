@@ -17,7 +17,7 @@
 
 var& _uv_tcp_t client;
 var int? err =
-    watching UV_TCP_Open() -> (client) do
+    watching UV_TCP_Open() -> (&client) do
         var&? _uv_connect_t connect = &_malloc(sizeof(_uv_connect_t))
             finalize (connect) with
                 // free on uv callback

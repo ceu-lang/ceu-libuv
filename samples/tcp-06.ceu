@@ -11,7 +11,7 @@
 
 var& _uv_tcp_t tcp;
 event& void ok_connected;
-watching UV_TCP_Connect("127.0.0.1", DEFAULT_PORT) -> (tcp, ok_connected) do
+watching UV_TCP_Connect("127.0.0.1", DEFAULT_PORT) -> (&tcp, &ok_connected) do
     await ok_connected;
 
     _printf("I will terminate after 10s...\n");

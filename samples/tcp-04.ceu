@@ -21,7 +21,7 @@ do
         do
             event& usize ok_read;
             watching UV_TCP_Read(&tcp, &string)
-                        -> (ok_read)
+                        -> (&ok_read)
             do
                 await ok_read;
             end
@@ -47,7 +47,7 @@ code/await Client (var& _uv_tcp_t server) -> void
 do
     var& _uv_tcp_t client;
     var int? err =
-        watching UV_TCP_Open() -> (client) do
+        watching UV_TCP_Open() -> (&client) do
             var int ret1 = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
             _ceu_dbg_assert(ret1 == 0);
 
@@ -77,12 +77,12 @@ do
     _uv_ip4_addr(&&ip[0], port, &&addr);
 
     var& _uv_tcp_t server;
-    watching UV_TCP_Open() -> (server)
+    watching UV_TCP_Open() -> (&server)
     do
         _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
 
         event& void ok_listen;
-        watching UV_TCP_Listen(&server, DEFAULT_BACKLOG) -> (ok_listen)
+        watching UV_TCP_Listen(&server, DEFAULT_BACKLOG) -> (&ok_listen)
         do
             pool[10] Client cs;
             every ok_listen do

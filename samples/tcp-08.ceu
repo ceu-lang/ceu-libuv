@@ -27,7 +27,7 @@ end
 code/await Client (var int port) -> void do
     var& _uv_tcp_t tcp;
     event& void ok_connected;
-    watching UV_TCP_Connect("127.0.0.1", port) -> (tcp, ok_connected)
+    watching UV_TCP_Connect("127.0.0.1", port) -> (&tcp, ok_connected)
     do
         await ok_connected;
 

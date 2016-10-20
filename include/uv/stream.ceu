@@ -93,7 +93,7 @@ code/await UV_Stream_ReadLine (var& _uv_stream_t stream, vector&[] byte string)
                                 -> void
 do
     event& usize ok;
-    watching UV_Stream_Read(&stream,&string) -> (ok) do
+    watching UV_Stream_Read(&stream,&string) -> (&ok) do
         loop do
             await ok;
             var byte n=0, c=0;

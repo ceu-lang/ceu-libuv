@@ -7,7 +7,7 @@ code/await UV_TCP_Server_Client (var& _uv_tcp_t server) -> void
 do
     var& _uv_tcp_t client;
     var int? err =
-        watching UV_TCP_Open() -> (client) do
+        watching UV_TCP_Open() -> (&client) do
             var int ret = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
             _ceu_dbg_assert(ret == 0);
 
@@ -32,12 +32,12 @@ do
     _uv_ip4_addr(&&ip[0], port, &&addr);
 
     var& _uv_tcp_t server;
-    watching UV_TCP_Open() -> (server)
+    watching UV_TCP_Open() -> (&server)
     do
         _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
 
         event& void ok_listen;
-        watching UV_TCP_Listen(&server,backlog) -> (ok_listen)
+        watching UV_TCP_Listen(&server,backlog) -> (&ok_listen)
         do
 // TODO: receive as argument?
             pool[] UV_TCP_Server_Client cs;
