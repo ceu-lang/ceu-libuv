@@ -73,7 +73,7 @@ do
     _uv_ip4_addr(ip, port, &&dest);
 
     var int? err1 =
-        watching UV_TCP_Open() -> (tcp_) do
+        watching UV_TCP_Open() -> (&tcp_) do
             tcp = &tcp_;
 
             var&? _uv_connect_t connect = &_malloc(sizeof(_uv_connect_t))
