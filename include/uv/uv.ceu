@@ -29,7 +29,11 @@ native/pos do
     s32 ceu_uv_timer_next_us;
     void ceu_uv_timer_cb (uv_timer_t* timer) {
         ceu_dbg_assert(timer == &ceu_uv_timer);
+#if 1 // TIMER
+        s32 us = 10000;
+#else
         s32 us = ceu_uv_timer_next_us;
+#endif
         ceu_input(CEU_INPUT__WCLOCK, &us);
     }
 
@@ -43,6 +47,11 @@ native/pos do
                 uv_loop_init(&ceu_uv_loop);
                 uv_async_init(&ceu_uv_loop, &ceu_uv_async, NULL);
                 uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
+
+#if 1 // TIMER
+                uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb,
+                               10, 10);
+#endif
                 break;
 
             case CEU_CALLBACK_STEP:
@@ -61,6 +70,7 @@ native/pos do
                 break;
 
             case CEU_CALLBACK_WCLOCK_MIN: {
+#if 0 // TIMER
                 s32 us = p1.num;
                 if (us == CEU_WCLOCK_INACTIVE) {
                     uv_timer_stop(&ceu_uv_timer);
@@ -72,6 +82,7 @@ native/pos do
                     uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb,
                                    ceu_uv_timer_next_us/1000, 0);
                 }
+#endif
                 break;
             }
 
