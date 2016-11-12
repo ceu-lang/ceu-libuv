@@ -1,0 +1,17 @@
+#include "c.ceu"
+#include "uv/uv.ceu"
+
+_printf(">>> 5s\n");
+watching 5s do
+    loop do
+        await 1000ms;
+        _printf("A\n");
+        await async/thread do
+            _sleep(1);
+            _printf("B\n");
+        end
+    end
+end
+_printf("<<< 5s\n");
+
+escape 0;

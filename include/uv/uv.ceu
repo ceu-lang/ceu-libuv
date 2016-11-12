@@ -24,17 +24,12 @@ native/pos do
 
     uv_loop_t  ceu_uv_loop;
     uv_async_t ceu_uv_async;
-
     uv_timer_t ceu_uv_timer;
-    s32 ceu_uv_timer_next_us;
+
+    u64 ceu_uv_timer_now;
     void ceu_uv_timer_cb (uv_timer_t* timer) {
         ceu_dbg_assert(timer == &ceu_uv_timer);
-#if 1 // TIMER
-        s32 us = 10000;
-#else
-        s32 us = ceu_uv_timer_next_us;
-#endif
-        ceu_input(CEU_INPUT__WCLOCK, &us);
+        uv_async_send(&ceu_uv_async);
     }
 
     tceu_callback_ret ceu_uv_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
@@ -47,16 +42,18 @@ native/pos do
                 uv_loop_init(&ceu_uv_loop);
                 uv_async_init(&ceu_uv_loop, &ceu_uv_async, NULL);
                 uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
-
-#if 1 // TIMER
-                uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb,
-                               10, 10);
-#endif
+                ceu_uv_timer_now = uv_now(&ceu_uv_loop);
                 break;
 
             case CEU_CALLBACK_STEP:
                 // TODO: detect/error if return w/o "escape"
                 uv_run(&ceu_uv_loop, UV_RUN_ONCE);
+
+                u64 now = uv_now(&ceu_uv_loop);
+                s32 us = (now - ceu_uv_timer_now) * 1000;
+                ceu_uv_timer_now = now;
+                ceu_input(CEU_INPUT__WCLOCK, &us);
+
                 break;
 
             case CEU_CALLBACK_ASYNC_PENDING:
@@ -70,19 +67,14 @@ native/pos do
                 break;
 
             case CEU_CALLBACK_WCLOCK_MIN: {
-#if 0 // TIMER
                 s32 us = p1.num;
                 if (us == CEU_WCLOCK_INACTIVE) {
                     uv_timer_stop(&ceu_uv_timer);
                 } else if (us <= 0) {
-                    ceu_uv_timer_next_us = 0;
-                    uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, 0, 0);
+                    uv_async_send(&ceu_uv_async);
                 } else {
-                    ceu_uv_timer_next_us = us;
-                    uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb,
-                                   ceu_uv_timer_next_us/1000, 0);
+                    uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, us/1000, 0);
                 }
-#endif
                 break;
             }
 
