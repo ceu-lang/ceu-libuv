@@ -21,4 +21,3 @@ _ceu_dbg_assert(ret == 100);
 _printf("ok\n");
 
 escape 0;
-       
