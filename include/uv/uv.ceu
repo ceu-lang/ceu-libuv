@@ -30,7 +30,7 @@ native/pos do
     void ceu_uv_timer_cb (uv_timer_t* timer) {
         ceu_dbg_assert(timer == &ceu_uv_timer);
         //uv_async_send(&ceu_uv_async);
-        s32 dt = ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num;
+        u32 dt = ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num;
         ceu_input(CEU_INPUT__WCLOCK, &dt);
     }
 
@@ -64,7 +64,7 @@ native/pos do
 
             case CEU_CALLBACK_WCLOCK_DT: {
                 u64 now = uv_now(&ceu_uv_loop);
-                s32 dt = (now - ceu_uv_timer_old);
+                u32 dt = (now - ceu_uv_timer_old);
                 ceu_uv_timer_old = now;
                 ret.value.num = dt*1000;
                 ret.is_handled = 1;
