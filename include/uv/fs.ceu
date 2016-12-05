@@ -176,7 +176,7 @@ native/pos do
     ##define ceu_uv_fs_fstat(a,b)       uv_fs_fstat(&ceu_uv_loop,a,b,ceu_uv_fs_cb)
 
     void ceu_uv_fs_cb (uv_fs_t* req) {
-        ceu_input(CEU_INPUT_UV_FS, &req);
+        ceu_input(CEU_INPUT_UV_FS, &req, ceu_uv_dt());
     }
 
     void ceu_uv_fs_close_cb (uv_fs_t* req) {

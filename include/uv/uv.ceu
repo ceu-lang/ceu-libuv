@@ -27,11 +27,19 @@ native/pos do
     uv_timer_t ceu_uv_timer;
 
     u64 ceu_uv_timer_old;
+
+    s32 ceu_uv_dt (void) {
+        u64 now = uv_now(&ceu_uv_loop);
+        u32 dt = (now - ceu_uv_timer_old);
+        ceu_uv_timer_old = now;
+        return dt*1000;
+    }
+
     void ceu_uv_timer_cb (uv_timer_t* timer) {
         ceu_dbg_assert(timer == &ceu_uv_timer);
         //uv_async_send(&ceu_uv_async);
-        u32 dt = ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num;
-        ceu_input(CEU_INPUT__WCLOCK, &dt);
+        s32 dt = ceu_uv_dt();
+        ceu_input_one(CEU_INPUT__WCLOCK, &dt);
     }
 
     tceu_callback_ret ceu_uv_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
@@ -57,19 +65,14 @@ native/pos do
                 ret.is_handled = 0;
                 break;
 
-            case CEU_CALLBACK_THREAD_TERMINATING:
+            case CEU_CALLBACK_THREAD_TERMINATING: {
+                s32 dt = ceu_uv_dt();
+                ceu_input_one(CEU_INPUT__WCLOCK, &dt);
                 uv_async_send(&ceu_uv_async);
                 ret.is_handled = 0;
                 break;
-
-            case CEU_CALLBACK_WCLOCK_DT: {
-                u64 now = uv_now(&ceu_uv_loop);
-                u32 dt = (now - ceu_uv_timer_old);
-                ceu_uv_timer_old = now;
-                ret.value.num = dt*1000;
-                ret.is_handled = 1;
-                break;
             }
+
             case CEU_CALLBACK_WCLOCK_MIN: {
                 s32 us = p1.num;
                 if (us == CEU_WCLOCK_INACTIVE) {
@@ -77,6 +80,9 @@ native/pos do
                 //} else if (us <= 0) {
                     //uv_async_send(&ceu_uv_async);
                 } else {
+                    if (us < 0) {
+                        us = 0;
+                    }
                     uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, us/1000, 0);
                 }
                 break;
