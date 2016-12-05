@@ -167,7 +167,7 @@ printf(">>> FREE\n");
     void ceu_uv_listen_cb (uv_stream_t* s, int err) {
         ceu_dbg_assert(err >= 0);
         tceu_input_UV_LISTEN p = { s, err };
-        ceu_input(CEU_INPUT_UV_LISTEN, &p, ceu_uv_dt());
+        ceu_input(CEU_INPUT_UV_LISTEN, &p);
     }
 
     ##define CEU_UV_READ_ALLOC_DYN_INIT 128
@@ -198,12 +198,12 @@ printf(">>> FREE\n");
 
         if (n < 0) {
             tceu_input_UV_ERROR p = { s, n };
-            ceu_input(CEU_INPUT_UV_ERROR, &p, ceu_uv_dt());
+            ceu_input(CEU_INPUT_UV_ERROR, &p);
         }
 
         {
             tceu_input_UV_READ p = { s, n };
-            ceu_input(CEU_INPUT_UV_READ, &p, ceu_uv_dt());
+            ceu_input(CEU_INPUT_UV_READ, &p);
         }
     }
 
@@ -212,10 +212,10 @@ printf(">>> FREE\n");
             // if the "assert" fails, see if the error makes sense and extend it
             ceu_dbg_assert(err == UV__EOF);
             tceu_input_UV_ERROR p = { req->handle, err };
-            ceu_input(CEU_INPUT_UV_ERROR, &p, ceu_uv_dt());
+            ceu_input(CEU_INPUT_UV_ERROR, &p);
         }
         tceu_input_UV_WRITE p = { req, err };
-        ceu_input(CEU_INPUT_UV_WRITE, &p, ceu_uv_dt());
+        ceu_input(CEU_INPUT_UV_WRITE, &p);
         free(req);
     }
 end
