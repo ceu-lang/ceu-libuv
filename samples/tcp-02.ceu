@@ -32,7 +32,7 @@ do
             spawn do
                 var _uv_stream_t&& s;
                 var int            err2;
-                every (s,err2) in UV_ERROR do
+                every (s,err2) in UV_STREAM_ERROR do
                     _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err2));
                 end
             end

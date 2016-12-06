@@ -7,7 +7,7 @@
 #@  $ cat /tmp/fifo  | nc -l 7000 -v | cat  > /tmp/fifo
 #@ http://unix.stackexchange.com/questions/147977/netcat-echo-server-possible-with-pipes-instead-of-commands-as-strings
 #@ Features:
-#@  - UV_CONNECT
+#@  - UV_STREAM_CONNECT
 #endif
 
 #include "uv/tcp.ceu"
@@ -29,7 +29,7 @@ var int? err =
 
         var _uv_connect_t&& c;
         var int status;
-        (c,status) = await UV_CONNECT until c==&&connect!;
+        (c,status) = await UV_STREAM_CONNECT until c==&&connect!;
         _ceu_dbg_assert(status == 0);
 
         _printf("I will terminate after 10s...\n");

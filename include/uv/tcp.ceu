@@ -22,8 +22,8 @@ native/pos do
     ##define ceu_uv_tcp_connect(a,b,c) uv_tcp_connect(a,b,c,ceu_uv_connect_cb)
 
     void ceu_uv_connect_cb (uv_connect_t* c, int err) {
-        tceu_input_UV_CONNECT p = { c, err };
-        ceu_input(CEU_INPUT_UV_CONNECT, &p);
+        tceu_input_UV_STREAM_CONNECT p = { c, err };
+        ceu_input(CEU_INPUT_UV_STREAM_CONNECT, &p);
         free(c);
     }
 end
@@ -57,7 +57,7 @@ do
 
     var _uv_stream_t&& s;
     var int err2;
-    (s,err2) = await UV_ERROR until (s==(&&tcp_! as _uv_stream_t&&));
+    (s,err2) = await UV_STREAM_ERROR until (s==(&&tcp_! as _uv_stream_t&&));
     escape err2;
 end
 
@@ -85,7 +85,7 @@ do
 
             var _uv_connect_t&& c;
             var int err2;
-            (c,err2) = await UV_CONNECT until c==&&connect!;
+            (c,err2) = await UV_STREAM_CONNECT until c==&&connect!;
             _ceu_dbg_assert(err2 == 0);
 
             emit ok_;

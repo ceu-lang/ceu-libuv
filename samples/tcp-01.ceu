@@ -17,7 +17,7 @@
 #@  - write long string
 #@      - ERROR! ("out of bounds")
 #@ Features:
-#@  - UV_ERROR, UV_LISTEN, UV_READ, UV_WRITE
+#@  - UV_STREAM_ERROR, UV_STREAM_LISTEN, UV_STREAM_READ, UV_STREAM_WRITE
 #endif
 
 #include "uv/tcp.ceu"
@@ -65,7 +65,7 @@ loop i in [0 -> 2[ do
             // LISTEN
             var _uv_stream_t&& s;
             var int status;
-            (s,status) = await UV_LISTEN until s==(&&server as _uv_stream_t&&);
+            (s,status) = await UV_STREAM_LISTEN until s==(&&server as _uv_stream_t&&);
             _ceu_dbg_assert(status >= 0);
         end
     end
@@ -78,7 +78,7 @@ loop i in [0 -> 2[ do
     spawn do
         var _uv_stream_t&& s;
         var int            err;
-        every (s,err) in UV_ERROR do
+        every (s,err) in UV_STREAM_ERROR do
             _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err));
         end
     end
@@ -92,14 +92,14 @@ loop i in [0 -> 2[ do
             do
                 ret = _ceu_uv_read_start(&&client as _uv_stream_t&&);
             finalize (client) with
-                // finalize after each UV_READ
+                // finalize after each UV_STREAM_READ
                 _uv_read_stop(&&client as _uv_stream_t&&);
             end
             //_printf("error: %s\n", _uv_strerror(ret));
             _ceu_dbg_assert(ret == 0);
 
             var _uv_stream_t&& s;
-            (s,n_read) = await UV_READ until s==(&&client as _uv_stream_t&&);
+            (s,n_read) = await UV_STREAM_READ until s==(&&client as _uv_stream_t&&);
             //_ceu_dbg_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
             //_ceu_dbg_assert(buf_r:len == $$buf);
         end
@@ -123,7 +123,7 @@ loop i in [0 -> 2[ do
         _ceu_uv_write(&&req_write!, &&client as _uv_stream_t&&, &&buf_);
         var _uv_write_t&& w;
         var int status;
-        (w, status) = await UV_WRITE until w==&&req_write!;
+        (w, status) = await UV_STREAM_WRITE until w==&&req_write!;
         _ceu_dbg_assert(status == 0);
     end
 end
