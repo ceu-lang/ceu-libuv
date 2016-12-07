@@ -214,3 +214,55 @@ Prints the contents of `file.txt` in a loop that reads the file line by line.
 
 Céu-libuv references:
     [`UV_FS_Read`](#TODO).
+
+UV_FS_Fstat
+-----------
+
+Reads information about a file.
+
+```ceu
+code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat)
+                        -> int
+```
+
+- Parameters
+    - `file`: [file handle](#TODO) to write to
+    - `stat`: destination buffer
+- Return
+    - `int`: operation status
+        -  `0`: success
+        - `<0`: error
+
+Example:
+
+```ceu
+#include "uv/fs.ceu"
+
+var& UV_FS_File file;
+
+var int? err =
+    watching UV_FS_Open("file.txt", _O_RDONLY, 0) -> (&file)
+    do
+        await file.ok;
+
+        var _uv_stat_t stat = _;
+        await UV_FS_Fstat(&file, &stat);
+        _printf("size = %ld\n", stat.st_size);
+    end;
+
+if err? then
+    _printf("open error: %d\n", err!);
+end
+
+escape 0;
+```
+
+Prints the size of `file.txt` in bytes.
+
+libuv references:
+    [`uv_fs_fstat`](#TODO),
+    [`uv_fs_req_cleanup`](#TODO).
+
+*Note: all allocated libuv resources are automatically released on termination.*
+
+
