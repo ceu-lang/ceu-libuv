@@ -10,7 +10,7 @@ var int? err =
         await file.ok;
         vector[] byte buf = [] .. "Hello World!\n";
         var ssize n = await UV_FS_Write(&file,&buf,$buf,0);
-        if (n as usize) != $buf then
+        if (n<0) or (n as usize)!=$buf then
             _printf("write error\n");
         end
     end;

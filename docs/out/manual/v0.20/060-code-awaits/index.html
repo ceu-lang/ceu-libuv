@@ -103,6 +103,8 @@
                 
                     <li><a class="toctree-l4" href="#uv_fs_write">UV_FS_Write</a></li>
                 
+                    <li><a class="toctree-l4" href="#uv_fs_readline">UV_FS_ReadLine</a></li>
+                
             
             </ul>
         
@@ -164,7 +166,7 @@
 </ul>
 </li>
 <li>Initialization<ul>
-<li><code>file</code>: alias to <a href="#TODO">file</a> handle</li>
+<li><code>file</code>: alias to <a href="#TODO">file handle</a></li>
 </ul>
 </li>
 <li>Return<ul>
@@ -206,7 +208,7 @@ In case of failure, prints <em>open error</em> along with the error code.</p>
 
 <ul>
 <li>Parameters<ul>
-<li><code>file</code>:   <a href="#TODO">file</a> handle to read from</li>
+<li><code>file</code>:   <a href="#TODO">file handle</a> to read from</li>
 <li><code>buf</code>:    destination buffer</li>
 <li><code>size</code>:   number of bytes to read</li>
 <li><code>offset</code>: starting file offset</li>
@@ -261,7 +263,7 @@ escape 0;
 
 <ul>
 <li>Parameters<ul>
-<li><code>file</code>:   <a href="#TODO">file</a> handle to write to</li>
+<li><code>file</code>:   <a href="#TODO">file handle</a> to write to</li>
 <li><code>buf</code>:    source buffer</li>
 <li><code>size</code>:   number of bytes to write</li>
 <li><code>offset</code>: starting file offset</li>
@@ -285,12 +287,11 @@ var&amp; UV_FS_File file;
 var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
 
 var int? err =
-    watching UV_FS_Open(&quot;hello.txt&quot;, _O_CREAT|_O_WRONLY, mode) -&gt; (&amp;file)
-    do
+    watching UV_FS_Open(&quot;hello.txt&quot;, _O_CREAT|_O_WRONLY, mode) -&gt; (&amp;file) do
         await file.ok;
         vector[] byte buf = [] .. &quot;Hello World!\n&quot;;
         var ssize n = await UV_FS_Write(&amp;file,&amp;buf,$buf,0);
-        if (n as usize) != $buf then
+        if (n&lt;0) or (n as usize)!=$buf then
             _printf(&quot;write error\n&quot;);
         end
     end;
@@ -301,11 +302,59 @@ end
 escape 0;
 </code></pre>
 
-<p>Writes the string <em>Hello World"</em> to <code>hello.txt</code>.</p>
+<p>Writes the string <em>Hello World</em> to <code>hello.txt</code>.</p>
 <p>libuv references:
     <a href="#TODO"><code>uv_buf_init</code></a>,
     <a href="#TODO"><code>uv_fs_write</code></a>,
     <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+<h2 id="uv_fs_readline">UV_FS_ReadLine</h2>
+<p>Reads a line from a file.</p>
+<pre><code class="ceu">code/await UV_FS_ReadLine (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize offset)
+                            -&gt; ssize
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>file</code>:   <a href="#TODO">file handle</a> to read from</li>
+<li><code>buf</code>:    destination buffer (excludes the leading <code>\n</code>)</li>
+<li><code>offset</code>: starting file offset</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>ssize</code>: actual number of bytes read<ul>
+<li><code>&gt;=0</code>: number of bytes (includes the leading <code>\n</code>)</li>
+<li><code>&lt;0</code>:  read error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>All allocated resources are released on termination.</p>
+<p><code>TODO: the file is currently read byte by byte.</code></p>
+<p>Example:</p>
+<pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
+
+var&amp; UV_FS_File file;
+
+watching UV_FS_Open(&quot;file.txt&quot;, _O_RDONLY, 0) -&gt; (&amp;file) do
+    await file.ok;
+
+    var usize off = 0;
+    loop do
+        vector[] byte line;
+        var ssize n = await UV_FS_ReadLine(&amp;file,&amp;line,off);
+        if n &lt;= 0 then
+            break;
+        end
+        _printf(&quot;line = %s [%d]\n&quot;, &amp;&amp;line[0], n as int);
+        off = off + (n as usize);
+    end
+end
+
+escape 0;
+</code></pre>
+
+<p>Prints the contents of <code>file.txt</code> in a loop that reads the file line by line.</p>
               
             </div>
           </div>
