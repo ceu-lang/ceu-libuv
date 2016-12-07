@@ -79,7 +79,7 @@ $ make samples
 Opening a File
 --------------
 
-The exmple `fs-00.ceu` opens `file.txt` and prints *opening ok* after the file
+The example `fs-00.ceu` opens `file.txt` and prints *opening ok* after the file
 is ready for use.
 In case of failure, prints *opening error* along with the error code:
 
@@ -100,3 +100,6 @@ end
 
 escape 0;
 ```
+
+TODO
+----

@@ -40,7 +40,7 @@ input (_uv_connect_t&&, int) UV_STREAM_CONNECT;
     - Whenever a connection opens.
 - Payload:
     - `_uv_connect_t&&`: pointer to the connection
-    - `int`: opening status
+    - `int`: open status
         -  `0`: success
         - `<0`: error
 

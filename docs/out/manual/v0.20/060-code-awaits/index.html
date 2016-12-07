@@ -99,6 +99,8 @@
                 
                     <li><a class="toctree-l4" href="#uv_fs_open">UV_FS_Open</a></li>
                 
+                    <li><a class="toctree-l4" href="#uv_fs_read">UV_FS_Read</a></li>
+                
             
             </ul>
         
@@ -160,11 +162,11 @@
 </ul>
 </li>
 <li>Initialization<ul>
-<li><code>file</code>: alias to managed <a href="#TODO">file</a></li>
+<li><code>file</code>: alias to <a href="#TODO">file</a> handle</li>
 </ul>
 </li>
 <li>Return<ul>
-<li><code>int</code> (<code>&lt;0</code>): opening error</li>
+<li><code>int</code> (<code>&lt;0</code>): open error</li>
 </ul>
 </li>
 </ul>
@@ -179,20 +181,76 @@ var int? err =
     watching UV_FS_Open(&quot;file.txt&quot;, _O_RDONLY, 0) -&gt; (&amp;file) do
         await file.ok;
         // file is ready for use
-        _printf(&quot;opening ok\n&quot;);
+        _printf(&quot;open ok\n&quot;);
     end;
 if err? then
-    _printf(&quot;opening error: %d\n&quot;, err!);
+    _printf(&quot;open error: %d\n&quot;, err!);
 end
 
 escape 0;
 </code></pre>
 
-<p>Opens <code>file.txt</code> and prints <em>opening ok</em> after the file is ready for use.
-In case of failure, prints <em>opening error</em> along with the error code.</p>
+<p>Opens <code>file.txt</code> and prints <em>open ok</em> after the file is ready for use.
+In case of failure, prints <em>open error</em> along with the error code.</p>
 <p>libuv references:
     <a href="#TODO"><code>uv_fs_open</code></a>,
     <a href="#TODO"><code>ceu_uv_fs_close</code></a>,
+    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+<h2 id="uv_fs_read">UV_FS_Read</h2>
+<p>Read bytes from a file.</p>
+<pre><code class="ceu">code/await UV_FS_Read (var&amp; UV_FS_File file, vector&amp;[] byte buf,
+                       var usize size, var usize offset)
+                            -&gt; ssize
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>file</code>:   <a href="#TODO">file</a> handle to read from</li>
+<li><code>buf</code>:    destination buffer</li>
+<li><code>size</code>:   number of bytes to read</li>
+<li><code>offset</code>: starting file offset</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>ssize</code>: actual number of bytes read<ul>
+<li><code>&gt;=0</code>: number of bytes</li>
+<li><code>&lt;0</code>:  read error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>All allocated resources are released on termination.</p>
+<p>Example:</p>
+<pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
+
+var&amp; UV_FS_File file;
+
+var int? err =
+    watching UV_FS_Open(&quot;file.txt&quot;, _O_RDONLY, 0) -&gt; (&amp;file) do
+        await file.ok;
+
+        var usize offset = 0;
+        loop do
+            vector[11] byte buf;
+            var ssize n = await UV_FS_Read(&amp;file,&amp;buf,$$buf-1,offset);
+            if n == 0 then
+                break;
+            end
+            buf = buf .. [{'\0'}];
+            _printf(&quot;%s&quot;, &amp;&amp;buf[0]);
+            offset = offset + ($$buf-1);
+        end
+    end;
+_ceu_dbg_assert(not err?);
+
+escape 0;
+</code></pre>
+
+<p>Prints the contents of <code>file.txt</code> in a loop that reads the file 10 in 10 bytes.</p>
+<p>libuv references:
+    <a href="#TODO"><code>uv_buf_init</code></a>,
+    <a href="#TODO"><code>uv_fs_read</code></a>,
     <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
               
             </div>
