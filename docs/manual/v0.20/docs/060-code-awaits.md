@@ -23,8 +23,6 @@ code/await UV_FS_Open (var _char&& path, var int flags, var int mode)
 
 The file is only ready for use after `UV_FS_Open` triggers `file.ok`.
 
-All allocated resources are released on termination.
-
 Example:
 
 ```ceu
@@ -53,6 +51,8 @@ libuv references:
     [`ceu_uv_fs_close`](#TODO),
     [`uv_fs_req_cleanup`](#TODO).
 
+*Note: all allocated libuv resources are automatically released on termination.*
+
 UV_FS_Read
 ----------
 
@@ -72,8 +72,6 @@ code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf, var usize size,
     - `ssize`: actual number of bytes read
         - `>=0`: number of bytes
         - `<0`:  read error
-
-All allocated resources are released on termination.
 
 Example:
 
@@ -110,6 +108,8 @@ libuv references:
     [`uv_fs_read`](#TODO),
     [`uv_fs_req_cleanup`](#TODO).
 
+*Note: all allocated libuv resources are automatically released on termination.*
+
 UV_FS_Write
 -----------
 
@@ -129,8 +129,6 @@ code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf, var usize size
     - `ssize`: actual number of bytes written
         - `>=0`: number of bytes
         - `<0`:  write error
-
-All allocated resources are released on termination.
 
 Example:
 
@@ -164,6 +162,8 @@ libuv references:
     [`uv_fs_write`](#TODO),
     [`uv_fs_req_cleanup`](#TODO).
 
+*Note: all allocated libuv resources are automatically released on termination.*
+
 UV_FS_ReadLine
 --------------
 
@@ -182,8 +182,6 @@ code/await UV_FS_ReadLine (var& UV_FS_File file, vector&[] byte buf, var usize o
     - `ssize`: actual number of bytes read
         - `>=0`: number of bytes (includes the leading `\n`)
         - `<0`:  read error
-
-All allocated resources are released on termination.
 
 `TODO: the file is currently read byte by byte.`
 
@@ -213,3 +211,6 @@ escape 0;
 ```
 
 Prints the contents of `file.txt` in a loop that reads the file line by line.
+
+Céu-libuv references:
+    [`UV_FS_Read`](#TODO).

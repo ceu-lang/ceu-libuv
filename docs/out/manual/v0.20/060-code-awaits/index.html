@@ -175,7 +175,6 @@
 </li>
 </ul>
 <p>The file is only ready for use after <code>UV_FS_Open</code> triggers <code>file.ok</code>.</p>
-<p>All allocated resources are released on termination.</p>
 <p>Example:</p>
 <pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
 
@@ -200,6 +199,7 @@ In case of failure, prints <em>open error</em> along with the error code.</p>
     <a href="#TODO"><code>uv_fs_open</code></a>,
     <a href="#TODO"><code>ceu_uv_fs_close</code></a>,
     <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
 <h2 id="uv_fs_read">UV_FS_Read</h2>
 <p>Reads bytes from a file.</p>
 <pre><code class="ceu">code/await UV_FS_Read (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize size, var usize offset)
@@ -223,7 +223,6 @@ In case of failure, prints <em>open error</em> along with the error code.</p>
 </ul>
 </li>
 </ul>
-<p>All allocated resources are released on termination.</p>
 <p>Example:</p>
 <pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
 
@@ -255,6 +254,7 @@ escape 0;
     <a href="#TODO"><code>uv_buf_init</code></a>,
     <a href="#TODO"><code>uv_fs_read</code></a>,
     <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
 <h2 id="uv_fs_write">UV_FS_Write</h2>
 <p>Write bytes from a file.</p>
 <pre><code class="ceu">code/await UV_FS_Write (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize size, var usize offset)
@@ -278,7 +278,6 @@ escape 0;
 </ul>
 </li>
 </ul>
-<p>All allocated resources are released on termination.</p>
 <p>Example:</p>
 <pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
 
@@ -307,6 +306,7 @@ escape 0;
     <a href="#TODO"><code>uv_buf_init</code></a>,
     <a href="#TODO"><code>uv_fs_write</code></a>,
     <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
 <h2 id="uv_fs_readline">UV_FS_ReadLine</h2>
 <p>Reads a line from a file.</p>
 <pre><code class="ceu">code/await UV_FS_ReadLine (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize offset)
@@ -329,7 +329,6 @@ escape 0;
 </ul>
 </li>
 </ul>
-<p>All allocated resources are released on termination.</p>
 <p><code>TODO: the file is currently read byte by byte.</code></p>
 <p>Example:</p>
 <pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
@@ -355,6 +354,8 @@ escape 0;
 </code></pre>
 
 <p>Prints the contents of <code>file.txt</code> in a loop that reads the file line by line.</p>
+<p>Céu-libuv references:
+    <a href="#TODO"><code>UV_FS_Read</code></a>.</p>
               
             </div>
           </div>
