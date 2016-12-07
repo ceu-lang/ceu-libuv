@@ -57,7 +57,7 @@ $ make
 ```
 
 If necessary, configure the variables in the `Makefile`.
-The default example moves a rectangle on screen.
+The default example prints the time elapsing during 5 seconds.
 
 To compile and run another application, run `make` and set `CEU_SRC`:
 

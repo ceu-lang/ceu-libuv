@@ -2,10 +2,9 @@
 #include "uv/uv.ceu"
 
 var int i;
-loop i in [0 -> 5[ do
-    _printf(">>> 1s\n");
+loop i in [1 -> 5] do
     await 1s;
-    _printf("<<< 1s\n");
+    _printf("%ds elapsed...\n", i);
 end
 
 escape 0;
