@@ -57,12 +57,19 @@ do
         _ceu_uv_fs_close_(&&req_close, req_open.result);
         _uv_fs_req_cleanup(&&req_open);
     end
+#if 1
+    _ceu_dbg_assert(ret == 0);  // libuv seems to always return 0
+#else
     if ret < 0 then
         escape ret;
     end
+#endif
 
     var _uv_fs_t&& req = await UV_FS until req==&&req_open;
     file_.fd = req_open.result;
+    if file_.fd < 0 then
+        escape file_.fd;
+    end
     emit file_.ok;
 
     await FOREVER;
