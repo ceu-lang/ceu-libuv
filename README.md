@@ -79,9 +79,9 @@ $ make samples
 Opening a File
 --------------
 
-The example `fs-00.ceu` opens `file.txt` and prints *opening ok* after the file
+The example `fs-00.ceu` opens `file.txt` and prints *open ok* after the file
 is ready for use.
-In case of failure, prints *opening error* along with the error code:
+In case of failure, prints *open error* along with the error code:
 
 ```
 #include "uv/fs.ceu"
@@ -92,10 +92,10 @@ var int? err =
     watching UV_FS_Open("file.txt", _O_RDONLY, 0) -> (&file) do
         await file.ok;
         // file is ready for use
-        _printf("opening ok\n");
+        _printf("open ok\n");
     end;
 if err? then
-    _printf("opening error: %d\n", err!);
+    _printf("open error: %d\n", err!);
 end
 
 escape 0;

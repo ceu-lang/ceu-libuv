@@ -20,7 +20,7 @@ var int? err =
     end;
 
 if err? then
-    _printf("opening error: %d\n", err!);
+    _printf("open error: %d\n", err!);
 end
 
 escape 0;

@@ -56,12 +56,11 @@ libuv references:
 UV_FS_Read
 ----------
 
-Read bytes from a file.
+Reads bytes from a file.
 
 ```ceu
-code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf,
-                       var usize size, var usize offset)
-                            -> ssize
+code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf, var usize size, var usize offset)
+                        -> ssize
 ```
 
 - Parameters
@@ -109,4 +108,59 @@ Prints the contents of `file.txt` in a loop that reads the file 10 in 10 bytes.
 libuv references:
     [`uv_buf_init`](#TODO),
     [`uv_fs_read`](#TODO),
+    [`uv_fs_req_cleanup`](#TODO).
+
+UV_FS_Write
+-----------
+
+Write bytes from a file.
+
+```ceu
+code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf, var usize size, var usize offset)
+                        -> ssize
+```
+
+- Parameters
+    - `file`:   [file](#TODO) handle to write to
+    - `buf`:    source buffer
+    - `size`:   number of bytes to write
+    - `offset`: starting file offset
+- Return
+    - `ssize`: actual number of bytes written
+        - `>=0`: number of bytes
+        - `<0`:  write error
+
+All allocated resources are released on termination.
+
+Example:
+
+```ceu
+#include "uv/fs.ceu"
+
+var& UV_FS_File file;
+
+var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
+
+var int? err =
+    watching UV_FS_Open("hello.txt", _O_CREAT|_O_WRONLY, mode) -> (&file)
+    do
+        await file.ok;
+        vector[] byte buf = [] .. "Hello World!\n";
+        var ssize n = await UV_FS_Write(&file,&buf,$buf,0);
+        if (n as usize) != $buf then
+            _printf("write error\n");
+        end
+    end;
+if err? then
+    _printf("open error: %d\n", err!);
+end
+
+escape 0;
+```
+
+Writes the string *Hello World"* to `hello.txt`.
+
+libuv references:
+    [`uv_buf_init`](#TODO),
+    [`uv_fs_write`](#TODO),
     [`uv_fs_req_cleanup`](#TODO).

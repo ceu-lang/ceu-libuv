@@ -101,6 +101,8 @@
                 
                     <li><a class="toctree-l4" href="#uv_fs_read">UV_FS_Read</a></li>
                 
+                    <li><a class="toctree-l4" href="#uv_fs_write">UV_FS_Write</a></li>
+                
             
             </ul>
         
@@ -197,10 +199,9 @@ In case of failure, prints <em>open error</em> along with the error code.</p>
     <a href="#TODO"><code>ceu_uv_fs_close</code></a>,
     <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
 <h2 id="uv_fs_read">UV_FS_Read</h2>
-<p>Read bytes from a file.</p>
-<pre><code class="ceu">code/await UV_FS_Read (var&amp; UV_FS_File file, vector&amp;[] byte buf,
-                       var usize size, var usize offset)
-                            -&gt; ssize
+<p>Reads bytes from a file.</p>
+<pre><code class="ceu">code/await UV_FS_Read (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize size, var usize offset)
+                        -&gt; ssize
 </code></pre>
 
 <ul>
@@ -251,6 +252,59 @@ escape 0;
 <p>libuv references:
     <a href="#TODO"><code>uv_buf_init</code></a>,
     <a href="#TODO"><code>uv_fs_read</code></a>,
+    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+<h2 id="uv_fs_write">UV_FS_Write</h2>
+<p>Write bytes from a file.</p>
+<pre><code class="ceu">code/await UV_FS_Write (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize size, var usize offset)
+                        -&gt; ssize
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>file</code>:   <a href="#TODO">file</a> handle to write to</li>
+<li><code>buf</code>:    source buffer</li>
+<li><code>size</code>:   number of bytes to write</li>
+<li><code>offset</code>: starting file offset</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>ssize</code>: actual number of bytes written<ul>
+<li><code>&gt;=0</code>: number of bytes</li>
+<li><code>&lt;0</code>:  write error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>All allocated resources are released on termination.</p>
+<p>Example:</p>
+<pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
+
+var&amp; UV_FS_File file;
+
+var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
+
+var int? err =
+    watching UV_FS_Open(&quot;hello.txt&quot;, _O_CREAT|_O_WRONLY, mode) -&gt; (&amp;file)
+    do
+        await file.ok;
+        vector[] byte buf = [] .. &quot;Hello World!\n&quot;;
+        var ssize n = await UV_FS_Write(&amp;file,&amp;buf,$buf,0);
+        if (n as usize) != $buf then
+            _printf(&quot;write error\n&quot;);
+        end
+    end;
+if err? then
+    _printf(&quot;open error: %d\n&quot;, err!);
+end
+
+escape 0;
+</code></pre>
+
+<p>Writes the string <em>Hello World"</em> to <code>hello.txt</code>.</p>
+<p>libuv references:
+    <a href="#TODO"><code>uv_buf_init</code></a>,
+    <a href="#TODO"><code>uv_fs_write</code></a>,
     <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
               
             </div>
