@@ -8,7 +8,7 @@
   
   
   
-  <title>Modes of Operation - Céu-SDL v0.20 - Reference Manual</title>
+  <title>Mode of Operation - Céu-libuv v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -23,7 +23,7 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Modes of Operation";
+    var mkdocs_page_name = "Mode of Operation";
     var mkdocs_page_input_path = "020-modes.md";
     var mkdocs_page_url = "/020-modes/";
   </script>
@@ -43,7 +43,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href=".." class="icon icon-home"> Céu-SDL v0.20 - Reference Manual</a>
+        <a href=".." class="icon icon-home"> Céu-libuv v0.20 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -70,17 +70,11 @@
           
             <li>
     <li class="toctree-l1 current">
-        <a class="current" href="./">Modes of Operation</a>
+        <a class="current" href="./">Mode of Operation</a>
         
             <ul>
             
-                <li class="toctree-l3"><a href="#modes-of-operation">Modes of Operation</a></li>
-                
-                    <li><a class="toctree-l4" href="#polling-mode">Polling Mode</a></li>
-                
-                    <li><a class="toctree-l4" href="#waiting-mode">Waiting Mode</a></li>
-                
-                    <li><a class="toctree-l4" href="#frame-based-mode">Frame-Based Mode</a></li>
+                <li class="toctree-l3"><a href="#mode-of-operation">Mode of Operation</a></li>
                 
             
             </ul>
@@ -126,7 +120,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="..">Céu-SDL v0.20 - Reference Manual</a>
+        <a href="..">Céu-libuv v0.20 - Reference Manual</a>
       </nav>
 
       
@@ -138,7 +132,7 @@
     
       
     
-    <li>Modes of Operation</li>
+    <li>Mode of Operation</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -148,89 +142,40 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="modes-of-operation">Modes of Operation</h1>
-<p>A mode of operation specifies how Céu-SDL captures events from the environment
-(e.g., key presses) and redirects them to the Céu application.</p>
-<p>Céu-SDL supports <em>polling</em>, <em>waiting</em>, and <em>frame-based</em> modes of operation.</p>
-<p>Each mode of operation uses a different compilation flag:</p>
-<pre><code>$ make CEU_ARGS=&quot;-DCEU_SDL_MODE_POLLING&quot;  CEU_SRC=&lt;path-to-ceu-application&gt;
-$ make CEU_ARGS=&quot;-DCEU_SDL_MODE_WAITING&quot;  CEU_SRC=&lt;path-to-ceu-application&gt;
-$ make CEU_ARGS=&quot;-DCEU_SDL_MODE_FRAME=33&quot; CEU_SRC=&lt;path-to-ceu-application&gt;
-</code></pre>
+                <h1 id="mode-of-operation">Mode of Operation</h1>
+<p><code>TODO</code></p>
+<!--
 
-<p>The frame-based mode also requires the desired period of the frame (in
-milliseconds).</p>
-<p>The frame-based mode is the default mode of operation and is preset to 33
-milliseconds.</p>
-<p>The modes of operation are implemented in C and are part of Céu-SDL.
-Each mode is described in pseudo-code as follows.</p>
-<h2 id="polling-mode">Polling Mode</h2>
-<p>The <em>polling mode</em> of Céu-SDL continually checks for SDL input events in an
-infinite loop:</p>
-<pre><code class="c">int main (void) {
-    ceu_start();
-    while (&lt;program-is-running&gt;) {
-        if (SDL_PollEvent(&lt;...&gt;)) {
-            ceu_input(CEU_INPUT__*, &lt;...&gt;);     /* input SDL_QUIT, SDL_KEY*, SDL_MOUSE*, etc */
-        }
-        ceu_input(CEU_INPUT__NONE, &lt;time&gt;);     /* input async and timer */
-        ceu_input(CEU_INPUT_SDL_REDRAW, &lt;...&gt;); /* input SDL_REDRAW after every input */
-    }
-    ceu_stop();
-    return &lt;program-escape-value&gt;;
-}
-</code></pre>
+The mode of operation specifies how Céu-libuv captures events from the
+environment (e.g., timers and incoming network traffic) and redirects them to
+the Céu application.
+It is implemented in C and is part of Céu-libuv.
 
-<p>The inputs are polled on each loop iteration and changes are notified to the
-Céu application through <code>ceu_input</code> calls.</p>
-<p>The polling mode uses <em>100%</em> of the CPU time.</p>
-<h2 id="waiting-mode">Waiting Mode</h2>
-<p>The <em>waiting mode</em> of Céu-SDL continually waits for SDL input events in an
-infinite loop:</p>
-<pre><code class="c">int main (void) {
-    ceu_start();
-    while (&lt;program-is-running&gt;) {
-        int timeout = (&lt;program-has-pending-async&gt;) ? 0 : &lt;next-timer-in-ms&gt;;
-        if (SDL_WaitEventTimeout(&lt;...&gt;, timeout);
-            ceu_input(CEU_INPUT__*, &lt;...&gt;);     /* input SDL_QUIT, SDL_KEY*, SDL_MOUSE*, etc */
-        }
-        ceu_input(CEU_INPUT__NONE, &lt;time&gt;);     /* input async and timer */
-        ceu_input(CEU_INPUT_SDL_REDRAW, &lt;...&gt;); /* input SDL_REDRAW after every input */
-    }
-    ceu_stop();
-    return &lt;program-escape-value&gt;;
-}
-</code></pre>
+Céu-libuv maps each libuv callback to 
 
-<p>The inputs are polled on each loop iteration and changes are notified to the
-Céu application through <code>ceu_input</code> calls.</p>
-<h2 id="frame-based-mode">Frame-Based Mode</h2>
-<p>The <em>frame-based mode</em> of Céu-SDL continually waits for SDL input events in an
-infinite loop.
-The waiting period is limited to the next frame period:</p>
-<pre><code class="c">int main (void) {
-    ceu_start();
-    while (&lt;program-is-running&gt;) {
-        int timeout = (&lt;program-has-pending-async&gt;) ?
-                        0 : MIN(&lt;next-timer-in-ms&gt;,&lt;next-frame-in-ms&gt;);
-        if (&lt;next-frame-expired&gt;) {
-            ceu_input(CEU_INPUT_SDL_DT, CEU_SDL_MODE_FRAME);
-        }
-        if (SDL_WaitEventTimeout(&lt;...&gt;, timeout);
-            ceu_input(CEU_INPUT__*, &lt;...&gt;);     /* input SDL_QUIT, SDL_KEY*, SDL_MOUSE*, etc */
-        }
-        ceu_input(CEU_INPUT__NONE, &lt;time&gt;);     /* input async and timer */
-        ceu_input(CEU_INPUT_SDL_REDRAW, &lt;...&gt;); /* input SDL_REDRAW after every input */
-    }
-    ceu_stop();
-    return &lt;program-escape-value&gt;;
-}
-</code></pre>
+Each mode is described in pseudo-code as follows.
 
-<p>The inputs are polled on each loop iteration and changes are notified to the
-Céu application through <code>ceu_input</code> calls.</p>
-<p>The frame-based mode also provides the <code>CEU_SDL_DT</code> input, which is notified
-after each frame period expires.</p>
+- FS
+- tcp
+- thread
+- timers
+
+callback -> event
+
+Waiting Mode
+------------
+
+The *waiting mode* of Céu-SDL continually waits for SDL input events in an
+infinite loop:
+
+
+wzxhzdk:0
+
+
+The inputs are polled on each loop iteration and changes are notified to the
+Céu application through `ceu_input` calls.
+
+-->
               
             </div>
           </div>

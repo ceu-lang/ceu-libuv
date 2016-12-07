@@ -8,7 +8,7 @@
   
   
   
-  <title>Input Events - Céu-SDL v0.20 - Reference Manual</title>
+  <title>Input Events - Céu-libuv v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -43,7 +43,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href=".." class="icon icon-home"> Céu-SDL v0.20 - Reference Manual</a>
+        <a href=".." class="icon icon-home"> Céu-libuv v0.20 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -70,7 +70,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../020-modes/">Modes of Operation</a>
+        <a class="" href="../020-modes/">Mode of Operation</a>
         
     </li>
 <li>
@@ -83,21 +83,17 @@
             
                 <li class="toctree-l3"><a href="#input-events">Input Events</a></li>
                 
-                    <li><a class="toctree-l4" href="#sdl_redraw">SDL_REDRAW</a></li>
+                    <li><a class="toctree-l4" href="#uv_fs">UV_FS</a></li>
                 
-                    <li><a class="toctree-l4" href="#sdl_dt">SDL_DT</a></li>
+                    <li><a class="toctree-l4" href="#uv_stream_listen">UV_STREAM_LISTEN</a></li>
                 
-                    <li><a class="toctree-l4" href="#sdl_quit">SDL_QUIT</a></li>
+                    <li><a class="toctree-l4" href="#uv_stream_connect">UV_STREAM_CONNECT</a></li>
                 
-                    <li><a class="toctree-l4" href="#sdl_keydown">SDL_KEYDOWN</a></li>
+                    <li><a class="toctree-l4" href="#uv_stream_read">UV_STREAM_READ</a></li>
                 
-                    <li><a class="toctree-l4" href="#sdl_keyup">SDL_KEYUP</a></li>
+                    <li><a class="toctree-l4" href="#uv_stream_write">UV_STREAM_WRITE</a></li>
                 
-                    <li><a class="toctree-l4" href="#sdl_mousebuttondown">SDL_MOUSEBUTTONDOWN</a></li>
-                
-                    <li><a class="toctree-l4" href="#sdl_mousebuttonup">SDL_MOUSEBUTTONUP</a></li>
-                
-                    <li><a class="toctree-l4" href="#sdl_mousemotion">SDL_MOUSEMOTION</a></li>
+                    <li><a class="toctree-l4" href="#uv_stream_error">UV_STREAM_ERROR</a></li>
                 
             
             </ul>
@@ -136,7 +132,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="..">Céu-SDL v0.20 - Reference Manual</a>
+        <a href="..">Céu-libuv v0.20 - Reference Manual</a>
       </nav>
 
       
@@ -159,53 +155,114 @@
             <div class="section">
               
                 <h1 id="input-events">Input Events</h1>
-<p>Céu-SDL provides mappings to all SDL events:</p>
-<p><a href="https://wiki.libsdl.org/SDL_Event">https://wiki.libsdl.org/SDL_Event</a></p>
-<p><code>TODO: not all inputs have been mapped</code></p>
-<p>In addition, it provides the <code>SDL_REDRAW</code> and <code>SDL_DT</code> input events.</p>
-<h2 id="sdl_redraw">SDL_REDRAW</h2>
-<pre><code class="ceu">input _SDL_Renderer&amp;&amp;&amp;&amp; SDL_REDRAW;
+<h2 id="uv_fs">UV_FS</h2>
+<pre><code class="ceu">input _uv_fs_t&amp;&amp; UV_FS;
 </code></pre>
 
-<p>Occurs in the end of every loop iteration in all <a href="#TODO">modes of operation</a>.</p>
-<p><code>TODO: payload</code></p>
-<h2 id="sdl_dt">SDL_DT</h2>
-<pre><code class="ceu">input int SDL_DT;
+<ul>
+<li>Occurrence:<ul>
+<li>Whenever a filesystem operation completes.</li>
+</ul>
+</li>
+<li>Payload:<ul>
+<li><code>_uv_fs_t&amp;&amp;</code>: pointer to the operation request</li>
+</ul>
+</li>
+</ul>
+<p>libuv Reference: <a href="http://docs.libuv.org/en/v1.x/fs.html">http://docs.libuv.org/en/v1.x/fs.html</a></p>
+<h2 id="uv_stream_listen">UV_STREAM_LISTEN</h2>
+<pre><code class="ceu">input (_uv_stream_t&amp;&amp;, int) UV_STREAM_LISTEN;
 </code></pre>
 
-<p>Occurs in the beginning of every loop iteration in the <a href="#TODO">frame-based</a>
-<a href="#TODO">mode of operation</a>.</p>
-<p>The input value of type <code>int</code> is always equal to <a href="#TODO"><code>CEU_SDL_MODE_FRAME</code></a>.</p>
-<h2 id="sdl_quit">SDL_QUIT</h2>
-<pre><code class="ceu">input void SDL_QUIT;
+<ul>
+<li>Occurrence:<ul>
+<li>Whenever a stream server receives an incoming connection.</li>
+</ul>
+</li>
+<li>Payload:<ul>
+<li><code>_uv_stream_t&amp;&amp;</code>: pointer to the stream server</li>
+</ul>
+</li>
+</ul>
+<p>libuv Reference: <a href="http://docs.libuv.org/en/v1.x/stream.html#c.uv_connection_cb">http://docs.libuv.org/en/v1.x/stream.html#c.uv_connection_cb</a></p>
+<h2 id="uv_stream_connect">UV_STREAM_CONNECT</h2>
+<pre><code class="ceu">input (_uv_connect_t&amp;&amp;, int) UV_STREAM_CONNECT;
 </code></pre>
 
-<p>SDL Reference: <a href="https://wiki.libsdl.org/SDL_QuitEvent">https://wiki.libsdl.org/SDL_QuitEvent</a></p>
-<h2 id="sdl_keydown">SDL_KEYDOWN</h2>
-<pre><code class="ceu">input _SDL_KeyboardEvent&amp;&amp; SDL_KEYDOWN;
+<ul>
+<li>Occurrence:<ul>
+<li>Whenever a connection opens.</li>
+</ul>
+</li>
+<li>Payload:<ul>
+<li><code>_uv_connect_t&amp;&amp;</code>: pointer to the connection</li>
+<li><code>int</code>: opening status<ul>
+<li><code>0</code>: success</li>
+<li><code>&lt;0</code>: error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>libuv Reference: <a href="http://docs.libuv.org/en/v1.x/stream.html#c.uv_connect_cb">http://docs.libuv.org/en/v1.x/stream.html#c.uv_connect_cb</a></p>
+<h2 id="uv_stream_read">UV_STREAM_READ</h2>
+<pre><code class="ceu">input (_uv_stream_t&amp;&amp;, ssize) UV_STREAM_READ;
 </code></pre>
 
-<p>SDL Reference: <a href="https://wiki.libsdl.org/SDL_KeyboardEvent">https://wiki.libsdl.org/SDL_KeyboardEvent</a></p>
-<h2 id="sdl_keyup">SDL_KEYUP</h2>
-<pre><code class="ceu">input _SDL_KeyboardEvent&amp;&amp; SDL_KEYUP;
+<ul>
+<li>Occurrence:<ul>
+<li>Whenever data is available on a stream.</li>
+</ul>
+</li>
+<li>Payload:<ul>
+<li><code>_uv_stream_t&amp;&amp;</code>: pointer to the stream</li>
+<li><code>ssize</code>: number of bytes available<ul>
+<li><code>&gt;0</code>: data available</li>
+<li><code>&lt;0</code>: error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>libuv Reference: <a href="http://docs.libuv.org/en/v1.x/stream.html#c.uv_read_cb">http://docs.libuv.org/en/v1.x/stream.html#c.uv_read_cb</a></p>
+<h2 id="uv_stream_write">UV_STREAM_WRITE</h2>
+<pre><code class="ceu">input (_uv_write_t&amp;&amp;, int) UV_STREAM_WRITE;
 </code></pre>
 
-<p>SDL Reference: <a href="https://wiki.libsdl.org/SDL_KeyboardEvent">https://wiki.libsdl.org/SDL_KeyboardEvent</a></p>
-<h2 id="sdl_mousebuttondown">SDL_MOUSEBUTTONDOWN</h2>
-<pre><code class="ceu">input _SDL_MouseButtonEvent&amp;&amp; SDL_MOUSEBUTTONDOWN;
+<ul>
+<li>Occurrence:<ul>
+<li>Whenever writing to a stream completes.</li>
+</ul>
+</li>
+<li>Payload:<ul>
+<li><code>_uv_write_T&amp;&amp;</code>: pointer to the write request</li>
+<li><code>int</code>: completion status<ul>
+<li><code>0</code>: success</li>
+<li><code>&lt;0</code>: error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>libuv Reference: <a href="http://docs.libuv.org/en/v1.x/stream.html#c.uv_write_cb">http://docs.libuv.org/en/v1.x/stream.html#c.uv_write_cb</a></p>
+<h2 id="uv_stream_error">UV_STREAM_ERROR</h2>
+<pre><code class="ceu">input (_uv_stream_t&amp;&amp;, int) UV_STREAM_ERROR;
 </code></pre>
 
-<p>SDL Reference: <a href="https://wiki.libsdl.org/SDL_MouseButtonEvent">https://wiki.libsdl.org/SDL_MouseButtonEvent</a></p>
-<h2 id="sdl_mousebuttonup">SDL_MOUSEBUTTONUP</h2>
-<pre><code class="ceu">input _SDL_MouseButtonEvent&amp;&amp; SDL_MOUSEBUTTONUP;
-</code></pre>
-
-<p>SDL Reference: <a href="https://wiki.libsdl.org/SDL_MouseButtonEvent">https://wiki.libsdl.org/SDL_MouseButtonEvent</a></p>
-<h2 id="sdl_mousemotion">SDL_MOUSEMOTION</h2>
-<pre><code class="ceu">input _SDL_MouseMotionEvent&amp;&amp; SDL_MOUSEMOTION;
-</code></pre>
-
-<p>SDL Reference: <a href="https://wiki.libsdl.org/SDL_MouseMotionEvent">https://wiki.libsdl.org/SDL_MouseMotionEvent</a></p>
+<ul>
+<li>Occurrence:<ul>
+<li>Whenever a read or write error occurs in a stream.</li>
+</ul>
+</li>
+<li>Payload:<ul>
+<li><code>_uv_stream_t&amp;&amp;</code>: pointer to the stream</li>
+<li><code>int</code>: error code</li>
+</ul>
+</li>
+</ul>
+<p><code>UV_STREAM_ERROR</code> always occurs before the corresponding <a href="#TODO"><code>UV_STREAM_READ</code></a> or
+<a href="#TODO"><code>UV_STREAM_WRITE</code></a>.</p>
+<p>libuv Reference: <a href="http://docs.libuv.org/en/v1.x/errors.html">http://docs.libuv.org/en/v1.x/errors.html</a></p>
               
             </div>
           </div>
@@ -216,7 +273,7 @@
         <a href="../040-datas/" class="btn btn-neutral float-right" title="Data Abstractions">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../020-modes/" class="btn btn-neutral" title="Modes of Operation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../020-modes/" class="btn btn-neutral" title="Mode of Operation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   

@@ -8,7 +8,7 @@
   
   
   
-  <title>Data Abstractions - Céu-SDL v0.20 - Reference Manual</title>
+  <title>Data Abstractions - Céu-libuv v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -43,7 +43,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href=".." class="icon icon-home"> Céu-SDL v0.20 - Reference Manual</a>
+        <a href=".." class="icon icon-home"> Céu-libuv v0.20 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -70,7 +70,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../020-modes/">Modes of Operation</a>
+        <a class="" href="../020-modes/">Mode of Operation</a>
         
     </li>
 <li>
@@ -90,13 +90,7 @@
             
                 <li class="toctree-l3"><a href="#data-abstractions">Data Abstractions</a></li>
                 
-                    <li><a class="toctree-l4" href="#sdl_color">SDL_Color</a></li>
-                
-                    <li><a class="toctree-l4" href="#sdl_point">SDL_Point</a></li>
-                
-                    <li><a class="toctree-l4" href="#sdl_rect">SDL_Rect</a></li>
-                
-                    <li><a class="toctree-l4" href="#sdl_texture">SDL_Texture</a></li>
+                    <li><a class="toctree-l4" href="#uv_fs_file">UV_FS_File</a></li>
                 
             
             </ul>
@@ -128,7 +122,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="..">Céu-SDL v0.20 - Reference Manual</a>
+        <a href="..">Céu-libuv v0.20 - Reference Manual</a>
       </nav>
 
       
@@ -151,43 +145,12 @@
             <div class="section">
               
                 <h1 id="data-abstractions">Data Abstractions</h1>
-<h2 id="sdl_color">SDL_Color</h2>
-<pre><code class="ceu">data SDL_Color with
-    var u8 r;
-    var u8 g;
-    var u8 b;
-    var u8 a;
+<h2 id="uv_fs_file">UV_FS_File</h2>
+<pre><code class="ceu">data UV_FS_File with
+    event void ok;
+    var   int  fd;
 end
 </code></pre>
-
-<p>SDL Reference: <a href="https://wiki.libsdl.org/SDL_Color">https://wiki.libsdl.org/SDL_Color</a></p>
-<h2 id="sdl_point">SDL_Point</h2>
-<pre><code class="ceu">data SDL_Point with
-    var int x;
-    var int y;
-end
-</code></pre>
-
-<p>SDL Reference: <a href="https://wiki.libsdl.org/SDL_Point">https://wiki.libsdl.org/SDL_Point</a></p>
-<h2 id="sdl_rect">SDL_Rect</h2>
-<pre><code class="ceu">data SDL_Rect with
-    var int x;
-    var int y;
-    var int w;
-    var int h;
-end
-</code></pre>
-
-<p>SDL Reference: <a href="https://wiki.libsdl.org/SDL_Rect">https://wiki.libsdl.org/SDL_Rect</a></p>
-<h2 id="sdl_texture">SDL_Texture</h2>
-<pre><code class="ceu">data SDL_Texture with
-    var&amp; _SDL_Texture tex;
-    var  int          width;
-    var  int          height;
-end
-</code></pre>
-
-<p>SDL Reference: <a href="https://wiki.libsdl.org/SDL_Texture">https://wiki.libsdl.org/SDL_Texture</a></p>
               
             </div>
           </div>

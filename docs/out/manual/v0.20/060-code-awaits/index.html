@@ -8,7 +8,7 @@
   
   
   
-  <title>Code/Await Abstractions - Céu-SDL v0.20 - Reference Manual</title>
+  <title>Code/Await Abstractions - Céu-libuv v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -43,7 +43,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href=".." class="icon icon-home"> Céu-SDL v0.20 - Reference Manual</a>
+        <a href=".." class="icon icon-home"> Céu-libuv v0.20 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -70,7 +70,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../020-modes/">Modes of Operation</a>
+        <a class="" href="../020-modes/">Mode of Operation</a>
         
     </li>
 <li>
@@ -97,15 +97,7 @@
             
                 <li class="toctree-l3"><a href="#codeawait-abstractions">Code/Await Abstractions</a></li>
                 
-                    <li><a class="toctree-l4" href="#sdl_init">SDL_Init</a></li>
-                
-                    <li><a class="toctree-l4" href="#sdl_open_image">SDL_Open_Image</a></li>
-                
-                    <li><a class="toctree-l4" href="#sdl_open_font">SDL_Open_Font</a></li>
-                
-                    <li><a class="toctree-l4" href="#sdl_new_text">SDL_New_Text</a></li>
-                
-                    <li><a class="toctree-l4" href="#sdl_open_sound">SDL_Open_Sound</a></li>
+                    <li><a class="toctree-l4" href="#uv_fs_open">UV_FS_Open</a></li>
                 
             
             </ul>
@@ -130,7 +122,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="..">Céu-SDL v0.20 - Reference Manual</a>
+        <a href="..">Céu-libuv v0.20 - Reference Manual</a>
       </nav>
 
       
@@ -153,261 +145,55 @@
             <div class="section">
               
                 <h1 id="codeawait-abstractions">Code/Await Abstractions</h1>
-<h2 id="sdl_init">SDL_Init</h2>
-<p>Initializes Céu-SDL, creates a SDL window, and provides a renderer to the
-application.</p>
-<p><code>SDL_Init</code> terminates once <a href="#TODO"><code>SDL_QUIT</code></a> occurs.</p>
-<pre><code class="ceu">code/await SDL_Init (var _char&amp;&amp; title, var int width, var int height, var SDL_Color? bg)
-                        -&gt; (var&amp; _SDL_Renderer ren)
-                            -&gt; void
+<h2 id="uv_fs_open">UV_FS_Open</h2>
+<p>Opens a file.</p>
+<pre><code class="ceu">code/await UV_FS_Open (var _char&amp;&amp; path, var int flags, var int mode)
+                        -&gt; (var&amp; UV_FS_File file)
+                            -&gt; int
 </code></pre>
 
 <ul>
 <li>Parameters<ul>
-<li><code>title</code>:  title  of the window</li>
-<li><code>width</code>:  width  of the window in pixels</li>
-<li><code>height</code>: height of the window in pixels</li>
-<li><code>bg</code>:     background color of the window (optional)</li>
+<li><code>path</code>:  path to the file</li>
+<li><code>flags</code>: access mode flags</li>
+<li><code>mode</code>:  file permission mode</li>
 </ul>
 </li>
 <li>Initialization<ul>
-<li><code>ren</code>:    alias to managed renderer</li>
+<li><code>file</code>: alias to managed <a href="#TODO">file</a></li>
 </ul>
 </li>
 <li>Return<ul>
-<li>terminates on <code>SDL_QUIT</code> and returns no value</li>
+<li><code>int</code> (<code>&lt;0</code>): opening error</li>
 </ul>
 </li>
 </ul>
-<p><code>SDL_Init</code> performs a number of initializations on Céu-SDL:</p>
-<ul>
-<li>initializes SDL</li>
-<li>creates a window</li>
-<li>creates a renderer</li>
-<li>initializes the text and audio subsystems</li>
-</ul>
+<p>The file is only ready for use after <code>UV_FS_Open</code> triggers <code>file.ok</code>.</p>
 <p>All allocated resources are released on termination.</p>
-<p>If a <code>bg</code> is provided, <code>SDL_Init</code> fills the window background with the provided
-color on every <code>SDL_REDRAW</code>.</p>
 <p>Example:</p>
-<pre><code class="ceu">#include &quot;sdl/sdl.ceu&quot;
+<pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
 
-var&amp; _SDL_Renderer ren; ;
-watching SDL_Init(&quot;Rectangle&quot;, 300,300, SDL_Color(0xFF,0xFF,0x00,0xFF)) -&gt; (&amp;ren) do
-    var SDL_Rect rect = val SDL_Rect(100,100 , 100,100);
-    every SDL_REDRAW do
-        _SDL_SetRenderDrawColor(&amp;&amp;ren, 0xFF,0x00,0x00,0xFF);
-        _SDL_RenderFillRect(&amp;&amp;ren, (&amp;&amp;rect as _SDL_Rect&amp;&amp;));
-    end
+var&amp; UV_FS_File file;
+
+var int? err =
+    watching UV_FS_Open(&quot;file.txt&quot;, _O_RDONLY, 0) -&gt; (&amp;file) do
+        await file.ok;
+        // file is ready for use
+        _printf(&quot;opening ok\n&quot;);
+    end;
+if err? then
+    _printf(&quot;opening error: %d\n&quot;, err!);
 end
 
 escape 0;
 </code></pre>
 
-<p>Draws a <em>100x100</em> red rectangle centered in a <em>300x300</em> yellow window.</p>
-<p>SDL References:
-    <a href="#TODO"><code>SDL_Init</code></a>,
-    <a href="#TODO"><code>SDL_Quit</code></a>,
-    <a href="#TODO"><code>SDL_CreateWindow</code></a>,
-    <a href="#TODO"><code>SDL_DestroyWindow</code></a>,
-    <a href="#TODO"><code>SDL_CreateRenderer</code></a>,
-    <a href="#TODO"><code>SDL_DestroyRenderer</code></a>,
-    <a href="#TODO"><code>TTF_Init</code></a>,
-    <a href="#TODO"><code>TTF_Quit</code></a>,
-    <a href="#TODO"><code>Mix_OpenAudio</code></a>,
-    <a href="#TODO"><code>Mix_CloseAudio</code></a>,
-    <a href="#TODO"><code>SDL_SetRenderDrawColor</code></a>,
-    <a href="#TODO"><code>SDL_RenderClear</code></a>.</p>
-<h2 id="sdl_open_image">SDL_Open_Image</h2>
-<p>Opens an image file into a new texture.</p>
-<pre><code class="ceu">code/await SDL_Open_Image (var&amp; _SDL_Renderer ren, var _char&amp;&amp; path)
-                            -&gt; (var&amp; SDL_Texture tex)
-                                -&gt; FOREVER
-</code></pre>
-
-<ul>
-<li>Parameters<ul>
-<li><code>ren</code>:  rendering context</li>
-<li><code>path</code>: path to the image</li>
-</ul>
-</li>
-<li>Initialization<ul>
-<li><code>tex</code>:  alias to created <a href="#TODO">texture</a></li>
-</ul>
-</li>
-<li>Return<ul>
-<li>never terminates naturally</li>
-</ul>
-</li>
-</ul>
-<p>All allocated resources are released on termination.</p>
-<p>Example:</p>
-<pre><code class="ceu">#include &quot;sdl/sdl.ceu&quot;
-
-var&amp; _SDL_Renderer ren; ;
-watching SDL_Init(&quot;Image&quot;, 68,68, SDL_Color(0xFF,0xFF,0x00,0xFF)) -&gt; (&amp;ren) do
-    var&amp; SDL_Texture img;
-    spawn SDL_Open_Image(&amp;ren, &quot;img.png&quot;) -&gt; (&amp;img);
-    var SDL_Rect rect = val SDL_Rect(10,10 , img.width,img.height);
-    every SDL_REDRAW do
-        _SDL_RenderCopy(&amp;&amp;ren, &amp;&amp;img.tex, null, &amp;&amp;rect as _SDL_Rect&amp;&amp;);
-    end
-end
-
-escape 0;
-</code></pre>
-
-<p>Draws <code>img.png</code> in a <em>68x68</em> yellow window.</p>
-<p>SDL References:
-    <a href="#TODO"><code>IMG_LoadTexture</code></a>,
-    <a href="#TODO"><code>SDL_DestroyTexture</code></a>,
-    <a href="#TODO"><code>SDL_QueryTexture</code></a>.</p>
-<h2 id="sdl_open_font">SDL_Open_Font</h2>
-<p>Opens a <code>TTF</code> font file.</p>
-<pre><code class="ceu">code/await SDL_Open_Font (var _char&amp;&amp; path, var int size)
-                            -&gt; (var&amp; _TTF_Font font)
-                                -&gt; FOREVER
-</code></pre>
-
-<ul>
-<li>Parameters<ul>
-<li><code>path</code>: path to the font</li>
-<li><code>size</code>: size of the font</li>
-</ul>
-</li>
-<li>Initialization<ul>
-<li><code>font</code>: alias to created font</li>
-</ul>
-</li>
-<li>Return<ul>
-<li>never terminates naturally</li>
-</ul>
-</li>
-</ul>
-<p>All allocated resources are released on termination.</p>
-<p>Example:</p>
-<pre><code class="ceu">#include &quot;sdl/sdl.ceu&quot;
-
-var&amp; _SDL_Renderer ren; ;
-watching SDL_Init(&quot;Font 1&quot;, 220,60, SDL_Color(0xFF,0xFF,0x00,0xFF)) -&gt; (&amp;ren) do
-    var&amp; _TTF_Font font;
-    spawn SDL_Open_Font(&quot;samples/Deutsch.ttf&quot;, 40) -&gt; (&amp;font);
-
-    var&amp; SDL_Texture txt;
-    spawn SDL_New_Text(&amp;ren, &amp;font, &quot;Hello World!&quot;, SDL_Color(0x00,0x00,0x00,0xFF))
-            -&gt; (&amp;txt);
-    var SDL_Rect rect = val SDL_Rect(10, 10, txt.width, txt.height);
-
-    every SDL_REDRAW do
-        _SDL_RenderCopy(&amp;&amp;ren, &amp;&amp;txt.tex, null, &amp;&amp;rect as _SDL_Rect&amp;&amp;);
-    end
-end
-
-escape 0;
-</code></pre>
-
-<p>Draws a black <code>Hello World!</code> text in yellow window.</p>
-<p>SDL References:
-    <a href="#TODO"><code>_TTF_OpenFont</code></a>,
-    <a href="#TODO"><code>_TTF_WasInit</code></a>,
-    <a href="#TODO"><code>_TTF_CloseFont</code></a>.</p>
-<h2 id="sdl_new_text">SDL_New_Text</h2>
-<p>Writes a text into a new texture.</p>
-<pre><code class="ceu">code/await SDL_New_Text (var&amp; _SDL_Renderer ren, var&amp; _TTF_Font font, var _char&amp;&amp; text, var SDL_Color color)
-                            -&gt; (var&amp; SDL_Texture tex)
-                                -&gt; FOREVER
-</code></pre>
-
-<ul>
-<li>Parameters<ul>
-<li><code>ren</code>:   rendering context</li>
-<li><code>font</code>:  text font</li>
-<li><code>text</code>:  text to write</li>
-<li><code>color</code>: text color</li>
-</ul>
-</li>
-<li>Initialization<ul>
-<li><code>tex</code>:  alias to created <a href="#TODO">texture</a></li>
-</ul>
-</li>
-<li>Return<ul>
-<li>never terminates naturally</li>
-</ul>
-</li>
-</ul>
-<p>All allocated resources are released on termination.</p>
-<p>Example:</p>
-<pre><code class="ceu">#include &quot;sdl/sdl.ceu&quot;
-
-var&amp; _SDL_Renderer ren; ;
-watching SDL_Init(&quot;Font 1&quot;, 220,60, SDL_Color(0xFF,0xFF,0x00,0xFF)) -&gt; (&amp;ren) do
-    var&amp; _TTF_Font font;
-    spawn SDL_Open_Font(&quot;font.ttf&quot;, 40) -&gt; (&amp;font);
-
-    var&amp; SDL_Texture txt;
-    spawn SDL_New_Text(&amp;ren, &amp;font, &quot;Hello World!&quot;, SDL_Color(0x00,0x00,0x00,0xFF))
-            -&gt; (&amp;txt);
-    var SDL_Rect rect = val SDL_Rect(10, 10, txt.width, txt.height);
-
-    every SDL_REDRAW do
-        _SDL_RenderCopy(&amp;&amp;ren, &amp;&amp;txt.tex, null, &amp;&amp;rect as _SDL_Rect&amp;&amp;);
-    end
-end
-
-escape 0;
-</code></pre>
-
-<p>Draws a black <code>Hello World!</code> text in yellow window.</p>
-<p>SDL References:
-    [<code>_TTF_RenderText_Blended</code>],
-    [<code>_SDL_FreeSurface</code>],
-    [<code>_SDL_CreateTextureFromSurface</code>],
-    [<code>_SDL_DestroyTexture</code>],
-    [<code>_SDL_QueryTexture</code>].</p>
-<h2 id="sdl_open_sound">SDL_Open_Sound</h2>
-<p>Opens a sound file.</p>
-<pre><code class="ceu">code/await SDL_Open_Sound (var _char&amp;&amp; path)
-                            -&gt; (var&amp; _Mix_Chunk sound)
-                                -&gt; FOREVER
-</code></pre>
-
-<ul>
-<li>Parameters<ul>
-<li><code>path</code>: path to the sound</li>
-</ul>
-</li>
-<li>Initialization<ul>
-<li><code>sound</code>: alias to created sound</li>
-</ul>
-</li>
-<li>Return<ul>
-<li>never terminates naturally</li>
-</ul>
-</li>
-</ul>
-<p>All allocated resources are released on termination.</p>
-<p>Example:</p>
-<pre><code class="ceu">#include &quot;sdl/sdl.ceu&quot;
-
-var SDL_Color bg = val SDL_Color(0x00,0x00,0x00,0xFF);
-
-var&amp; _SDL_Renderer ren;
-watching SDL_Init(&quot;Sound 1&quot;, 10,10, bg) -&gt; (&amp;ren)
-do
-    var&amp; _Mix_Chunk sound;
-    spawn SDL_Open_Sound(&quot;sound.wav&quot;) -&gt; (&amp;sound);
-    every 1s do
-        _Mix_PlayChannel(-1, &amp;&amp;sound, 0);
-    end
-end
-
-escape 0;
-</code></pre>
-
-<p>Plays <code>sound.wav</code> every second.</p>
-<p>SDL References:
-    <a href="#TODO"><code>_Mix_LoadWAV</code></a>,
-    <a href="#TODO"><code>_Mix_FreeChunk</code></a>.</p>
+<p>Opens <code>file.txt</code> and prints <em>opening ok</em> after the file is ready for use.
+In case of failure, prints <em>opening error</em> along with the error code.</p>
+<p>libuv References:
+    <a href="#TODO"><code>uv_fs_open</code></a>,
+    <a href="#TODO"><code>ceu_uv_fs_close</code></a>,
+    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
               
             </div>
           </div>
