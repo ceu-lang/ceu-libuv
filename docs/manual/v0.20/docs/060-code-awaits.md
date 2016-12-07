@@ -48,7 +48,7 @@ escape 0;
 Opens `file.txt` and prints *opening ok* after the file is ready for use.
 In case of failure, prints *opening error* along with the error code.
 
-libuv References:
+libuv references:
     [`uv_fs_open`](#TODO),
     [`ceu_uv_fs_close`](#TODO),
     [`uv_fs_req_cleanup`](#TODO).

@@ -13,7 +13,7 @@ input _uv_fs_t&& UV_FS;
 - Payload:
     - `_uv_fs_t&&`: pointer to the operation request
 
-libuv Reference: <http://docs.libuv.org/en/v1.x/fs.html>
+libuv reference: <http://docs.libuv.org/en/v1.x/fs.html>
 
 UV_STREAM_LISTEN
 ----------------
@@ -27,7 +27,7 @@ input (_uv_stream_t&&, int) UV_STREAM_LISTEN;
 - Payload:
     - `_uv_stream_t&&`: pointer to the stream server
 
-libuv Reference: <http://docs.libuv.org/en/v1.x/stream.html#c.uv_connection_cb>
+libuv reference: <http://docs.libuv.org/en/v1.x/stream.html#c.uv_connection_cb>
 
 UV_STREAM_CONNECT
 ----------
@@ -44,7 +44,7 @@ input (_uv_connect_t&&, int) UV_STREAM_CONNECT;
         -  `0`: success
         - `<0`: error
 
-libuv Reference: <http://docs.libuv.org/en/v1.x/stream.html#c.uv_connect_cb>
+libuv reference: <http://docs.libuv.org/en/v1.x/stream.html#c.uv_connect_cb>
 
 UV_STREAM_READ
 --------------
@@ -61,7 +61,7 @@ input (_uv_stream_t&&, ssize) UV_STREAM_READ;
         - `>0`: data available
         - `<0`: error
 
-libuv Reference: <http://docs.libuv.org/en/v1.x/stream.html#c.uv_read_cb>
+libuv reference: <http://docs.libuv.org/en/v1.x/stream.html#c.uv_read_cb>
 
 UV_STREAM_WRITE
 ---------------
@@ -78,7 +78,7 @@ input (_uv_write_t&&, int) UV_STREAM_WRITE;
         -  `0`: success
         - `<0`: error
 
-libuv Reference: <http://docs.libuv.org/en/v1.x/stream.html#c.uv_write_cb>
+libuv reference: <http://docs.libuv.org/en/v1.x/stream.html#c.uv_write_cb>
 
 UV_STREAM_ERROR
 ---------------
@@ -96,4 +96,4 @@ input (_uv_stream_t&&, int) UV_STREAM_ERROR;
 `UV_STREAM_ERROR` always occurs before the corresponding [`UV_STREAM_READ`](#TODO) or
 [`UV_STREAM_WRITE`](#TODO).
 
-libuv Reference: <http://docs.libuv.org/en/v1.x/errors.html>
+libuv reference: <http://docs.libuv.org/en/v1.x/errors.html>

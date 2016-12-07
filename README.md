@@ -75,3 +75,28 @@ To run all examples one after another, run `make samples`:
 ```
 $ make samples
 ```
+
+Opening a File
+--------------
+
+The exmple `fs-00.ceu` opens `file.txt` and prints *opening ok* after the file
+is ready for use.
+In case of failure, prints *opening error* along with the error code:
+
+```
+#include "uv/fs.ceu"
+
+var& UV_FS_File file;
+
+var int? err =
+    watching UV_FS_Open("file.txt", _O_RDONLY, 0) -> (&file) do
+        await file.ok;
+        // file is ready for use
+        _printf("opening ok\n");
+    end;
+if err? then
+    _printf("opening error: %d\n", err!);
+end
+
+escape 0;
+```
