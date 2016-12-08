@@ -9,11 +9,9 @@ native/plain
 
 native/nohold
     _ceu_uv_tcp_connect,    // TODO: diconnect?
+    _uv_ip4_name,
     _uv_tcp_bind,           // TODO: unbind?
     _uv_tcp_getsockname,
-;
-
-native
     _ceu_uv_tcp_init,
 ;
 
@@ -42,15 +40,13 @@ do
     if not tcp_? then
         escape _UV_EAI_MEMORY;
     end
+    do finalize with
+        _ceu_uv_close(&&tcp_! as _uv_handle_t&&);
+    end
 
     tcp = &tcp_!;
 
-    var int err1;
-    do
-        err1 = _ceu_uv_tcp_init(&&tcp_!);
-    finalize (tcp_) with
-        _ceu_uv_close(&&tcp_! as _uv_handle_t&&);
-    end
+    var int err1 = _ceu_uv_tcp_init(&&tcp_!);
     if err1 != 0 then
         escape err1;
     end

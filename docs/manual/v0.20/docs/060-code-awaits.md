@@ -17,7 +17,7 @@ code/await UV_FS_Open (var _char&& path, var int flags, var int mode)
     - `flags`: access mode flags
     - `mode`:  file permission mode
 - Initialization
-    - `file`: alias to [file handle](#TODO)
+    - `file`: created [file handle](#TODO)
 - Return
     - `int` (`<0`): open error
 
@@ -48,7 +48,7 @@ In case of failure, prints *open error* along with the error code.
 
 libuv references:
     [`uv_fs_open`](#TODO),
-    [`ceu_uv_fs_close`](#TODO),
+    [`uv_fs_close`](#TODO),
     [`uv_fs_req_cleanup`](#TODO).
 
 *Note: all allocated libuv resources are automatically released on termination.*
@@ -265,4 +265,65 @@ libuv references:
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
+UV_Stream_Listen
+----------------
 
+Start listening for incoming connections.
+
+```ceu
+code/await UV_Stream_Listen (var& _uv_stream_t stream, var int backlog)
+                                -> (event& void ok)
+                                    -> int
+```
+
+- Parameters
+    - `stream`:  stream to listen
+    - `backlog`: number of connections the kernel might queue
+- Initialization
+    - `ok`: signalled on every new incoming connection
+- Return
+    - `int`: operation status
+        -  `0`: success
+        - `<0`: error
+
+Example:
+
+```ceu
+#include "uv/tcp.ceu"
+
+var& _uv_tcp_t server;
+watching UV_TCP_Open() -> (&server) do
+    var _sockaddr_in addr = _;
+    _uv_ip4_addr("0.0.0.0", 7000, &&addr);
+    _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
+
+    event& void ok_listen;
+    watching UV_TCP_Listen(&server,128) -> (&ok_listen) do
+        every ok_listen do
+            var _uv_tcp_t client = _;
+            var int err = _ceu_uv_tcp_init(&&client);
+            _ceu_dbg_assert(err == 0);
+            var int ret = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
+            _ceu_dbg_assert(ret == 0);
+
+            vector[20] _char ip = _;
+            var _sockaddr_in name = _;
+            var int len = _;
+            _uv_tcp_getsockname(&&client, &&name as _sockaddr&&, &&len);
+            _uv_ip4_name(&&name,&&ip[0],20);
+            _printf("new incoming connection from %s\n", &&ip[0]);
+            _uv_close(&&client as _uv_handle_t&&, null);
+        end
+    end
+end
+
+escape 0;
+```
+
+[Opens](#TODO) a `server` tcp handle, binds it to port `7000`, and then enters
+in listen mode.
+Each incoming connection triggers `ok_listen` whose reaction accepts the
+client, prints its address, and closes the connection.
+
+libuv references:
+    [`uv_listen`](#TODO).
