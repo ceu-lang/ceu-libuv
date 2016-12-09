@@ -101,9 +101,9 @@
                 
                     <li><a class="toctree-l4" href="#uv_fs_read">UV_FS_Read</a></li>
                 
-                    <li><a class="toctree-l4" href="#uv_fs_write">UV_FS_Write</a></li>
-                
                     <li><a class="toctree-l4" href="#uv_fs_readline">UV_FS_ReadLine</a></li>
+                
+                    <li><a class="toctree-l4" href="#uv_fs_write">UV_FS_Write</a></li>
                 
                     <li><a class="toctree-l4" href="#uv_fs_fstat">UV_FS_Fstat</a></li>
                 
@@ -184,8 +184,10 @@
 </li>
 </ul>
 <p>The file is only ready for use after <code>UV_FS_Open</code> triggers <code>file.ok</code>.</p>
+<p>Céu-libuv references:
+    <a href="#TODO"><code>ceu_uv_fs_open</code></a>,
+    <a href="#TODO"><code>UV_FS</code></a>.</p>
 <p>libuv references:
-    <a href="#TODO"><code>uv_fs_open</code></a>,
     <a href="#TODO"><code>uv_fs_close</code></a>,
     <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
 <p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
@@ -234,9 +236,11 @@ escape 0;
 </ul>
 </li>
 </ul>
+<p>Céu-libuv references:
+    <a href="#TODO"><code>ceu_uv_fs_read</code></a>,
+    <a href="#TODO"><code>UV_FS</code></a>.</p>
 <p>libuv references:
     <a href="#TODO"><code>uv_buf_init</code></a>,
-    <a href="#TODO"><code>uv_fs_read</code></a>,
     <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
 <p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
 <h3 id="example_1">Example</h3>
@@ -269,60 +273,6 @@ escape 0;
 
 <!---------------------------------------------------------------------------->
 
-<h2 id="uv_fs_write">UV_FS_Write</h2>
-<p>Write bytes from a file.</p>
-<pre><code class="ceu">code/await UV_FS_Write (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize size, var usize offset)
-                        -&gt; ssize
-</code></pre>
-
-<ul>
-<li>Parameters<ul>
-<li><code>file</code>:   <a href="#TODO">file handle</a> to write to</li>
-<li><code>buf</code>:    source buffer</li>
-<li><code>size</code>:   number of bytes to write</li>
-<li><code>offset</code>: starting file offset</li>
-</ul>
-</li>
-<li>Return<ul>
-<li><code>ssize</code>: actual number of bytes written<ul>
-<li><code>&gt;=0</code>: number of bytes</li>
-<li><code>&lt;0</code>:  write error</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<p>libuv references:
-    <a href="#TODO"><code>uv_buf_init</code></a>,
-    <a href="#TODO"><code>uv_fs_write</code></a>,
-    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
-<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
-<h3 id="example_2">Example</h3>
-<p>Writes the string <em>Hello World</em> to <code>hello.txt</code>:</p>
-<pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
-
-var&amp; UV_FS_File file;
-
-var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
-
-var int? err =
-    watching UV_FS_Open(&quot;hello.txt&quot;, _O_CREAT|_O_WRONLY, mode) -&gt; (&amp;file) do
-        await file.ok;
-        vector[] byte buf = [] .. &quot;Hello World!\n&quot;;
-        var ssize n = await UV_FS_Write(&amp;file,&amp;buf,$buf,0);
-        if (n&lt;0) or (n as usize)!=$buf then
-            _printf(&quot;write error\n&quot;);
-        end
-    end;
-if err? then
-    _printf(&quot;open error: %d\n&quot;, err!);
-end
-
-escape 0;
-</code></pre>
-
-<!---------------------------------------------------------------------------->
-
 <h2 id="uv_fs_readline">UV_FS_ReadLine</h2>
 <p>Reads a line from a file.</p>
 <pre><code class="ceu">code/await UV_FS_ReadLine (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize offset)
@@ -348,7 +298,7 @@ escape 0;
 <p><code>TODO: the file is currently read byte by byte.</code></p>
 <p>Céu-libuv references:
     <a href="#TODO"><code>UV_FS_Read</code></a>.</p>
-<h3 id="example_3">Example</h3>
+<h3 id="example_2">Example</h3>
 <p>Prints the contents of <code>file.txt</code> in a loop that reads the file line by line:</p>
 <pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
 
@@ -367,6 +317,62 @@ watching UV_FS_Open(&quot;file.txt&quot;, _O_RDONLY, 0) -&gt; (&amp;file) do
         _printf(&quot;line = %s [%d]\n&quot;, &amp;&amp;line[0], n as int);
         off = off + (n as usize);
     end
+end
+
+escape 0;
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<h2 id="uv_fs_write">UV_FS_Write</h2>
+<p>Write bytes from a file.</p>
+<pre><code class="ceu">code/await UV_FS_Write (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize size, var usize offset)
+                        -&gt; ssize
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>file</code>:   <a href="#TODO">file handle</a> to write to</li>
+<li><code>buf</code>:    source buffer</li>
+<li><code>size</code>:   number of bytes to write</li>
+<li><code>offset</code>: starting file offset</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>ssize</code>: actual number of bytes written<ul>
+<li><code>&gt;=0</code>: number of bytes</li>
+<li><code>&lt;0</code>:  write error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Céu-libuv references:
+    <a href="#TODO"><code>ceu_uv_fs_write</code></a>,
+    <a href="#TODO"><code>UV_FS</code></a>.</p>
+<p>libuv references:
+    <a href="#TODO"><code>uv_buf_init</code></a>,
+    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<h3 id="example_3">Example</h3>
+<p>Writes the string <em>Hello World</em> to <code>hello.txt</code>:</p>
+<pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
+
+var&amp; UV_FS_File file;
+
+var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
+
+var int? err =
+    watching UV_FS_Open(&quot;hello.txt&quot;, _O_CREAT|_O_WRONLY, mode) -&gt; (&amp;file) do
+        await file.ok;
+        vector[] byte buf = [] .. &quot;Hello World!\n&quot;;
+        var ssize n = await UV_FS_Write(&amp;file,&amp;buf,$buf,0);
+        if (n&lt;0) or (n as usize)!=$buf then
+            _printf(&quot;write error\n&quot;);
+        end
+    end;
+if err? then
+    _printf(&quot;open error: %d\n&quot;, err!);
 end
 
 escape 0;
@@ -395,8 +401,10 @@ escape 0;
 </ul>
 </li>
 </ul>
+<p>Céu-libuv references:
+    <a href="#TODO"><code>ceu_uv_fs_fstat</code></a>,
+    <a href="#TODO"><code>UV_FS</code></a>.</p>
 <p>libuv references:
-    <a href="#TODO"><code>uv_fs_fstat</code></a>,
     <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
 <p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
 <h3 id="example_4">Example</h3>
@@ -450,8 +458,9 @@ escape 0;
 </ul>
 </li>
 </ul>
-<p>libuv references:
-    <a href="#TODO"><code>uv_listen</code></a>.</p>
+<p>Céu-libuv references:
+    <a href="#TODO"><code>ceu_uv_listen</code></a>,
+    <a href="#TODO"><code>UV_STREAM_LISTEN</code></a>.</p>
 <h3 id="example_5">Example</h3>
 <p><a href="#TODO">Opens</a> a <code>server</code> tcp handle, binds it to port <code>7000</code>, and then enters
 in listen mode.
