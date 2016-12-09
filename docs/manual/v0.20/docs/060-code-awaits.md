@@ -19,11 +19,22 @@ code/await UV_FS_Open (var _char&& path, var int flags, var int mode)
 - Initialization
     - `file`: created [file handle](#TODO)
 - Return
-    - `int` (`<0`): open error
+    - `int`: open error
+        - returns only case of error (always `<0`)
 
 The file is only ready for use after `UV_FS_Open` triggers `file.ok`.
 
-Example:
+libuv references:
+    [`uv_fs_open`](#TODO),
+    [`uv_fs_close`](#TODO),
+    [`uv_fs_req_cleanup`](#TODO).
+
+*Note: all allocated libuv resources are automatically released on termination.*
+
+### Example
+
+Opens `file.txt` and prints *open ok* after the file is ready for use.
+In case of failure, prints *open error* along with the error code:
 
 ```ceu
 #include "uv/fs.ceu"
@@ -43,15 +54,7 @@ end
 escape 0;
 ```
 
-Opens `file.txt` and prints *open ok* after the file is ready for use.
-In case of failure, prints *open error* along with the error code.
-
-libuv references:
-    [`uv_fs_open`](#TODO),
-    [`uv_fs_close`](#TODO),
-    [`uv_fs_req_cleanup`](#TODO).
-
-*Note: all allocated libuv resources are automatically released on termination.*
+<!---------------------------------------------------------------------------->
 
 UV_FS_Read
 ----------
@@ -73,7 +76,17 @@ code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf, var usize size,
         - `>=0`: number of bytes
         - `<0`:  read error
 
-Example:
+libuv references:
+    [`uv_buf_init`](#TODO),
+    [`uv_fs_read`](#TODO),
+    [`uv_fs_req_cleanup`](#TODO).
+
+*Note: all allocated libuv resources are automatically released on termination.*
+
+### Example
+
+Prints the contents of `file.txt` in a loop that reads the file in chunks of 10
+bytes:
 
 ```ceu
 #include "uv/fs.ceu"
@@ -101,14 +114,7 @@ _ceu_dbg_assert(not err?);
 escape 0;
 ```
 
-Prints the contents of `file.txt` in a loop that reads the file 10 in 10 bytes.
-
-libuv references:
-    [`uv_buf_init`](#TODO),
-    [`uv_fs_read`](#TODO),
-    [`uv_fs_req_cleanup`](#TODO).
-
-*Note: all allocated libuv resources are automatically released on termination.*
+<!---------------------------------------------------------------------------->
 
 UV_FS_Write
 -----------
@@ -130,7 +136,16 @@ code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf, var usize size
         - `>=0`: number of bytes
         - `<0`:  write error
 
-Example:
+libuv references:
+    [`uv_buf_init`](#TODO),
+    [`uv_fs_write`](#TODO),
+    [`uv_fs_req_cleanup`](#TODO).
+
+*Note: all allocated libuv resources are automatically released on termination.*
+
+### Example
+
+Writes the string *Hello World* to `hello.txt`:
 
 ```ceu
 #include "uv/fs.ceu"
@@ -155,14 +170,7 @@ end
 escape 0;
 ```
 
-Writes the string *Hello World* to `hello.txt`.
-
-libuv references:
-    [`uv_buf_init`](#TODO),
-    [`uv_fs_write`](#TODO),
-    [`uv_fs_req_cleanup`](#TODO).
-
-*Note: all allocated libuv resources are automatically released on termination.*
+<!---------------------------------------------------------------------------->
 
 UV_FS_ReadLine
 --------------
@@ -185,7 +193,12 @@ code/await UV_FS_ReadLine (var& UV_FS_File file, vector&[] byte buf, var usize o
 
 `TODO: the file is currently read byte by byte.`
 
-Example:
+Céu-libuv references:
+    [`UV_FS_Read`](#TODO).
+
+### Example
+
+Prints the contents of `file.txt` in a loop that reads the file line by line:
 
 ```ceu
 #include "uv/fs.ceu"
@@ -210,10 +223,7 @@ end
 escape 0;
 ```
 
-Prints the contents of `file.txt` in a loop that reads the file line by line.
-
-Céu-libuv references:
-    [`UV_FS_Read`](#TODO).
+<!---------------------------------------------------------------------------->
 
 UV_FS_Fstat
 -----------
@@ -233,7 +243,15 @@ code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat)
         -  `0`: success
         - `<0`: error
 
-Example:
+libuv references:
+    [`uv_fs_fstat`](#TODO),
+    [`uv_fs_req_cleanup`](#TODO).
+
+*Note: all allocated libuv resources are automatically released on termination.*
+
+### Example
+
+Prints the size of `file.txt` in bytes:
 
 ```ceu
 #include "uv/fs.ceu"
@@ -257,18 +275,12 @@ end
 escape 0;
 ```
 
-Prints the size of `file.txt` in bytes.
-
-libuv references:
-    [`uv_fs_fstat`](#TODO),
-    [`uv_fs_req_cleanup`](#TODO).
-
-*Note: all allocated libuv resources are automatically released on termination.*
+<!---------------------------------------------------------------------------->
 
 UV_Stream_Listen
 ----------------
 
-Start listening for incoming connections.
+Starts listening for incoming connections in a stream.
 
 ```ceu
 code/await UV_Stream_Listen (var& _uv_stream_t stream, var int backlog)
@@ -286,7 +298,15 @@ code/await UV_Stream_Listen (var& _uv_stream_t stream, var int backlog)
         -  `0`: success
         - `<0`: error
 
-Example:
+libuv references:
+    [`uv_listen`](#TODO).
+
+### Example
+
+[Opens](#TODO) a `server` tcp handle, binds it to port `7000`, and then enters
+in listen mode.
+Each incoming connection triggers `ok_listen` whose reaction accepts the
+client, prints its address, and closes the connection.
 
 ```ceu
 #include "uv/tcp.ceu"
@@ -320,10 +340,77 @@ end
 escape 0;
 ```
 
-[Opens](#TODO) a `server` tcp handle, binds it to port `7000`, and then enters
-in listen mode.
-Each incoming connection triggers `ok_listen` whose reaction accepts the
-client, prints its address, and closes the connection.
+<!---------------------------------------------------------------------------->
+
+UV_Stream_Read
+--------------
+
+Reads bytes from a stream continuously.
+
+```ceu
+code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
+                            -> (event& usize ok)
+                                -> int
+```
+
+- Parameters
+    - `stream`: stream to read from
+    - `buf`:    destination buffer
+- Initialization
+    - `ok`: signalled whenever new data is read to the destination buffer
+- Return
+    - `int`: read error
+        - returns only case of error (always `<0`)
+
+Céu-libuv references:
+    [`ceu_uv_read_start`](#TODO),
+    [`UV_STREAM_READ`](#TODO).
 
 libuv references:
-    [`uv_listen`](#TODO).
+    [`uv_read_stop`](#TODO).
+
+*Note: all allocated libuv resources are automatically released on termination.*
+
+
+
+### Example
+
+Connects to `127.0.0.1:7000` and waits reading 10 bytes in a loop:
+
+```ceu
+#include "uv/tcp.ceu"
+
+var& _uv_tcp_t tcp;
+var int? err =
+    watching UV_TCP_Open() -> (&tcp) do
+        var _uv_connect_t connect = _;
+        var _sockaddr_in dest = _;
+        _uv_ip4_addr("127.0.0.1", 7000, &&dest);
+        _ceu_uv_tcp_connect(&&connect, &&tcp, (&&dest as _sockaddr&&));
+
+        var _uv_connect_t&& c;
+        var int status;
+        (c,status) = await UV_STREAM_CONNECT until c==&&connect;
+        _ceu_dbg_assert(status == 0);
+
+        vector[11] byte buf;
+
+        event& usize ok_read;
+        var int? err2 =
+            watching UV_TCP_Read(&tcp,&buf) -> (&ok_read) do
+                loop do
+                    await ok_read;
+                    if $buf == 10 then  // assumes server sends exactly 10 bytes
+                        break;
+                    end
+                end
+            end;
+        _ceu_dbg_assert(not err2?);
+
+        buf = buf .. [{'\0'}];
+        _printf("buf: %s\n", &&buf[0]);
+    end;
+_ceu_dbg_assert(not err?);
+
+escape 0;
+```

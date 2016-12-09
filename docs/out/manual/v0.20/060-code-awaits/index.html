@@ -107,6 +107,10 @@
                 
                     <li><a class="toctree-l4" href="#uv_fs_fstat">UV_FS_Fstat</a></li>
                 
+                    <li><a class="toctree-l4" href="#uv_stream_listen">UV_Stream_Listen</a></li>
+                
+                    <li><a class="toctree-l4" href="#uv_stream_read">UV_Stream_Read</a></li>
+                
             
             </ul>
         
@@ -168,16 +172,26 @@
 </ul>
 </li>
 <li>Initialization<ul>
-<li><code>file</code>: alias to <a href="#TODO">file handle</a></li>
+<li><code>file</code>: created <a href="#TODO">file handle</a></li>
 </ul>
 </li>
 <li>Return<ul>
-<li><code>int</code> (<code>&lt;0</code>): open error</li>
+<li><code>int</code>: open error<ul>
+<li>returns only case of error (always <code>&lt;0</code>)</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 <p>The file is only ready for use after <code>UV_FS_Open</code> triggers <code>file.ok</code>.</p>
-<p>Example:</p>
+<p>libuv references:
+    <a href="#TODO"><code>uv_fs_open</code></a>,
+    <a href="#TODO"><code>uv_fs_close</code></a>,
+    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<h3 id="example">Example</h3>
+<p>Opens <code>file.txt</code> and prints <em>open ok</em> after the file is ready for use.
+In case of failure, prints <em>open error</em> along with the error code:</p>
 <pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
 
 var&amp; UV_FS_File file;
@@ -195,13 +209,8 @@ end
 escape 0;
 </code></pre>
 
-<p>Opens <code>file.txt</code> and prints <em>open ok</em> after the file is ready for use.
-In case of failure, prints <em>open error</em> along with the error code.</p>
-<p>libuv references:
-    <a href="#TODO"><code>uv_fs_open</code></a>,
-    <a href="#TODO"><code>ceu_uv_fs_close</code></a>,
-    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
-<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<!---------------------------------------------------------------------------->
+
 <h2 id="uv_fs_read">UV_FS_Read</h2>
 <p>Reads bytes from a file.</p>
 <pre><code class="ceu">code/await UV_FS_Read (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize size, var usize offset)
@@ -225,7 +234,14 @@ In case of failure, prints <em>open error</em> along with the error code.</p>
 </ul>
 </li>
 </ul>
-<p>Example:</p>
+<p>libuv references:
+    <a href="#TODO"><code>uv_buf_init</code></a>,
+    <a href="#TODO"><code>uv_fs_read</code></a>,
+    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<h3 id="example_1">Example</h3>
+<p>Prints the contents of <code>file.txt</code> in a loop that reads the file in chunks of 10
+bytes:</p>
 <pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
 
 var&amp; UV_FS_File file;
@@ -251,12 +267,8 @@ _ceu_dbg_assert(not err?);
 escape 0;
 </code></pre>
 
-<p>Prints the contents of <code>file.txt</code> in a loop that reads the file 10 in 10 bytes.</p>
-<p>libuv references:
-    <a href="#TODO"><code>uv_buf_init</code></a>,
-    <a href="#TODO"><code>uv_fs_read</code></a>,
-    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
-<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<!---------------------------------------------------------------------------->
+
 <h2 id="uv_fs_write">UV_FS_Write</h2>
 <p>Write bytes from a file.</p>
 <pre><code class="ceu">code/await UV_FS_Write (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize size, var usize offset)
@@ -280,7 +292,13 @@ escape 0;
 </ul>
 </li>
 </ul>
-<p>Example:</p>
+<p>libuv references:
+    <a href="#TODO"><code>uv_buf_init</code></a>,
+    <a href="#TODO"><code>uv_fs_write</code></a>,
+    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<h3 id="example_2">Example</h3>
+<p>Writes the string <em>Hello World</em> to <code>hello.txt</code>:</p>
 <pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
 
 var&amp; UV_FS_File file;
@@ -303,12 +321,8 @@ end
 escape 0;
 </code></pre>
 
-<p>Writes the string <em>Hello World</em> to <code>hello.txt</code>.</p>
-<p>libuv references:
-    <a href="#TODO"><code>uv_buf_init</code></a>,
-    <a href="#TODO"><code>uv_fs_write</code></a>,
-    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
-<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<!---------------------------------------------------------------------------->
+
 <h2 id="uv_fs_readline">UV_FS_ReadLine</h2>
 <p>Reads a line from a file.</p>
 <pre><code class="ceu">code/await UV_FS_ReadLine (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize offset)
@@ -332,7 +346,10 @@ escape 0;
 </li>
 </ul>
 <p><code>TODO: the file is currently read byte by byte.</code></p>
-<p>Example:</p>
+<p>Céu-libuv references:
+    <a href="#TODO"><code>UV_FS_Read</code></a>.</p>
+<h3 id="example_3">Example</h3>
+<p>Prints the contents of <code>file.txt</code> in a loop that reads the file line by line:</p>
 <pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
 
 var&amp; UV_FS_File file;
@@ -355,9 +372,8 @@ end
 escape 0;
 </code></pre>
 
-<p>Prints the contents of <code>file.txt</code> in a loop that reads the file line by line.</p>
-<p>Céu-libuv references:
-    <a href="#TODO"><code>UV_FS_Read</code></a>.</p>
+<!---------------------------------------------------------------------------->
+
 <h2 id="uv_fs_fstat">UV_FS_Fstat</h2>
 <p>Reads information about a file.</p>
 <pre><code class="ceu">code/await UV_FS_Fstat (var&amp; UV_FS_File file, var&amp; _uv_stat_t stat)
@@ -379,7 +395,12 @@ escape 0;
 </ul>
 </li>
 </ul>
-<p>Example:</p>
+<p>libuv references:
+    <a href="#TODO"><code>uv_fs_fstat</code></a>,
+    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<h3 id="example_4">Example</h3>
+<p>Prints the size of <code>file.txt</code> in bytes:</p>
 <pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
 
 var&amp; UV_FS_File file;
@@ -401,11 +422,143 @@ end
 escape 0;
 </code></pre>
 
-<p>Prints the size of <code>file.txt</code> in bytes.</p>
+<!---------------------------------------------------------------------------->
+
+<h2 id="uv_stream_listen">UV_Stream_Listen</h2>
+<p>Starts listening for incoming connections in a stream.</p>
+<pre><code class="ceu">code/await UV_Stream_Listen (var&amp; _uv_stream_t stream, var int backlog)
+                                -&gt; (event&amp; void ok)
+                                    -&gt; int
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>stream</code>:  stream to listen</li>
+<li><code>backlog</code>: number of connections the kernel might queue</li>
+</ul>
+</li>
+<li>Initialization<ul>
+<li><code>ok</code>: signalled on every new incoming connection</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>int</code>: operation status<ul>
+<li><code>0</code>: success</li>
+<li><code>&lt;0</code>: error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 <p>libuv references:
-    <a href="#TODO"><code>uv_fs_fstat</code></a>,
-    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+    <a href="#TODO"><code>uv_listen</code></a>.</p>
+<h3 id="example_5">Example</h3>
+<p><a href="#TODO">Opens</a> a <code>server</code> tcp handle, binds it to port <code>7000</code>, and then enters
+in listen mode.
+Each incoming connection triggers <code>ok_listen</code> whose reaction accepts the
+client, prints its address, and closes the connection.</p>
+<pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
+
+var&amp; _uv_tcp_t server;
+watching UV_TCP_Open() -&gt; (&amp;server) do
+    var _sockaddr_in addr = _;
+    _uv_ip4_addr(&quot;0.0.0.0&quot;, 7000, &amp;&amp;addr);
+    _uv_tcp_bind(&amp;&amp;server, &amp;&amp;addr as _sockaddr&amp;&amp;, 0);
+
+    event&amp; void ok_listen;
+    watching UV_TCP_Listen(&amp;server,128) -&gt; (&amp;ok_listen) do
+        every ok_listen do
+            var _uv_tcp_t client = _;
+            var int err = _ceu_uv_tcp_init(&amp;&amp;client);
+            _ceu_dbg_assert(err == 0);
+            var int ret = _uv_accept(&amp;&amp;server as _uv_stream_t&amp;&amp;, &amp;&amp;client as _uv_stream_t&amp;&amp;);
+            _ceu_dbg_assert(ret == 0);
+
+            vector[20] _char ip = _;
+            var _sockaddr_in name = _;
+            var int len = _;
+            _uv_tcp_getsockname(&amp;&amp;client, &amp;&amp;name as _sockaddr&amp;&amp;, &amp;&amp;len);
+            _uv_ip4_name(&amp;&amp;name,&amp;&amp;ip[0],20);
+            _printf(&quot;new incoming connection from %s\n&quot;, &amp;&amp;ip[0]);
+            _uv_close(&amp;&amp;client as _uv_handle_t&amp;&amp;, null);
+        end
+    end
+end
+
+escape 0;
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<h2 id="uv_stream_read">UV_Stream_Read</h2>
+<p>Reads bytes from a stream continuously.</p>
+<pre><code class="ceu">code/await UV_Stream_Read (var&amp; _uv_stream_t stream, vector&amp;[] byte buf)
+                            -&gt; (event&amp; usize ok)
+                                -&gt; int
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>stream</code>: stream to read from</li>
+<li><code>buf</code>:    destination buffer</li>
+</ul>
+</li>
+<li>Initialization<ul>
+<li><code>ok</code>: signalled whenever new data is read to the destination buffer</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>int</code>: read error<ul>
+<li>returns only case of error (always <code>&lt;0</code>)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Céu-libuv references:
+    <a href="#TODO"><code>ceu_uv_read_start</code></a>,
+    <a href="#TODO"><code>UV_STREAM_READ</code></a>.</p>
+<p>libuv references:
+    <a href="#TODO"><code>uv_read_stop</code></a>.</p>
 <p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<h3 id="example_6">Example</h3>
+<p>Connects to <code>127.0.0.1:7000</code> and waits reading 10 bytes in a loop:</p>
+<pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
+
+var&amp; _uv_tcp_t tcp;
+var int? err =
+    watching UV_TCP_Open() -&gt; (&amp;tcp) do
+        var _uv_connect_t connect = _;
+        var _sockaddr_in dest = _;
+        _uv_ip4_addr(&quot;127.0.0.1&quot;, 7000, &amp;&amp;dest);
+        _ceu_uv_tcp_connect(&amp;&amp;connect, &amp;&amp;tcp, (&amp;&amp;dest as _sockaddr&amp;&amp;));
+
+        var _uv_connect_t&amp;&amp; c;
+        var int status;
+        (c,status) = await UV_STREAM_CONNECT until c==&amp;&amp;connect;
+        _ceu_dbg_assert(status == 0);
+
+        vector[11] byte buf;
+
+        event&amp; usize ok_read;
+        var int? err2 =
+            watching UV_TCP_Read(&amp;tcp,&amp;buf) -&gt; (&amp;ok_read) do
+                loop do
+                    await ok_read;
+                    if $buf == 10 then  // assumes server sends exactly 10 bytes
+                        break;
+                    end
+                end
+            end;
+        _ceu_dbg_assert(not err2?);
+
+        buf = buf .. [{'\0'}];
+        _printf(&quot;buf: %s\n&quot;, &amp;&amp;buf[0]);
+    end;
+_ceu_dbg_assert(not err?);
+
+escape 0;
+</code></pre>
               
             </div>
           </div>
