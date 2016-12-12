@@ -14,6 +14,8 @@ all:
 	         --cc-output=/tmp/$$(basename $(CEU_SRC) .ceu);
 	/tmp/$$(basename $(CEU_SRC) .ceu);
 
+LUA_FLAGS = `pkg-config lua5.3 --libs --cflags`
+
 samples:
 	for i in samples/async-*.ceu \
 	         samples/timer-*.ceu \
@@ -33,7 +35,7 @@ samples:
 	        --env --env-types=$(CEU_DIR)/env/types.h                        \
 	              --env-threads=./env/threads.h                             \
 	              --env-main=$(CEU_DIR)/env/main.c                          \
-	        --cc --cc-args=\"-lm -llua5.3 -luv\"                            \
+	        --cc --cc-args=\"$(LUA_FLAGS) -luv\"                            \
 	             --cc-output=/tmp/$$(basename $$i .ceu);                    \
 	    ceu --pre --pre-args="-I$(CEU_DIR)/include -I./include -I./samples/" \
 	              --pre-input=$$i                                           \
@@ -41,7 +43,7 @@ samples:
 	        --env --env-types=$(CEU_DIR)/env/types.h                        \
 	              --env-threads=./env/threads.h                             \
 	              --env-main=$(CEU_DIR)/env/main.c                          \
-	        --cc --cc-args="-lm -llua5.3 -luv"                              \
+	        --cc --cc-args="$(LUA_FLAGS) -luv"                              \
 	             --cc-output=/tmp/$$(basename $$i .ceu);                    \
 	    cd samples && /tmp/$$(basename $$i .ceu) && cd ..                   \
 	    echo ">>> OK";                                                      \
