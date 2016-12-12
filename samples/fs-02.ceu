@@ -3,7 +3,7 @@
 var& UV_FS_File file;
 
 var int? err =
-    watching UV_FS_Open("fs-01.txt", _O_RDONLY, 0) => (file) do
+    watching UV_FS_Open("fs-01.txt", _O_RDONLY, 0) -> (&file) do
         await file.ok;
         _ceu_dbg_assert(file.fd >= 0);
 

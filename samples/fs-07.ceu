@@ -1,0 +1,21 @@
+#include "uv/fs.ceu"
+
+var& UV_FS_File file;
+
+var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
+
+var int? err =
+    watching UV_FS_Open("/tmp/hello.txt", _O_CREAT|_O_WRONLY, mode) -> (&file)
+    do
+        await file.ok;
+        vector[] byte buf = [] .. "Hello World!\n";
+        var ssize n = await UV_FS_Write(&file,&buf,$buf,0);
+        if (n<0) or (n as usize)!=$buf then
+            _printf("write error\n");
+        end
+    end;
+if err? then
+    _printf("open error: %d\n", err!);
+end
+
+escape 0;

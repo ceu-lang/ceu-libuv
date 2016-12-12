@@ -7,7 +7,7 @@
 #@  $ cat /tmp/fifo  | nc -l 7000 -v | cat  > /tmp/fifo
 #@ http://unix.stackexchange.com/questions/147977/netcat-echo-server-possible-with-pipes-instead-of-commands-as-strings
 #@ Features:
-#@  - UV_CONNECT
+#@  - UV_STREAM_CONNECT
 #endif
 
 #include "uv/tcp.ceu"
@@ -17,23 +17,20 @@
 
 var& _uv_tcp_t client;
 var int? err =
-    watching UV_TCP_Open() => (client) do
-        var&? _uv_connect_t connect = &_malloc(sizeof(_uv_connect_t))
-            finalize (connect) with
-                // free on uv callback
-            end
-
+    watching UV_TCP_Open() -> (&client) do
+        var _uv_connect_t connect = _;
         var _sockaddr_in dest = _;
         _uv_ip4_addr("127.0.0.1", DEFAULT_PORT, &&dest);
-        _ceu_uv_tcp_connect(&&connect!, &&client, (&&dest as _sockaddr&&));
+        _ceu_uv_tcp_connect(&&connect, &&client, (&&dest as _sockaddr&&));
 
         var _uv_connect_t&& c;
         var int status;
-        (c,status) = await UV_CONNECT until c==&&connect!;
+        (c,status) = await UV_STREAM_CONNECT until c==&&connect;
         _ceu_dbg_assert(status == 0);
 
         _printf("I will terminate after 10s...\n");
 
+        var int i;
         loop i in [0 -> 10[ do
             await 1s;
             vector[] byte string = [] .. "Alo mundo!\n";

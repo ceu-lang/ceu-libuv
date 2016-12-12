@@ -31,15 +31,15 @@ native
     _ceu_uv_read_start,
 ;
 
-input (_uv_stream_t&&, int)   UV_ERROR;
-input (_uv_stream_t&&, int)   UV_LISTEN;
-input (_uv_connect_t&&,int)   UV_CONNECT;
-input (_uv_stream_t&&, ssize) UV_READ;
-input (_uv_write_t&&,  int)   UV_WRITE;
+input (_uv_stream_t&&, int)   UV_STREAM_ERROR;
+input (_uv_stream_t&&, int)   UV_STREAM_LISTEN;
+input (_uv_connect_t&&,int)   UV_STREAM_CONNECT;
+input (_uv_stream_t&&, ssize) UV_STREAM_READ;
+input (_uv_write_t&&,  int)   UV_STREAM_WRITE;
 
 code/await UV_Stream_Listen (var& _uv_stream_t stream, var int backlog)
-                                => (event& void ok)
-                                    => int // err
+                                -> (event& void ok)
+                                    -> int // err
 do
     event void ok_;
     ok = &ok_;
@@ -51,17 +51,17 @@ do
 
     var _uv_stream_t&& s;
     var int err2;
-    every (s,err2) in UV_LISTEN do
+    every (s,err2) in UV_STREAM_LISTEN do
         if s == &&stream then
-            _ceu_dbg_assert(err2 == 0);   // UV_ERROR already aborted me
+            _ceu_dbg_assert(err2 == 0);   // UV_STREAM_ERROR already aborted me
             emit ok_;
         end
     end
 end
 
 code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
-                            => (event& usize ok)
-                                => int // err
+                            -> (event& usize ok)
+                                -> int // err
 do
     event usize ok_;
     ok = &ok_;
@@ -73,7 +73,7 @@ do
     do
         err = _ceu_uv_read_start(&&stream);
     finalize (stream) with
-        _uv_read_stop(&&stream);   // finalize after each UV_READ
+        _uv_read_stop(&&stream);   // finalize after each UV_STREAM_READ
     end
     if err != 0 then
         escape err;
@@ -81,19 +81,19 @@ do
 
     var _uv_stream_t&& s;
     var ssize n_read;
-    every (s, n_read) in UV_READ do
+    every (s, n_read) in UV_STREAM_READ do
         if s == &&stream then
-            _ceu_dbg_assert(n_read >= 0);   // UV_ERROR has already aborted me
+            _ceu_dbg_assert(n_read >= 0);   // UV_STREAM_ERROR has already aborted me
             emit ok_(n_read as usize);
         end
     end
 end
 
 code/await UV_Stream_ReadLine (var& _uv_stream_t stream, vector&[] byte string)
-                                => void
+                                -> void
 do
     event& usize ok;
-    watching UV_Stream_Read(&stream,&string) => (ok) do
+    watching UV_Stream_Read(&stream,&string) -> (&ok) do
         loop do
             await ok;
             var byte n=0, c=0;
@@ -105,11 +105,11 @@ do
             end
         end
     end
-    _ceu_dbg_assert(0);   // UV_ERROR has already aborted me
+    _ceu_dbg_assert(0);   // UV_STREAM_ERROR has already aborted me
 end
 
 code/await UV_Stream_Write (var& _uv_stream_t stream, vector&[] byte bytes)
-                                => int // err
+                                -> int // err
 do
     var usize starting  = 0;
     var usize excluding = $bytes;
@@ -134,8 +134,8 @@ do
     _ceu_dbg_assert(ret >= 0);
     var _uv_write_t&& w;
     var int err;
-    (w, err) = await UV_WRITE until w==&&req_write!;
-    _ceu_dbg_assert(err == 0);   // UV_ERROR has already aborted me
+    (w, err) = await UV_STREAM_WRITE until w==&&req_write!;
+    _ceu_dbg_assert(err == 0);   // UV_STREAM_ERROR has already aborted me
 
     escape 0;
 end
@@ -166,18 +166,18 @@ printf(">>> FREE\n");
 
     void ceu_uv_listen_cb (uv_stream_t* s, int err) {
         ceu_dbg_assert(err >= 0);
-        tceu_input_UV_LISTEN p = { s, err };
-        ceu_input(CEU_INPUT_UV_LISTEN, &p);
+        tceu_input_UV_STREAM_LISTEN p = { s, err };
+        ceu_input(CEU_INPUT_UV_STREAM_LISTEN, &p);
     }
 
-    ##define CEU_UV_READ_ALLOC_DYN_INIT 128
+    ##define CEU_UV_STREAM_READ_ALLOC_DYN_INIT 128
 
     void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
         ceu_dbg_assert(h->data != NULL);
         tceu_vector* vec = (tceu_vector*) h->data;
 
         if (vec->is_dyn) {
-            ceu_vector_setmax(vec, CEU_UV_READ_ALLOC_DYN_INIT, 0);
+            ceu_vector_setmax(vec, CEU_UV_STREAM_READ_ALLOC_DYN_INIT, 0);
         }
 
         *buf = uv_buf_init((char*)vec->buf+vec->len, vec->max-vec->len);
@@ -197,13 +197,13 @@ printf(">>> FREE\n");
         }
 
         if (n < 0) {
-            tceu_input_UV_ERROR p = { s, n };
-            ceu_input(CEU_INPUT_UV_ERROR, &p);
+            tceu_input_UV_STREAM_ERROR p = { s, n };
+            ceu_input(CEU_INPUT_UV_STREAM_ERROR, &p);
         }
 
         {
-            tceu_input_UV_READ p = { s, n };
-            ceu_input(CEU_INPUT_UV_READ, &p);
+            tceu_input_UV_STREAM_READ p = { s, n };
+            ceu_input(CEU_INPUT_UV_STREAM_READ, &p);
         }
     }
 
@@ -211,11 +211,11 @@ printf(">>> FREE\n");
         if (err < 0) {
             // if the "assert" fails, see if the error makes sense and extend it
             ceu_dbg_assert(err == UV__EOF);
-            tceu_input_UV_ERROR p = { req->handle, err };
-            ceu_input(CEU_INPUT_UV_ERROR, &p);
+            tceu_input_UV_STREAM_ERROR p = { req->handle, err };
+            ceu_input(CEU_INPUT_UV_STREAM_ERROR, &p);
         }
-        tceu_input_UV_WRITE p = { req, err };
-        ceu_input(CEU_INPUT_UV_WRITE, &p);
+        tceu_input_UV_STREAM_WRITE p = { req, err };
+        ceu_input(CEU_INPUT_UV_STREAM_WRITE, &p);
         free(req);
     }
 end
