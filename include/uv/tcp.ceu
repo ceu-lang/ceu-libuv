@@ -12,15 +12,20 @@ native/nohold
     _uv_ip4_name,
     _uv_tcp_bind,           // TODO: unbind?
     _uv_tcp_getsockname,
+;
+
+native
     _ceu_uv_tcp_init,
 ;
 
 native/pos do
     ##define ceu_uv_tcp_init(a) uv_tcp_init(&ceu_uv_loop, a);
-    ##define ceu_uv_tcp_connect(a,b,c)  uv_tcp_connect(a,b,c,ceu_uv_connect_cb)
+    ##define ceu_uv_tcp_connect(a,b,c) uv_tcp_connect(a,b,c,ceu_uv_connect_cb)
+
     void ceu_uv_connect_cb (uv_connect_t* c, int err) {
         tceu_input_UV_STREAM_CONNECT p = { c, err };
         ceu_input(CEU_INPUT_UV_STREAM_CONNECT, &p);
+        free(c);
     }
 end
 
@@ -38,13 +43,15 @@ do
     if not tcp_? then
         escape _UV_EAI_MEMORY;
     end
-    do finalize with
-        _ceu_uv_close(&&tcp_! as _uv_handle_t&&);
-    end
 
     tcp = &tcp_!;
 
-    var int err1 = _ceu_uv_tcp_init(&&tcp_!);
+    var int err1;
+    do
+        err1 = _ceu_uv_tcp_init(&&tcp_!);
+    finalize (tcp_) with
+        _ceu_uv_close(&&tcp_! as _uv_handle_t&&);
+    end
     if err1 != 0 then
         escape err1;
     end
@@ -70,12 +77,16 @@ do
         watching UV_TCP_Open() -> (&tcp_) do
             tcp = &tcp_;
 
-            var _uv_connect_t connect = _;
-            _ceu_uv_tcp_connect(&&connect, &&tcp_, (&&dest as _sockaddr&&));
+            var&? _uv_connect_t connect = &_malloc(sizeof(_uv_connect_t))
+                finalize (connect) with
+                    // free on uv callback
+                end
+
+            _ceu_uv_tcp_connect(&&connect!, &&tcp_, (&&dest as _sockaddr&&));
 
             var _uv_connect_t&& c;
             var int err2;
-            (c,err2) = await UV_STREAM_CONNECT until c==&&connect;
+            (c,err2) = await UV_STREAM_CONNECT until c==&&connect!;
             _ceu_dbg_assert(err2 == 0);
 
             emit ok_;
