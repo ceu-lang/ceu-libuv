@@ -8,7 +8,7 @@
   
   
   
-  <title>Introduction - Céu-libuv v0.20 - Reference Manual</title>
+  <title>Mode of Operation - Céu-libuv v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -23,9 +23,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Introduction";
-    var mkdocs_page_input_path = "010-introduction.md";
-    var mkdocs_page_url = "/010-introduction/";
+    var mkdocs_page_name = "Mode of Operation";
+    var mkdocs_page_input_path = "modes/index.md";
+    var mkdocs_page_url = "/modes/";
   </script>
   
   <script src="../js/jquery-2.1.1.min.js"></script>
@@ -63,11 +63,11 @@
           
             <li>
     <li class="toctree-l1 current">
-        <a class="current" href="./">Introduction</a>
+        <a class="current" href="./">Mode of Operation</a>
         
             <ul>
             
-                <li class="toctree-l3"><a href="#introduction">Introduction</a></li>
+                <li class="toctree-l3"><a href="#mode-of-operation">Mode of Operation</a></li>
                 
             
             </ul>
@@ -76,31 +76,111 @@
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Input Events</span></li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../020-modes/">Mode of Operation</a>
+        <a class="" href="../inputs/">Input Events</a>
         
     </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../inputs/file_system/">File System</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../inputs/stream/">Stream</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../inputs/tcp/">TCP</a>
+        
+    </li>
+
+        
+    </ul>
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Data Abstractions</span></li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../030-inputs/">Input Events</a>
+        <a class="" href="../datas/">Data Abstractions</a>
         
     </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../datas/file_system/">File System</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../datas/stream/">Stream</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../datas/tcp/">TCP</a>
+        
+    </li>
+
+        
+    </ul>
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Code/Await Abstractions</span></li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../040-datas/">Data Abstractions</a>
+        <a class="" href="../code_awaits/">Code/Await Abstractions</a>
         
     </li>
-<li>
-          
-            <li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../060-code-awaits/">Code/Await Abstractions</a>
+        <a class="" href="../code_awaits/file_system/">File System</a>
         
     </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../code_awaits/stream/">Stream</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../code_awaits/tcp/">TCP</a>
+        
+    </li>
+
+        
+    </ul>
 <li>
           
             <li>
@@ -132,7 +212,7 @@
     
       
     
-    <li>Introduction</li>
+    <li>Mode of Operation</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -142,11 +222,39 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="introduction">Introduction</h1>
+                <h1 id="mode-of-operation">Mode of Operation</h1>
 <p><code>TODO</code></p>
 <!--
-avoid inputs
-use abstractions
+
+The mode of operation specifies how Céu-libuv captures events from the
+environment (e.g., timers and incoming network traffic) and redirects them to
+the Céu application.
+It is implemented in C and is part of Céu-libuv.
+
+Céu-libuv maps each libuv callback to 
+
+Each mode is described in pseudo-code as follows.
+
+- FS
+- tcp
+- thread
+- timers
+
+callback -> event
+
+Waiting Mode
+------------
+
+The *waiting mode* of Céu-SDL continually waits for SDL input events in an
+infinite loop:
+
+
+wzxhzdk:0
+
+
+The inputs are polled on each loop iteration and changes are notified to the
+Céu application through `ceu_input` calls.
+
 -->
               
             </div>
@@ -155,7 +263,7 @@ use abstractions
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../020-modes/" class="btn btn-neutral float-right" title="Mode of Operation">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../inputs/" class="btn btn-neutral float-right" title="Input Events">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href=".." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -187,7 +295,7 @@ use abstractions
         <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../020-modes/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../inputs/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

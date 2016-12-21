@@ -8,7 +8,7 @@
   
   
   
-  <title>Mode of Operation - Céu-libuv v0.20 - Reference Manual</title>
+  <title>Code/Await Abstractions - Céu-libuv v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -23,9 +23,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Mode of Operation";
-    var mkdocs_page_input_path = "020-modes.md";
-    var mkdocs_page_url = "/020-modes/";
+    var mkdocs_page_name = "Code/Await Abstractions";
+    var mkdocs_page_input_path = "code_awaits/index.md";
+    var mkdocs_page_url = "/code_awaits/";
   </script>
   
   <script src="../js/jquery-2.1.1.min.js"></script>
@@ -63,44 +63,124 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../010-introduction/">Introduction</a>
+        <a class="" href="../modes/">Mode of Operation</a>
         
     </li>
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Input Events</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../inputs/">Input Events</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../inputs/file_system/">File System</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../inputs/stream/">Stream</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../inputs/tcp/">TCP</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Data Abstractions</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../datas/">Data Abstractions</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../datas/file_system/">File System</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../datas/stream/">Stream</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../datas/tcp/">TCP</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Code/Await Abstractions</span></li>
+
+        
+            
     <li class="toctree-l1 current">
-        <a class="current" href="./">Mode of Operation</a>
+        <a class="current" href="./">Code/Await Abstractions</a>
         
             <ul>
             
-                <li class="toctree-l3"><a href="#mode-of-operation">Mode of Operation</a></li>
+                <li class="toctree-l3"><a href="#codeawait-abstractions">Code/Await Abstractions</a></li>
                 
             
             </ul>
         
     </li>
-<li>
-          
-            <li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../030-inputs/">Input Events</a>
+        <a class="" href="file_system/">File System</a>
         
     </li>
-<li>
-          
-            <li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../040-datas/">Data Abstractions</a>
+        <a class="" href="stream/">Stream</a>
         
     </li>
-<li>
-          
-            <li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../060-code-awaits/">Code/Await Abstractions</a>
+        <a class="" href="tcp/">TCP</a>
         
     </li>
+
+        
+    </ul>
 <li>
           
             <li>
@@ -131,8 +211,12 @@
     <li><a href="..">Docs</a> &raquo;</li>
     
       
+        
+          <li>Code/Await Abstractions &raquo;</li>
+        
+      
     
-    <li>Mode of Operation</li>
+    <li>Code/Await Abstractions</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -142,40 +226,8 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="mode-of-operation">Mode of Operation</h1>
+                <h1 id="codeawait-abstractions">Code/Await Abstractions</h1>
 <p><code>TODO</code></p>
-<!--
-
-The mode of operation specifies how Céu-libuv captures events from the
-environment (e.g., timers and incoming network traffic) and redirects them to
-the Céu application.
-It is implemented in C and is part of Céu-libuv.
-
-Céu-libuv maps each libuv callback to 
-
-Each mode is described in pseudo-code as follows.
-
-- FS
-- tcp
-- thread
-- timers
-
-callback -> event
-
-Waiting Mode
-------------
-
-The *waiting mode* of Céu-SDL continually waits for SDL input events in an
-infinite loop:
-
-
-wzxhzdk:0
-
-
-The inputs are polled on each loop iteration and changes are notified to the
-Céu application through `ceu_input` calls.
-
--->
               
             </div>
           </div>
@@ -183,10 +235,10 @@ Céu application through `ceu_input` calls.
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../030-inputs/" class="btn btn-neutral float-right" title="Input Events">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="file_system/" class="btn btn-neutral float-right" title="File System">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../010-introduction/" class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../datas/tcp/" class="btn btn-neutral" title="TCP"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -212,10 +264,10 @@ Céu application through `ceu_input` calls.
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../010-introduction/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../datas/tcp/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../030-inputs/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="file_system/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

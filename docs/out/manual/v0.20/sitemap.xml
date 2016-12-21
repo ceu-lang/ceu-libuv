@@ -4,55 +4,107 @@
     
     <url>
      <loc>None/</loc>
-     <lastmod>2016-12-09</lastmod>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
 
     
     <url>
-     <loc>None/010-introduction/</loc>
-     <lastmod>2016-12-09</lastmod>
+     <loc>None/modes/</loc>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
 
     
+        
     <url>
-     <loc>None/020-modes/</loc>
-     <lastmod>2016-12-09</lastmod>
+     <loc>None/inputs/</loc>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
+        
+    <url>
+     <loc>None/inputs/file_system/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/inputs/stream/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/inputs/tcp/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
     
 
     
+        
     <url>
-     <loc>None/030-inputs/</loc>
-     <lastmod>2016-12-09</lastmod>
+     <loc>None/datas/</loc>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
+        
+    <url>
+     <loc>None/datas/file_system/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/datas/stream/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/datas/tcp/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
     
 
     
+        
     <url>
-     <loc>None/040-datas/</loc>
-     <lastmod>2016-12-09</lastmod>
+     <loc>None/code_awaits/</loc>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
-    
-
-    
+        
     <url>
-     <loc>None/060-code-awaits/</loc>
-     <lastmod>2016-12-09</lastmod>
+     <loc>None/code_awaits/file_system/</loc>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
+        
+    <url>
+     <loc>None/code_awaits/stream/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/code_awaits/tcp/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
     
 
     
     <url>
      <loc>None/license/</loc>
-     <lastmod>2016-12-09</lastmod>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     

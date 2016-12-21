@@ -8,30 +8,30 @@
   
   
   
-  <title>Céu-libuv v0.20 - Reference Manual</title>
+  <title>TCP - Céu-libuv v0.20 - Reference Manual</title>
   
 
-  <link rel="shortcut icon" href="./img/favicon.ico">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
 
   
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
-  <link rel="stylesheet" href="./css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="./css/highlight.css">
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
 
   
   <script>
     // Current page data
-    var mkdocs_page_name = "None";
-    var mkdocs_page_input_path = "index.md";
-    var mkdocs_page_url = "/";
+    var mkdocs_page_name = "TCP";
+    var mkdocs_page_input_path = "datas/tcp.md";
+    var mkdocs_page_url = "/datas/tcp/";
   </script>
   
-  <script src="./js/jquery-2.1.1.min.js"></script>
-  <script src="./js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="./js/highlight.pack.js"></script>
-  <script src="./js/theme.js"></script> 
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script>
+  <script src="../../js/theme.js"></script> 
 
   
 </head>
@@ -43,9 +43,9 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href="." class="icon icon-home"> Céu-libuv v0.20 - Reference Manual</a>
+        <a href="../.." class="icon icon-home"> Céu-libuv v0.20 - Reference Manual</a>
         <div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
   </form>
 </div>
@@ -55,22 +55,15 @@
         <ul class="current">
           
             <li>
-    <li class="toctree-l1 current">
-        <a class="current" href=".">Home</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#ceu-libuv-v020-reference-manual">Céu-libuv v0.20 - Reference Manual</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l1 ">
+        <a class="" href="../..">Home</a>
         
     </li>
 <li>
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="modes/">Mode of Operation</a>
+        <a class="" href="../../modes/">Mode of Operation</a>
         
     </li>
 <li>
@@ -82,28 +75,28 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="inputs/">Input Events</a>
+        <a class="" href="../../inputs/">Input Events</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="inputs/file_system/">File System</a>
+        <a class="" href="../../inputs/file_system/">File System</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="inputs/stream/">Stream</a>
+        <a class="" href="../../inputs/stream/">Stream</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="inputs/tcp/">TCP</a>
+        <a class="" href="../../inputs/tcp/">TCP</a>
         
     </li>
 
@@ -118,28 +111,35 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="datas/">Data Abstractions</a>
+        <a class="" href="../">Data Abstractions</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="datas/file_system/">File System</a>
+        <a class="" href="../file_system/">File System</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="datas/stream/">Stream</a>
+        <a class="" href="../stream/">Stream</a>
         
     </li>
 
         
             
-    <li class="toctree-l1 ">
-        <a class="" href="datas/tcp/">TCP</a>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">TCP</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#tcp">TCP</a></li>
+                
+            
+            </ul>
         
     </li>
 
@@ -154,28 +154,28 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="code_awaits/">Code/Await Abstractions</a>
+        <a class="" href="../../code_awaits/">Code/Await Abstractions</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="code_awaits/file_system/">File System</a>
+        <a class="" href="../../code_awaits/file_system/">File System</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="code_awaits/stream/">Stream</a>
+        <a class="" href="../../code_awaits/stream/">Stream</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="code_awaits/tcp/">TCP</a>
+        <a class="" href="../../code_awaits/tcp/">TCP</a>
         
     </li>
 
@@ -185,7 +185,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="license/">License</a>
+        <a class="" href="../../license/">License</a>
         
     </li>
 <li>
@@ -200,7 +200,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href=".">Céu-libuv v0.20 - Reference Manual</a>
+        <a href="../..">Céu-libuv v0.20 - Reference Manual</a>
       </nav>
 
       
@@ -208,11 +208,15 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href=".">Docs</a> &raquo;</li>
+    <li><a href="../..">Docs</a> &raquo;</li>
     
       
+        
+          <li>Data Abstractions &raquo;</li>
+        
+      
     
-    <li>Home</li>
+    <li>TCP</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -222,14 +226,8 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="ceu-libuv-v020-reference-manual">Céu-libuv v0.20 - Reference Manual</h1>
-<p>Céu-libuv supports the development of libuv applications in the programming
-language Céu:</p>
-<p><a href="https://github.com/fsantanna/ceu-libuv">https://github.com/fsantanna/ceu-libuv</a></p>
-<!--
-avoid inputs
-use abstractions
--->
+                <h2 id="tcp">TCP</h2>
+<p><code>TODO</code></p>
               
             </div>
           </div>
@@ -237,8 +235,10 @@ use abstractions
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="modes/" class="btn btn-neutral float-right" title="Mode of Operation">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../code_awaits/" class="btn btn-neutral float-right" title="Code/Await Abstractions">Next <span class="icon icon-circle-arrow-right"></span></a>
       
+      
+        <a href="../stream/" class="btn btn-neutral" title="Stream"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -264,16 +264,13 @@ use abstractions
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
+        <span><a href="../stream/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
-        <span style="margin-left: 15px"><a href="modes/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+        <span style="margin-left: 15px"><a href="../../code_awaits/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
 
 </body>
 </html>
-
-<!--
-MkDocs version : 0.15.3
-Build Date UTC : 2016-12-21 13:23:15.133234
--->
