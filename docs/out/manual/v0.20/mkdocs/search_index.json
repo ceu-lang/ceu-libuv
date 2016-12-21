@@ -21,16 +21,6 @@
             "title": "Mode of Operation"
         }, 
         {
-            "location": "/inputs/", 
-            "text": "Input Events\n\n\nTODO", 
-            "title": "Input Events"
-        }, 
-        {
-            "location": "/inputs/#input-events", 
-            "text": "TODO", 
-            "title": "Input Events"
-        }, 
-        {
             "location": "/inputs/file_system/", 
             "text": "File System\n\n\nUV_FS\n\n\ninput _uv_fs_t\n UV_FS;\n\n\n\n\n\n\nOccurrence:\n\n\nWhenever a filesystem operation completes.\n\n\n\n\n\n\nPayload:\n\n\n_uv_fs_t\n: pointer to the operation request\n\n\n\n\n\n\n\n\nlibuv reference: \nhttp://docs.libuv.org/en/v1.x/fs.html", 
             "title": "File System"
@@ -91,16 +81,6 @@
             "title": "TCP"
         }, 
         {
-            "location": "/datas/", 
-            "text": "Data Abstractions\n\n\nTODO", 
-            "title": "Data Abstractions"
-        }, 
-        {
-            "location": "/datas/#data-abstractions", 
-            "text": "TODO", 
-            "title": "Data Abstractions"
-        }, 
-        {
             "location": "/datas/file_system/", 
             "text": "File System\n\n\nUV_FS_File\n\n\ndata UV_FS_File with\n    event void ok;\n    var   int  fd;\nend", 
             "title": "File System"
@@ -134,16 +114,6 @@
             "location": "/datas/tcp/#tcp", 
             "text": "TODO", 
             "title": "TCP"
-        }, 
-        {
-            "location": "/code_awaits/", 
-            "text": "Code/Await Abstractions\n\n\nTODO", 
-            "title": "Code/Await Abstractions"
-        }, 
-        {
-            "location": "/code_awaits/#codeawait-abstractions", 
-            "text": "TODO", 
-            "title": "Code/Await Abstractions"
         }, 
         {
             "location": "/code_awaits/file_system/", 

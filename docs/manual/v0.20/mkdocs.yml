@@ -6,17 +6,17 @@ pages:
     - Home:                         'index.md'
     - Mode of Operation:            'modes/index.md'
     - Input Events:
-        - Input Events:             'inputs/index.md'
+        #- Input Events:             'inputs/index.md'
         - File System:              'inputs/file_system.md'
         - Stream:                   'inputs/stream.md'
         - TCP:                      'inputs/tcp.md'
     - Data Abstractions:
-        - Data Abstractions:        'datas/index.md'
+        #- Data Abstractions:        'datas/index.md'
         - File System:              'datas/file_system.md'
         - Stream:                   'datas/stream.md'
         - TCP:                      'datas/tcp.md'
     - Code/Await Abstractions:
-        - Code/Await Abstractions:  'code_awaits/index.md'
+        #- Code/Await Abstractions:  'code_awaits/index.md'
         - File System:              'code_awaits/file_system.md'
         - Stream:                   'code_awaits/stream.md'
         - TCP:                      'code_awaits/tcp.md'

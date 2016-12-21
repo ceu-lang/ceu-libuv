@@ -20,12 +20,6 @@
     
         
     <url>
-     <loc>None/inputs/</loc>
-     <lastmod>2016-12-21</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    <url>
      <loc>None/inputs/file_system/</loc>
      <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
@@ -48,12 +42,6 @@
     
         
     <url>
-     <loc>None/datas/</loc>
-     <lastmod>2016-12-21</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    <url>
      <loc>None/datas/file_system/</loc>
      <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
@@ -74,12 +62,6 @@
     
 
     
-        
-    <url>
-     <loc>None/code_awaits/</loc>
-     <lastmod>2016-12-21</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
         
     <url>
      <loc>None/code_awaits/file_system/</loc>
