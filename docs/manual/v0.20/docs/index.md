@@ -1,9 +1,7 @@
-# Céu-libuv v0.20 - Reference Manual
+# Introduction
 
 Céu-libuv supports the development of libuv applications in the programming
-language Céu:
-
-<https://github.com/fsantanna/ceu-libuv>
+language [Céu](http://www.ceu-lang.org/).
 
 <!--
 avoid inputs
