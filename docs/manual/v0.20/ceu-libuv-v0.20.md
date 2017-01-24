@@ -66,7 +66,9 @@ Céu application through `ceu_input` calls.
 
 ## File System
 
-`TODO`
+Provides file system operations.
+
+libuv reference: <http://docs.libuv.org/en/v1.x/fs.html>
 
 ### Input Events
 
@@ -381,7 +383,9 @@ escape 0;
 
 ## Stream
 
-`TODO`
+Provides stream operations.
+
+libuv reference: <http://docs.libuv.org/en/v1.x/stream.html>
 
 ### Input Events
 
@@ -463,11 +467,15 @@ input (_uv_stream_t&&, int) UV_STREAM_ERROR;
 
 libuv reference: <http://docs.libuv.org/en/v1.x/errors.html>
 
+<!--
 ### Data Abstractions
 
 `TODO`
+-->
 
 ### Code Abstractions
+
+<!---------------------------------------------------------------------------->
 
 #### UV_Stream_Listen
 
@@ -493,45 +501,6 @@ Céu-libuv references:
     [`ceu_uv_listen`](#TODO),
     [`UV_STREAM_LISTEN`](#TODO).
 
-##### Example
-
-[Opens](#TODO) a `server` tcp handle, binds it to port `7000`, and then enters
-in listen mode.
-Each incoming connection triggers `ok_listen` whose reaction accepts the
-client, prints its address, and closes the connection.
-
-```ceu
-##include "uv/tcp.ceu"
-
-var& _uv_tcp_t server;
-watching UV_TCP_Open() -> (&server) do
-    var _sockaddr_in addr = _;
-    _uv_ip4_addr("0.0.0.0", 7000, &&addr);
-    _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
-
-    event& void ok_listen;
-    watching UV_TCP_Listen(&server,128) -> (&ok_listen) do
-        every ok_listen do
-            var _uv_tcp_t client = _;
-            var int err = _ceu_uv_tcp_init(&&client);
-            _ceu_dbg_assert(err == 0);
-            var int ret = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
-            _ceu_dbg_assert(ret == 0);
-
-            vector[20] _char ip = _;
-            var _sockaddr_in name = _;
-            var int len = _;
-            _uv_tcp_getsockname(&&client, &&name as _sockaddr&&, &&len);
-            _uv_ip4_name(&&name,&&ip[0],20);
-            _printf("new incoming connection from %s\n", &&ip[0]);
-            _uv_close(&&client as _uv_handle_t&&, null);
-        end
-    end
-end
-
-escape 0;
-```
-
 <!---------------------------------------------------------------------------->
 
 #### UV_Stream_Read
@@ -551,7 +520,7 @@ code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
     - `ok`: signalled whenever new data is read to the destination buffer
 - Return
     - `int`: read error
-        - returns only case of error (always `<0`)
+        - returns only in case of error (always `<0`)
 
 Céu-libuv references:
     [`ceu_uv_read_start`](#TODO),
@@ -561,6 +530,196 @@ libuv references:
     [`uv_read_stop`](#TODO).
 
 *Note: all allocated libuv resources are automatically released on termination.*
+
+<!---------------------------------------------------------------------------->
+
+#### UV_Stream_ReadLine
+
+Reads a single line from a stream.
+
+```ceu
+code/await UV_Stream_ReadLine (var& _uv_stream_t stream, vector&[] byte string)
+                                -> void
+```
+
+- Parameters
+    - `stream`: stream to read from
+    - `string`: destination string buffer
+- Return
+    - `void`: nothing
+
+Céu-libuv references:
+    [`UV_Stream_Read`](#TODO).
+
+<!---------------------------------------------------------------------------->
+
+#### UV_Stream_Write
+
+Write bytes to a stream.
+
+```ceu
+code/await UV_Stream_Write (var& _uv_stream_t stream, vector&[] byte buf)
+                                -> int
+```
+
+- Parameters
+    - `stream`: stream to write to
+    - `buf`:    source buffer
+- Return
+    - `int`: operation status
+        -  `0`: success
+        - `<0`: error
+
+Céu-libuv references:
+    [`ceu_uv_write`](#TODO),
+    [`UV_STREAM_WRITE`](#TODO).
+
+*Note: all allocated libuv resources are automatically released on termination.*
+
+<!---------------------------------------------------------------------------->
+
+
+# TCP
+
+## TCP
+
+Provides TCP operations.
+
+libuv reference: <http://docs.libuv.org/en/v1.x/tcp.html>
+
+<!--
+### Input Events
+
+`TODO`
+
+### Data Abstractions
+
+`TODO`
+-->
+
+### Code Abstractions
+
+<!---------------------------------------------------------------------------->
+
+#### UV_TCP_Open
+
+Opens a raw TCP stream.
+
+```ceu
+code/await UV_TCP_Open (void) -> (var& _uv_tcp_t tcp) -> int
+```
+
+- Parameters
+    - `void`: nothing
+- Initialization
+    - `tcp`: opened [TCP handle](#TODO)
+- Return
+    - `int`: TCP error
+        - returns only in case of error (always `<0`)
+
+Céu-libuv references:
+    [`ceu_uv_tcp_init`](#TODO),
+    [`ceu_uv_close`](#TODO),
+    [`UV_STREAM_ERROR`](#TODO).
+
+*Note: all allocated libuv resources are automatically released on termination.*
+
+##### Example
+
+```ceu
+var& _uv_tcp_t tcp;
+watching UV_TCP_Open() -> (&tcp)
+do
+    <...>   // use the raw `tcp` handle
+end
+```
+
+<!---------------------------------------------------------------------------->
+
+Opens a connection TCP stream.
+
+```ceu
+code/await UV_TCP_Connect (var _char&& ip, var int port)
+                            -> (var& _uv_tcp_t tcp, event& void ok)
+                                -> int
+```
+
+- Parameters
+    - `ip`:     remote host
+    - `port`:   remote port
+- Initialization
+    - `tcp`:    disconnected [TCP handle](#TODO)
+    - `ok`:     signalled when `tcp` connects and is ready for use
+- Return
+    - `int`: TCP error
+        - returns only in case of error (always `<0`)
+
+##### Example
+
+```ceu
+var&   _uv_tcp_t tcp;
+event& void      ok_connected;
+watching UV_TCP_Connect("127.0.0.1", 7000) -> (&tcp, &ok_connected) do
+    await ok_connected;
+    <...>   // use the connected `tcp` handle
+end
+```
+
+<!---------------------------------------------------------------------------->
+
+#### UV_TCP_Listen
+
+Starts listening for incoming connections in a TCP stream.
+
+Defined in terms of [`UV_Stream_Listen`](#TODO):
+
+```c
+##define UV_TCP_Listen(tcp, backlog) UV_Stream_Listen((tcp) as _uv_stream_t&&, backlog)
+```
+
+Céu-libuv references:
+    [`UV_Stream_Listen`](#TODO)
+
+##### Example
+
+[Opens](#TODO) a `server` TCP handle, binds it to port `7000`, and then enters
+in listen mode.
+Each incoming connection triggers the event `ok_listen`.
+
+```ceu
+##include "uv/tcp.ceu"
+
+var& _uv_tcp_t server;
+watching UV_TCP_Open() -> (&server) do
+    var _sockaddr_in addr = _;
+    _uv_ip4_addr("0.0.0.0", 7000, &&addr);
+    _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
+
+    event& void ok_listen;
+    watching UV_TCP_Listen(&server,128) -> (&ok_listen) do
+        every ok_listen do
+            <...>   // handle incoming connection
+        end
+    end
+end
+
+escape 0;
+```
+
+<!---------------------------------------------------------------------------->
+
+#### UV_TCP_Read
+
+Reads bytes from a TCP stream continuously.
+
+Defined in terms of [`UV_Stream_Read`](#TODO):
+
+```c
+##define UV_TCP_Read(tcp, bytes) UV_Stream_Read((tcp) as _uv_stream_t&&, bytes)
+```
+
+Céu-libuv references:
+    [`UV_Stream_Read`](#TODO)
 
 ##### Example
 
@@ -604,24 +763,45 @@ _ceu_dbg_assert(not err?);
 escape 0;
 ```
 
+<!---------------------------------------------------------------------------->
 
-# TCP
+#### UV_TCP_ReadLine
 
-## TCP
+Reads a single line from a TCP stream.
+
+Defined in terms of [`UV_Stream_ReadLine`](#TODO):
+
+```c
+##define UV_TCP_ReadLine(tcp, bytes) UV_Stream_ReadLine((tcp) as _uv_stream_t&&, bytes)
+```
+
+Céu-libuv references:
+    [`UV_Stream_ReadLine`](#TODO)
+
+##### Example
 
 `TODO`
 
-### Input Events
+<!---------------------------------------------------------------------------->
+
+#### UV_TCP_Write
+
+Write bytes to a TCP stream.
+
+Defined in terms of [`UV_Stream_Write`](#TODO):
+
+```c
+##define UV_TCP_Write(tcp, bytes) UV_Stream_Write((tcp) as _uv_stream_t&&, bytes)
+```
+
+Céu-libuv references:
+    [`UV_Stream_Write`](#TODO)
+
+##### Example
 
 `TODO`
 
-### Data Abstractions
-
-`TODO`
-
-### Code Abstractions
-
-`TODO`
+<!---------------------------------------------------------------------------->
 
 
 # License

@@ -85,8 +85,6 @@
                 
                     <li><a class="toctree-l4" href="#input-events">Input Events</a></li>
                 
-                    <li><a class="toctree-l4" href="#data-abstractions">Data Abstractions</a></li>
-                
                     <li><a class="toctree-l4" href="#code-abstractions">Code Abstractions</a></li>
                 
             
@@ -142,7 +140,8 @@
             <div class="section">
               
                 <h1 id="stream">Stream<a class="headerlink" href="#stream" title="Permanent link">&para;</a></h1>
-<p><code>TODO</code></p>
+<p>Provides stream operations.</p>
+<p>libuv reference: <a href="http://docs.libuv.org/en/v1.x/stream.html">http://docs.libuv.org/en/v1.x/stream.html</a></p>
 <h2 id="input-events">Input Events<a class="headerlink" href="#input-events" title="Permanent link">&para;</a></h2>
 <h3 id="uv_stream_listen">UV_STREAM_LISTEN<a class="headerlink" href="#uv_stream_listen" title="Permanent link">&para;</a></h3>
 <pre><code class="ceu">input (_uv_stream_t&amp;&amp;, int) UV_STREAM_LISTEN;
@@ -237,9 +236,15 @@
 <p><code>UV_STREAM_ERROR</code> always occurs before the corresponding <a href="#TODO"><code>UV_STREAM_READ</code></a> or
 <a href="#TODO"><code>UV_STREAM_WRITE</code></a>.</p>
 <p>libuv reference: <a href="http://docs.libuv.org/en/v1.x/errors.html">http://docs.libuv.org/en/v1.x/errors.html</a></p>
-<h2 id="data-abstractions">Data Abstractions<a class="headerlink" href="#data-abstractions" title="Permanent link">&para;</a></h2>
-<p><code>TODO</code></p>
+<!--
+## Data Abstractions
+
+`TODO`
+-->
+
 <h2 id="code-abstractions">Code Abstractions<a class="headerlink" href="#code-abstractions" title="Permanent link">&para;</a></h2>
+<!---------------------------------------------------------------------------->
+
 <h3 id="uv_stream_listen_1">UV_Stream_Listen<a class="headerlink" href="#uv_stream_listen_1" title="Permanent link">&para;</a></h3>
 <p>Starts listening for incoming connections in a stream.</p>
 <pre><code class="ceu">code/await UV_Stream_Listen (var&amp; _uv_stream_t stream, var int backlog)
@@ -269,42 +274,6 @@
 <p>Céu-libuv references:
     <a href="#TODO"><code>ceu_uv_listen</code></a>,
     <a href="#TODO"><code>UV_STREAM_LISTEN</code></a>.</p>
-<h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h4>
-<p><a href="#TODO">Opens</a> a <code>server</code> tcp handle, binds it to port <code>7000</code>, and then enters
-in listen mode.
-Each incoming connection triggers <code>ok_listen</code> whose reaction accepts the
-client, prints its address, and closes the connection.</p>
-<pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
-
-var&amp; _uv_tcp_t server;
-watching UV_TCP_Open() -&gt; (&amp;server) do
-    var _sockaddr_in addr = _;
-    _uv_ip4_addr(&quot;0.0.0.0&quot;, 7000, &amp;&amp;addr);
-    _uv_tcp_bind(&amp;&amp;server, &amp;&amp;addr as _sockaddr&amp;&amp;, 0);
-
-    event&amp; void ok_listen;
-    watching UV_TCP_Listen(&amp;server,128) -&gt; (&amp;ok_listen) do
-        every ok_listen do
-            var _uv_tcp_t client = _;
-            var int err = _ceu_uv_tcp_init(&amp;&amp;client);
-            _ceu_dbg_assert(err == 0);
-            var int ret = _uv_accept(&amp;&amp;server as _uv_stream_t&amp;&amp;, &amp;&amp;client as _uv_stream_t&amp;&amp;);
-            _ceu_dbg_assert(ret == 0);
-
-            vector[20] _char ip = _;
-            var _sockaddr_in name = _;
-            var int len = _;
-            _uv_tcp_getsockname(&amp;&amp;client, &amp;&amp;name as _sockaddr&amp;&amp;, &amp;&amp;len);
-            _uv_ip4_name(&amp;&amp;name,&amp;&amp;ip[0],20);
-            _printf(&quot;new incoming connection from %s\n&quot;, &amp;&amp;ip[0]);
-            _uv_close(&amp;&amp;client as _uv_handle_t&amp;&amp;, null);
-        end
-    end
-end
-
-escape 0;
-</code></pre>
-
 <!---------------------------------------------------------------------------->
 
 <h3 id="uv_stream_read_1">UV_Stream_Read<a class="headerlink" href="#uv_stream_read_1" title="Permanent link">&para;</a></h3>
@@ -326,7 +295,7 @@ escape 0;
 </li>
 <li>Return<ul>
 <li><code>int</code>: read error<ul>
-<li>returns only case of error (always <code>&lt;0</code>)</li>
+<li>returns only in case of error (always <code>&lt;0</code>)</li>
 </ul>
 </li>
 </ul>
@@ -338,44 +307,55 @@ escape 0;
 <p>libuv references:
     <a href="#TODO"><code>uv_read_stop</code></a>.</p>
 <p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
-<h4 id="example_1">Example<a class="headerlink" href="#example_1" title="Permanent link">&para;</a></h4>
-<p>Connects to <code>127.0.0.1:7000</code> and waits reading 10 bytes in a loop:</p>
-<pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
+<!---------------------------------------------------------------------------->
 
-var&amp; _uv_tcp_t tcp;
-var int? err =
-    watching UV_TCP_Open() -&gt; (&amp;tcp) do
-        var _uv_connect_t connect = _;
-        var _sockaddr_in dest = _;
-        _uv_ip4_addr(&quot;127.0.0.1&quot;, 7000, &amp;&amp;dest);
-        _ceu_uv_tcp_connect(&amp;&amp;connect, &amp;&amp;tcp, (&amp;&amp;dest as _sockaddr&amp;&amp;));
-
-        var _uv_connect_t&amp;&amp; c;
-        var int status;
-        (c,status) = await UV_STREAM_CONNECT until c==&amp;&amp;connect;
-        _ceu_dbg_assert(status == 0);
-
-        vector[11] byte buf;
-
-        event&amp; usize ok_read;
-        var int? err2 =
-            watching UV_TCP_Read(&amp;tcp,&amp;buf) -&gt; (&amp;ok_read) do
-                loop do
-                    await ok_read;
-                    if $buf == 10 then  // assumes server sends exactly 10 bytes
-                        break;
-                    end
-                end
-            end;
-        _ceu_dbg_assert(not err2?);
-
-        buf = buf .. [{'\0'}];
-        _printf(&quot;buf: %s\n&quot;, &amp;&amp;buf[0]);
-    end;
-_ceu_dbg_assert(not err?);
-
-escape 0;
+<h3 id="uv_stream_readline">UV_Stream_ReadLine<a class="headerlink" href="#uv_stream_readline" title="Permanent link">&para;</a></h3>
+<p>Reads a single line from a stream.</p>
+<pre><code class="ceu">code/await UV_Stream_ReadLine (var&amp; _uv_stream_t stream, vector&amp;[] byte string)
+                                -&gt; void
 </code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>stream</code>: stream to read from</li>
+<li><code>string</code>: destination string buffer</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>void</code>: nothing</li>
+</ul>
+</li>
+</ul>
+<p>Céu-libuv references:
+    <a href="#TODO"><code>UV_Stream_Read</code></a>.</p>
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_stream_write_1">UV_Stream_Write<a class="headerlink" href="#uv_stream_write_1" title="Permanent link">&para;</a></h3>
+<p>Write bytes to a stream.</p>
+<pre><code class="ceu">code/await UV_Stream_Write (var&amp; _uv_stream_t stream, vector&amp;[] byte buf)
+                                -&gt; int
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>stream</code>: stream to write to</li>
+<li><code>buf</code>:    source buffer</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>int</code>: operation status<ul>
+<li><code>0</code>: success</li>
+<li><code>&lt;0</code>: error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Céu-libuv references:
+    <a href="#TODO"><code>ceu_uv_write</code></a>,
+    <a href="#TODO"><code>UV_STREAM_WRITE</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<!---------------------------------------------------------------------------->
               
             </div>
           </div>

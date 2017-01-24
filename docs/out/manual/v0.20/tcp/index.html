@@ -90,10 +90,6 @@
             
                 <li class="toctree-l3"><a href="#tcp">TCP</a></li>
                 
-                    <li><a class="toctree-l4" href="#input-events">Input Events</a></li>
-                
-                    <li><a class="toctree-l4" href="#data-abstractions">Data Abstractions</a></li>
-                
                     <li><a class="toctree-l4" href="#code-abstractions">Code Abstractions</a></li>
                 
             
@@ -142,13 +138,199 @@
             <div class="section">
               
                 <h1 id="tcp">TCP<a class="headerlink" href="#tcp" title="Permanent link">&para;</a></h1>
-<p><code>TODO</code></p>
-<h2 id="input-events">Input Events<a class="headerlink" href="#input-events" title="Permanent link">&para;</a></h2>
-<p><code>TODO</code></p>
-<h2 id="data-abstractions">Data Abstractions<a class="headerlink" href="#data-abstractions" title="Permanent link">&para;</a></h2>
-<p><code>TODO</code></p>
+<p>Provides TCP operations.</p>
+<p>libuv reference: <a href="http://docs.libuv.org/en/v1.x/tcp.html">http://docs.libuv.org/en/v1.x/tcp.html</a></p>
+<!--
+## Input Events
+
+`TODO`
+
+## Data Abstractions
+
+`TODO`
+-->
+
 <h2 id="code-abstractions">Code Abstractions<a class="headerlink" href="#code-abstractions" title="Permanent link">&para;</a></h2>
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_tcp_open">UV_TCP_Open<a class="headerlink" href="#uv_tcp_open" title="Permanent link">&para;</a></h3>
+<p>Opens a raw TCP stream.</p>
+<pre><code class="ceu">code/await UV_TCP_Open (void) -&gt; (var&amp; _uv_tcp_t tcp) -&gt; int
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>void</code>: nothing</li>
+</ul>
+</li>
+<li>Initialization<ul>
+<li><code>tcp</code>: opened <a href="#TODO">TCP handle</a></li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>int</code>: TCP error<ul>
+<li>returns only in case of error (always <code>&lt;0</code>)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Céu-libuv references:
+    <a href="#TODO"><code>ceu_uv_tcp_init</code></a>,
+    <a href="#TODO"><code>ceu_uv_close</code></a>,
+    <a href="#TODO"><code>UV_STREAM_ERROR</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h4>
+<pre><code class="ceu">var&amp; _uv_tcp_t tcp;
+watching UV_TCP_Open() -&gt; (&amp;tcp)
+do
+    &lt;...&gt;   // use the raw `tcp` handle
+end
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<p>Opens a connection TCP stream.</p>
+<pre><code class="ceu">code/await UV_TCP_Connect (var _char&amp;&amp; ip, var int port)
+                            -&gt; (var&amp; _uv_tcp_t tcp, event&amp; void ok)
+                                -&gt; int
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>ip</code>:     remote host</li>
+<li><code>port</code>:   remote port</li>
+</ul>
+</li>
+<li>Initialization<ul>
+<li><code>tcp</code>:    disconnected <a href="#TODO">TCP handle</a></li>
+<li><code>ok</code>:     signalled when <code>tcp</code> connects and is ready for use</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>int</code>: TCP error<ul>
+<li>returns only in case of error (always <code>&lt;0</code>)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="example_1">Example<a class="headerlink" href="#example_1" title="Permanent link">&para;</a></h4>
+<pre><code class="ceu">var&amp;   _uv_tcp_t tcp;
+event&amp; void      ok_connected;
+watching UV_TCP_Connect(&quot;127.0.0.1&quot;, 7000) -&gt; (&amp;tcp, &amp;ok_connected) do
+    await ok_connected;
+    &lt;...&gt;   // use the connected `tcp` handle
+end
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_tcp_listen">UV_TCP_Listen<a class="headerlink" href="#uv_tcp_listen" title="Permanent link">&para;</a></h3>
+<p>Starts listening for incoming connections in a TCP stream.</p>
+<p>Defined in terms of <a href="#TODO"><code>UV_Stream_Listen</code></a>:</p>
+<pre><code class="c">#define UV_TCP_Listen(tcp, backlog) UV_Stream_Listen((tcp) as _uv_stream_t&amp;&amp;, backlog)
+</code></pre>
+
+<p>Céu-libuv references:
+    <a href="#TODO"><code>UV_Stream_Listen</code></a></p>
+<h4 id="example_2">Example<a class="headerlink" href="#example_2" title="Permanent link">&para;</a></h4>
+<p><a href="#TODO">Opens</a> a <code>server</code> TCP handle, binds it to port <code>7000</code>, and then enters
+in listen mode.
+Each incoming connection triggers the event <code>ok_listen</code>.</p>
+<pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
+
+var&amp; _uv_tcp_t server;
+watching UV_TCP_Open() -&gt; (&amp;server) do
+    var _sockaddr_in addr = _;
+    _uv_ip4_addr(&quot;0.0.0.0&quot;, 7000, &amp;&amp;addr);
+    _uv_tcp_bind(&amp;&amp;server, &amp;&amp;addr as _sockaddr&amp;&amp;, 0);
+
+    event&amp; void ok_listen;
+    watching UV_TCP_Listen(&amp;server,128) -&gt; (&amp;ok_listen) do
+        every ok_listen do
+            &lt;...&gt;   // handle incoming connection
+        end
+    end
+end
+
+escape 0;
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_tcp_read">UV_TCP_Read<a class="headerlink" href="#uv_tcp_read" title="Permanent link">&para;</a></h3>
+<p>Reads bytes from a TCP stream continuously.</p>
+<p>Defined in terms of <a href="#TODO"><code>UV_Stream_Read</code></a>:</p>
+<pre><code class="c">#define UV_TCP_Read(tcp, bytes) UV_Stream_Read((tcp) as _uv_stream_t&amp;&amp;, bytes)
+</code></pre>
+
+<p>Céu-libuv references:
+    <a href="#TODO"><code>UV_Stream_Read</code></a></p>
+<h4 id="example_3">Example<a class="headerlink" href="#example_3" title="Permanent link">&para;</a></h4>
+<p>Connects to <code>127.0.0.1:7000</code> and waits reading 10 bytes in a loop:</p>
+<pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
+
+var&amp; _uv_tcp_t tcp;
+var int? err =
+    watching UV_TCP_Open() -&gt; (&amp;tcp) do
+        var _uv_connect_t connect = _;
+        var _sockaddr_in dest = _;
+        _uv_ip4_addr(&quot;127.0.0.1&quot;, 7000, &amp;&amp;dest);
+        _ceu_uv_tcp_connect(&amp;&amp;connect, &amp;&amp;tcp, (&amp;&amp;dest as _sockaddr&amp;&amp;));
+
+        var _uv_connect_t&amp;&amp; c;
+        var int status;
+        (c,status) = await UV_STREAM_CONNECT until c==&amp;&amp;connect;
+        _ceu_dbg_assert(status == 0);
+
+        vector[11] byte buf;
+
+        event&amp; usize ok_read;
+        var int? err2 =
+            watching UV_TCP_Read(&amp;tcp,&amp;buf) -&gt; (&amp;ok_read) do
+                loop do
+                    await ok_read;
+                    if $buf == 10 then  // assumes server sends exactly 10 bytes
+                        break;
+                    end
+                end
+            end;
+        _ceu_dbg_assert(not err2?);
+
+        buf = buf .. [{'\0'}];
+        _printf(&quot;buf: %s\n&quot;, &amp;&amp;buf[0]);
+    end;
+_ceu_dbg_assert(not err?);
+
+escape 0;
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_tcp_readline">UV_TCP_ReadLine<a class="headerlink" href="#uv_tcp_readline" title="Permanent link">&para;</a></h3>
+<p>Reads a single line from a TCP stream.</p>
+<p>Defined in terms of <a href="#TODO"><code>UV_Stream_ReadLine</code></a>:</p>
+<pre><code class="c">#define UV_TCP_ReadLine(tcp, bytes) UV_Stream_ReadLine((tcp) as _uv_stream_t&amp;&amp;, bytes)
+</code></pre>
+
+<p>Céu-libuv references:
+    <a href="#TODO"><code>UV_Stream_ReadLine</code></a></p>
+<h4 id="example_4">Example<a class="headerlink" href="#example_4" title="Permanent link">&para;</a></h4>
 <p><code>TODO</code></p>
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_tcp_write">UV_TCP_Write<a class="headerlink" href="#uv_tcp_write" title="Permanent link">&para;</a></h3>
+<p>Write bytes to a TCP stream.</p>
+<p>Defined in terms of <a href="#TODO"><code>UV_Stream_Write</code></a>:</p>
+<pre><code class="c">#define UV_TCP_Write(tcp, bytes) UV_Stream_Write((tcp) as _uv_stream_t&amp;&amp;, bytes)
+</code></pre>
+
+<p>Céu-libuv references:
+    <a href="#TODO"><code>UV_Stream_Write</code></a></p>
+<h4 id="example_5">Example<a class="headerlink" href="#example_5" title="Permanent link">&para;</a></h4>
+<p><code>TODO</code></p>
+<!---------------------------------------------------------------------------->
               
             </div>
           </div>
