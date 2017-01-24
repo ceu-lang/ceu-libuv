@@ -3,7 +3,7 @@
 
 #include "uv/tcp.ceu"
 
-code/await UV_TCP_Server_Client (var& _uv_tcp_t server) -> void
+code/await UV_TCP_Server_Client (var& _uv_tcp_t server) -> void     // TODO: error
 do
     var& _uv_tcp_t client;
     var int? err =
@@ -11,13 +11,15 @@ do
             var int ret = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
             _ceu_dbg_assert(ret == 0);
 
+/*
             var _sockaddr_in sock = _;
             var int len = sizeof(_sockaddr_in) as int;
             var int ret = _uv_tcp_getsockname(&&client, (&&sock as _sockaddr&&), &&len);
             _ceu_dbg_assert(ret == 0);
             var int port = _ntohs(sock.sin_port);
+*/
 
-            await UV_TCP_Server_Handler(&client);
+            await UV_TCP_Server_Handler(&client);                   // TODO: error
         end;
 
     if err? then
@@ -26,26 +28,20 @@ do
 end
 
 code/await UV_TCP_Server (var _char&& ip, var int port, var int backlog)
-                            -> void
+                            -> int  // err
 do
-    var _sockaddr_in addr = _;
-    _uv_ip4_addr(&&ip[0], port, &&addr);
-
     var& _uv_tcp_t server;
-    watching UV_TCP_Open() -> (&server)
-    do
-        _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
-
-        event& void ok_listen;
-        watching UV_TCP_Listen(&server,backlog) -> (&ok_listen)
+    event& void ok_listen;
+    var int? err =
+        watching UV_TCP_Open_Bind_Listen(ip,port,backlog) -> (&server,&ok_listen)
         do
 // TODO: receive as argument?
-            pool[] UV_TCP_Server_Client cs;
+            pool[UV_TCP_SERVER_HANDLER_MAX] UV_TCP_Server_Client cs;
             every ok_listen do
                 spawn UV_TCP_Server_Client(&server) in cs;
             end
-        end
-    end
+        end;
+    escape err!;
 end
 
 #endif

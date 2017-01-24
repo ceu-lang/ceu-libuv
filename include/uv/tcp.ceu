@@ -62,6 +62,30 @@ do
     escape err2;
 end
 
+code/await UV_TCP_Open_Bind_Listen (var _char&& ip, var int port, var int backlog)
+                                    -> (var& _uv_tcp_t tcp, event& void ok)
+                                        -> int // err
+do
+    var&   _uv_tcp_t tcp_;
+    event& void      ok_;
+
+    var _sockaddr_in addr = _;
+    _uv_ip4_addr(&&ip[0], port, &&addr);
+
+    var int? err1 =
+        watching UV_TCP_Open() -> (&tcp_) do
+            tcp = &tcp_;
+            _uv_tcp_bind(&&tcp_, &&addr as _sockaddr&&, 0);
+            var int? err2 =
+                watching UV_TCP_Listen(&tcp_,backlog) -> (&ok_) do
+                    ok = &ok_;
+                    await FOREVER;
+                end;
+            escape err2!;
+        end;
+    escape err1!;
+end
+
 code/await UV_TCP_Connect (var _char&& ip, var int port)
                             -> (var& _uv_tcp_t tcp, event& void ok)
                                 -> int  // err

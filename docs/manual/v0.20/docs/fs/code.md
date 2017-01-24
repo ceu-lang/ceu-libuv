@@ -15,7 +15,7 @@ code/await UV_FS_Open (var _char&& path, var int flags, var int mode)
     - `flags`: access mode flags
     - `mode`:  file permission mode
 - Initialization
-    - `file`: created [file handle](#TODO)
+    - `file`: created [file handle](#uv_fs_file)
 - Return
     - `int`: open error
         - returns only case of error (always `<0`)
@@ -23,12 +23,12 @@ code/await UV_FS_Open (var _char&& path, var int flags, var int mode)
 The file is only ready for use after `UV_FS_Open` triggers `file.ok`.
 
 Céu-libuv references:
-    [`ceu_uv_fs_open`](#TODO),
-    [`UV_FS`](#TODO).
+    [`UV_FS`](#uv_fs).
 
 libuv references:
-    [`uv_fs_close`](#TODO),
-    [`uv_fs_req_cleanup`](#TODO).
+    [`ceu_uv_fs_open`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_open),
+    [`uv_fs_close`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_close),
+    [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
@@ -67,7 +67,7 @@ code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf, var usize size,
 ```
 
 - Parameters
-    - `file`:   [file handle](#TODO) to read from
+    - `file`:   [file handle](#uv_fs_file) to read from
     - `buf`:    destination buffer
     - `size`:   number of bytes to read
     - `offset`: starting file offset
@@ -77,12 +77,12 @@ code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf, var usize size,
         - `<0`:  read error
 
 Céu-libuv references:
-    [`ceu_uv_fs_read`](#TODO),
-    [`UV_FS`](#TODO).
+    [`ceu_uv_fs_read`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_read),
+    [`UV_FS`](#uv_fs).
 
 libuv references:
-    [`uv_buf_init`](#TODO),
-    [`uv_fs_req_cleanup`](#TODO).
+    [`uv_buf_init`](http://docs.libuv.org/en/v1.x/misc.html#c.uv_buf_init),
+    [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
@@ -129,7 +129,7 @@ code/await UV_FS_ReadLine (var& UV_FS_File file, vector&[] byte buf, var usize o
 ```
 
 - Parameters
-    - `file`:   [file handle](#TODO) to read from
+    - `file`:   [file handle](#uv_fs_file) to read from
     - `buf`:    destination buffer (excludes the leading `\n`)
     - `offset`: starting file offset
 - Return
@@ -140,7 +140,7 @@ code/await UV_FS_ReadLine (var& UV_FS_File file, vector&[] byte buf, var usize o
 `TODO: the file is currently read byte by byte.`
 
 Céu-libuv references:
-    [`UV_FS_Read`](#TODO).
+    [`UV_FS_Read`](#uv_fs_read).
 
 #### Example
 
@@ -181,7 +181,7 @@ code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf, var usize size
 ```
 
 - Parameters
-    - `file`:   [file handle](#TODO) to write to
+    - `file`:   [file handle](#uv_fs_file) to write to
     - `buf`:    source buffer
     - `size`:   number of bytes to write
     - `offset`: starting file offset
@@ -191,12 +191,12 @@ code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf, var usize size
         - `<0`:  write error
 
 Céu-libuv references:
-    [`ceu_uv_fs_write`](#TODO),
-    [`UV_FS`](#TODO).
+    [`ceu_uv_fs_write`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_write),
+    [`UV_FS`](#uv_fs).
 
 libuv references:
-    [`uv_buf_init`](#TODO),
-    [`uv_fs_req_cleanup`](#TODO).
+    [`uv_buf_init`](http://docs.libuv.org/en/v1.x/misc.html#c.uv_buf_init),
+    [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
@@ -239,7 +239,7 @@ code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat)
 ```
 
 - Parameters
-    - `file`: [file handle](#TODO) to write to
+    - `file`: [file handle](#uv_fs_file) to write to
     - `stat`: destination buffer
 - Return
     - `int`: operation status
@@ -247,11 +247,11 @@ code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat)
         - `<0`: error
 
 Céu-libuv references:
-    [`ceu_uv_fs_fstat`](#TODO),
-    [`UV_FS`](#TODO).
+    [`ceu_uv_fs_fstat`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_fstat),
+    [`UV_FS`](#uv_fs).
 
 libuv references:
-    [`uv_fs_req_cleanup`](#TODO).
+    [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 

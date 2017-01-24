@@ -73,7 +73,7 @@ input (_uv_stream_t&&, int) UV_STREAM_ERROR;
     - `_uv_stream_t&&`: pointer to the stream
     - `int`: error code
 
-`UV_STREAM_ERROR` always occurs before the corresponding [`UV_STREAM_READ`](#TODO) or
-[`UV_STREAM_WRITE`](#TODO).
+`UV_STREAM_ERROR` always occurs before the corresponding [`UV_STREAM_READ`](#uv_stream_read) or
+[`UV_STREAM_WRITE`](#uv_stream_write).
 
 libuv reference: <http://docs.libuv.org/en/v1.x/errors.html>

@@ -113,7 +113,7 @@ code/await UV_FS_Open (var _char&& path, var int flags, var int mode)
     - `flags`: access mode flags
     - `mode`:  file permission mode
 - Initialization
-    - `file`: created [file handle](#TODO)
+    - `file`: created [file handle](#uv_fs_file)
 - Return
     - `int`: open error
         - returns only case of error (always `<0`)
@@ -121,12 +121,12 @@ code/await UV_FS_Open (var _char&& path, var int flags, var int mode)
 The file is only ready for use after `UV_FS_Open` triggers `file.ok`.
 
 Céu-libuv references:
-    [`ceu_uv_fs_open`](#TODO),
-    [`UV_FS`](#TODO).
+    [`UV_FS`](#uv_fs).
 
 libuv references:
-    [`uv_fs_close`](#TODO),
-    [`uv_fs_req_cleanup`](#TODO).
+    [`ceu_uv_fs_open`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_open),
+    [`uv_fs_close`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_close),
+    [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
@@ -165,7 +165,7 @@ code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf, var usize size,
 ```
 
 - Parameters
-    - `file`:   [file handle](#TODO) to read from
+    - `file`:   [file handle](#uv_fs_file) to read from
     - `buf`:    destination buffer
     - `size`:   number of bytes to read
     - `offset`: starting file offset
@@ -175,12 +175,12 @@ code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf, var usize size,
         - `<0`:  read error
 
 Céu-libuv references:
-    [`ceu_uv_fs_read`](#TODO),
-    [`UV_FS`](#TODO).
+    [`ceu_uv_fs_read`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_read),
+    [`UV_FS`](#uv_fs).
 
 libuv references:
-    [`uv_buf_init`](#TODO),
-    [`uv_fs_req_cleanup`](#TODO).
+    [`uv_buf_init`](http://docs.libuv.org/en/v1.x/misc.html#c.uv_buf_init),
+    [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
@@ -227,7 +227,7 @@ code/await UV_FS_ReadLine (var& UV_FS_File file, vector&[] byte buf, var usize o
 ```
 
 - Parameters
-    - `file`:   [file handle](#TODO) to read from
+    - `file`:   [file handle](#uv_fs_file) to read from
     - `buf`:    destination buffer (excludes the leading `\n`)
     - `offset`: starting file offset
 - Return
@@ -238,7 +238,7 @@ code/await UV_FS_ReadLine (var& UV_FS_File file, vector&[] byte buf, var usize o
 `TODO: the file is currently read byte by byte.`
 
 Céu-libuv references:
-    [`UV_FS_Read`](#TODO).
+    [`UV_FS_Read`](#uv_fs_read).
 
 ##### Example
 
@@ -279,7 +279,7 @@ code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf, var usize size
 ```
 
 - Parameters
-    - `file`:   [file handle](#TODO) to write to
+    - `file`:   [file handle](#uv_fs_file) to write to
     - `buf`:    source buffer
     - `size`:   number of bytes to write
     - `offset`: starting file offset
@@ -289,12 +289,12 @@ code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf, var usize size
         - `<0`:  write error
 
 Céu-libuv references:
-    [`ceu_uv_fs_write`](#TODO),
-    [`UV_FS`](#TODO).
+    [`ceu_uv_fs_write`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_write),
+    [`UV_FS`](#uv_fs).
 
 libuv references:
-    [`uv_buf_init`](#TODO),
-    [`uv_fs_req_cleanup`](#TODO).
+    [`uv_buf_init`](http://docs.libuv.org/en/v1.x/misc.html#c.uv_buf_init),
+    [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
@@ -337,7 +337,7 @@ code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat)
 ```
 
 - Parameters
-    - `file`: [file handle](#TODO) to write to
+    - `file`: [file handle](#uv_fs_file) to write to
     - `stat`: destination buffer
 - Return
     - `int`: operation status
@@ -345,11 +345,11 @@ code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat)
         - `<0`: error
 
 Céu-libuv references:
-    [`ceu_uv_fs_fstat`](#TODO),
-    [`UV_FS`](#TODO).
+    [`ceu_uv_fs_fstat`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_fstat),
+    [`UV_FS`](#uv_fs).
 
 libuv references:
-    [`uv_fs_req_cleanup`](#TODO).
+    [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
@@ -462,8 +462,8 @@ input (_uv_stream_t&&, int) UV_STREAM_ERROR;
     - `_uv_stream_t&&`: pointer to the stream
     - `int`: error code
 
-`UV_STREAM_ERROR` always occurs before the corresponding [`UV_STREAM_READ`](#TODO) or
-[`UV_STREAM_WRITE`](#TODO).
+`UV_STREAM_ERROR` always occurs before the corresponding [`UV_STREAM_READ`](#uv_stream_read) or
+[`UV_STREAM_WRITE`](#uv_stream_write).
 
 libuv reference: <http://docs.libuv.org/en/v1.x/errors.html>
 
@@ -498,8 +498,8 @@ code/await UV_Stream_Listen (var& _uv_stream_t stream, var int backlog)
         - `<0`: error
 
 Céu-libuv references:
-    [`ceu_uv_listen`](#TODO),
-    [`UV_STREAM_LISTEN`](#TODO).
+    [`ceu_uv_listen`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_listen),
+    [`UV_STREAM_LISTEN`](#uv_stream_listen).
 
 <!---------------------------------------------------------------------------->
 
@@ -523,11 +523,11 @@ code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
         - returns only in case of error (always `<0`)
 
 Céu-libuv references:
-    [`ceu_uv_read_start`](#TODO),
-    [`UV_STREAM_READ`](#TODO).
+    [`ceu_uv_read_start`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_read_start),
+    [`UV_STREAM_READ`](#uv_stream_read).
 
 libuv references:
-    [`uv_read_stop`](#TODO).
+    [`uv_read_stop`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_read_stop).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
@@ -549,7 +549,7 @@ code/await UV_Stream_ReadLine (var& _uv_stream_t stream, vector&[] byte string)
     - `void`: nothing
 
 Céu-libuv references:
-    [`UV_Stream_Read`](#TODO).
+    [`UV_Stream_Read`](uv_stream_read_1).
 
 <!---------------------------------------------------------------------------->
 
@@ -571,8 +571,8 @@ code/await UV_Stream_Write (var& _uv_stream_t stream, vector&[] byte buf)
         - `<0`: error
 
 Céu-libuv references:
-    [`ceu_uv_write`](#TODO),
-    [`UV_STREAM_WRITE`](#TODO).
+    [`ceu_uv_write`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_write),
+    [`UV_STREAM_WRITE`](#uv_stream_write).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
@@ -603,7 +603,7 @@ libuv reference: <http://docs.libuv.org/en/v1.x/tcp.html>
 
 #### UV_TCP_Open
 
-Opens a raw TCP stream.
+Opens an uninitialized TCP stream.
 
 ```ceu
 code/await UV_TCP_Open (void) -> (var& _uv_tcp_t tcp) -> int
@@ -612,15 +612,15 @@ code/await UV_TCP_Open (void) -> (var& _uv_tcp_t tcp) -> int
 - Parameters
     - `void`: nothing
 - Initialization
-    - `tcp`: opened [TCP handle](#TODO)
+    - `tcp`: opened and uninitialized [TCP handle](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t)
 - Return
     - `int`: TCP error
         - returns only in case of error (always `<0`)
 
 Céu-libuv references:
-    [`ceu_uv_tcp_init`](#TODO),
-    [`ceu_uv_close`](#TODO),
-    [`UV_STREAM_ERROR`](#TODO).
+    [`ceu_uv_tcp_init`](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_init),
+    [`ceu_uv_close`](http://docs.libuv.org/en/v1.x/handle.html#c.uv_close),
+    [`UV_STREAM_ERROR`](#uv_stream_error).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
@@ -648,11 +648,17 @@ code/await UV_TCP_Connect (var _char&& ip, var int port)
     - `ip`:     remote host
     - `port`:   remote port
 - Initialization
-    - `tcp`:    disconnected [TCP handle](#TODO)
+    - `tcp`:    [TCP handle](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t)
     - `ok`:     signalled when `tcp` connects and is ready for use
 - Return
     - `int`: TCP error
         - returns only in case of error (always `<0`)
+
+Céu-libuv references:
+    [`ceu_uv_tcp_connect`](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_connect),
+    [`UV_STREAM_CONNECT`](#uv_stream_connnect).
+
+*Note: all allocated libuv resources are automatically released on termination.*
 
 ##### Example
 
@@ -669,35 +675,35 @@ end
 
 #### UV_TCP_Listen
 
-Starts listening for incoming connections in a TCP stream.
+Starts listening for incoming connections on a TCP stream.
 
-Defined in terms of [`UV_Stream_Listen`](#TODO):
+Defined in terms of [`UV_Stream_Listen`](#uv_stream_listen_1):
 
 ```c
 ##define UV_TCP_Listen(tcp, backlog) UV_Stream_Listen((tcp) as _uv_stream_t&&, backlog)
 ```
 
 Céu-libuv references:
-    [`UV_Stream_Listen`](#TODO)
+    [`UV_Stream_Listen`](#uv_stream_listen_1)
 
 ##### Example
 
-[Opens](#TODO) a `server` TCP handle, binds it to port `7000`, and then enters
+Opens a `tcp` handle, binds it to port `7000`, and then enters
 in listen mode.
-Each incoming connection triggers the event `ok_listen`.
+Each incoming connection triggers the event `ok`.
 
 ```ceu
 ##include "uv/tcp.ceu"
 
-var& _uv_tcp_t server;
-watching UV_TCP_Open() -> (&server) do
+var& _uv_tcp_t tcp;
+watching UV_TCP_Open() -> (&tcp) do
     var _sockaddr_in addr = _;
     _uv_ip4_addr("0.0.0.0", 7000, &&addr);
-    _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
+    _uv_tcp_bind(&&tcp, &&addr as _sockaddr&&, 0);
 
-    event& void ok_listen;
-    watching UV_TCP_Listen(&server,128) -> (&ok_listen) do
-        every ok_listen do
+    event& void ok;
+    watching UV_TCP_Listen(&tcp,128) -> (&ok) do
+        every ok do
             <...>   // handle incoming connection
         end
     end
@@ -708,18 +714,116 @@ escape 0;
 
 <!---------------------------------------------------------------------------->
 
+#### UV_TCP_Open_Bind_Listen
+
+Opens a TCP stream, binds it to an IP and port, and listens for incoming
+connections.
+
+```ceu
+code/await UV_TCP_Open_Bind_Listen (var _char&& ip, var int port, var int backlog)
+                                    -> (var& _uv_tcp_t tcp, event& void ok)
+                                        -> int
+```
+
+- Parameters
+    - `ip`:      local host
+    - `port`:    local port
+    - `backlog`: number of connections the kernel might queue
+- Initialization
+    - `tcp`:     [TCP handle](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t)
+    - `ok`:      signalled on every new incoming connection
+- Return
+    - `int`:     TCP error
+        - returns only in case of error (always `<0`)
+
+Céu-libuv references:
+    [`UV_TCP_Open`](#uv_tcp_open),
+    [`UV_TCP_Listen`](#uv_tcp_listen_1).
+
+##### Example
+
+Listen on port `7000`:
+
+```ceu
+##include "uv/tcp.ceu"
+var&   _uv_tcp_t tcp;
+event& void      ok;
+watching UV_TCP_Open_Bind_Listen("0.0.0.0",7000,128) -> (&tcp,&ok) do
+    every ok do
+        <...>   // handle incoming connection
+    end
+end
+```
+
+<!---------------------------------------------------------------------------->
+
+Opens a TCP stream, binds it to an IP and port, listens for incoming
+connections, and spawns a handler on every new connection.
+
+```ceu
+code/await UV_TCP_Server (var _char&& ip, var int port, var int backlog) -> int
+```
+
+- Parameters
+    - `ip`:      local host
+    - `port`:    local port
+    - `backlog`: number of connections the kernel might queue
+- Return
+    - `int`:     TCP error
+        - returns only in case of error (always `<0`)
+
+The handler is a user-defined `UV_TCP_Server_Handler`, which must be declared
+in between the includes for `uv/tcp.ceu` and `uv/tcp-server.ceu`, as follows:
+
+```ceu
+##include "uv/tcp.ceu"
+code/await UV_TCP_Server_Handler (var& _uv_tcp_t tcp) -> void do
+    <...>       // handles the new client connection
+end
+##include "uv/tcp-server.ceu"
+<...>
+```
+
+The handler receives the [TCP handle](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t) of the connected client.
+
+If the macro `UV_TCP_SERVER_HANDLER_MAX` is defined, the server uses a bounded
+pool of `UV_TCP_Server_Handler`
+
+Céu-libuv references:
+    [`UV_TCP_Open_Bind_Listen`](#uv_tcp_open_bind_listen),
+    [`UV_TCP_Open`](#uv_tcp_open).
+
+libuv references:
+    [`_uv_accept`].
+
+##### Example:
+
+```ceu
+##include "uv/tcp.ceu"
+
+code/await UV_TCP_Server_Handler (var& _uv_tcp_t tcp) -> void do
+    <...>       // handles the new client connection
+end
+
+##include "uv/tcp-server.ceu"
+
+await UV_TCP_Server("0.0.0.0", 7000, 128);
+```
+
+<!---------------------------------------------------------------------------->
+
 #### UV_TCP_Read
 
 Reads bytes from a TCP stream continuously.
 
-Defined in terms of [`UV_Stream_Read`](#TODO):
+Defined in terms of [`UV_Stream_Read`](#uv_stream_read_1):
 
 ```c
 ##define UV_TCP_Read(tcp, bytes) UV_Stream_Read((tcp) as _uv_stream_t&&, bytes)
 ```
 
 Céu-libuv references:
-    [`UV_Stream_Read`](#TODO)
+    [`UV_Stream_Read`](#uv_stream_read_1)
 
 ##### Example
 
@@ -769,14 +873,14 @@ escape 0;
 
 Reads a single line from a TCP stream.
 
-Defined in terms of [`UV_Stream_ReadLine`](#TODO):
+Defined in terms of [`UV_Stream_ReadLine`](#uv_stream_readline):
 
 ```c
 ##define UV_TCP_ReadLine(tcp, bytes) UV_Stream_ReadLine((tcp) as _uv_stream_t&&, bytes)
 ```
 
 Céu-libuv references:
-    [`UV_Stream_ReadLine`](#TODO)
+    [`UV_Stream_ReadLine`](#uv_stream_readline)
 
 ##### Example
 
@@ -788,14 +892,14 @@ Céu-libuv references:
 
 Write bytes to a TCP stream.
 
-Defined in terms of [`UV_Stream_Write`](#TODO):
+Defined in terms of [`UV_Stream_Write`](#uv_stream_write_1):
 
 ```c
 ##define UV_TCP_Write(tcp, bytes) UV_Stream_Write((tcp) as _uv_stream_t&&, bytes)
 ```
 
 Céu-libuv references:
-    [`UV_Stream_Write`](#TODO)
+    [`UV_Stream_Write`](#uv_stream_write_1)
 
 ##### Example
 

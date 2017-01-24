@@ -184,7 +184,7 @@ end
 </ul>
 </li>
 <li>Initialization<ul>
-<li><code>file</code>: created <a href="#TODO">file handle</a></li>
+<li><code>file</code>: created <a href="#uv_fs_file">file handle</a></li>
 </ul>
 </li>
 <li>Return<ul>
@@ -197,11 +197,11 @@ end
 </ul>
 <p>The file is only ready for use after <code>UV_FS_Open</code> triggers <code>file.ok</code>.</p>
 <p>Céu-libuv references:
-    <a href="#TODO"><code>ceu_uv_fs_open</code></a>,
-    <a href="#TODO"><code>UV_FS</code></a>.</p>
+    <a href="#uv_fs"><code>UV_FS</code></a>.</p>
 <p>libuv references:
-    <a href="#TODO"><code>uv_fs_close</code></a>,
-    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_open"><code>ceu_uv_fs_open</code></a>,
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_close"><code>uv_fs_close</code></a>,
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup"><code>uv_fs_req_cleanup</code></a>.</p>
 <p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
 <h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h4>
 <p>Opens <code>file.txt</code> and prints <em>open ok</em> after the file is ready for use.
@@ -233,7 +233,7 @@ escape 0;
 
 <ul>
 <li>Parameters<ul>
-<li><code>file</code>:   <a href="#TODO">file handle</a> to read from</li>
+<li><code>file</code>:   <a href="#uv_fs_file">file handle</a> to read from</li>
 <li><code>buf</code>:    destination buffer</li>
 <li><code>size</code>:   number of bytes to read</li>
 <li><code>offset</code>: starting file offset</li>
@@ -249,11 +249,11 @@ escape 0;
 </li>
 </ul>
 <p>Céu-libuv references:
-    <a href="#TODO"><code>ceu_uv_fs_read</code></a>,
-    <a href="#TODO"><code>UV_FS</code></a>.</p>
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_read"><code>ceu_uv_fs_read</code></a>,
+    <a href="#uv_fs"><code>UV_FS</code></a>.</p>
 <p>libuv references:
-    <a href="#TODO"><code>uv_buf_init</code></a>,
-    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+    <a href="http://docs.libuv.org/en/v1.x/misc.html#c.uv_buf_init"><code>uv_buf_init</code></a>,
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup"><code>uv_fs_req_cleanup</code></a>.</p>
 <p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
 <h4 id="example_1">Example<a class="headerlink" href="#example_1" title="Permanent link">&para;</a></h4>
 <p>Prints the contents of <code>file.txt</code> in a loop that reads the file in chunks of 10
@@ -293,7 +293,7 @@ escape 0;
 
 <ul>
 <li>Parameters<ul>
-<li><code>file</code>:   <a href="#TODO">file handle</a> to read from</li>
+<li><code>file</code>:   <a href="#uv_fs_file">file handle</a> to read from</li>
 <li><code>buf</code>:    destination buffer (excludes the leading <code>\n</code>)</li>
 <li><code>offset</code>: starting file offset</li>
 </ul>
@@ -309,7 +309,7 @@ escape 0;
 </ul>
 <p><code>TODO: the file is currently read byte by byte.</code></p>
 <p>Céu-libuv references:
-    <a href="#TODO"><code>UV_FS_Read</code></a>.</p>
+    <a href="#uv_fs_read"><code>UV_FS_Read</code></a>.</p>
 <h4 id="example_2">Example<a class="headerlink" href="#example_2" title="Permanent link">&para;</a></h4>
 <p>Prints the contents of <code>file.txt</code> in a loop that reads the file line by line:</p>
 <pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
@@ -344,7 +344,7 @@ escape 0;
 
 <ul>
 <li>Parameters<ul>
-<li><code>file</code>:   <a href="#TODO">file handle</a> to write to</li>
+<li><code>file</code>:   <a href="#uv_fs_file">file handle</a> to write to</li>
 <li><code>buf</code>:    source buffer</li>
 <li><code>size</code>:   number of bytes to write</li>
 <li><code>offset</code>: starting file offset</li>
@@ -360,11 +360,11 @@ escape 0;
 </li>
 </ul>
 <p>Céu-libuv references:
-    <a href="#TODO"><code>ceu_uv_fs_write</code></a>,
-    <a href="#TODO"><code>UV_FS</code></a>.</p>
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_write"><code>ceu_uv_fs_write</code></a>,
+    <a href="#uv_fs"><code>UV_FS</code></a>.</p>
 <p>libuv references:
-    <a href="#TODO"><code>uv_buf_init</code></a>,
-    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+    <a href="http://docs.libuv.org/en/v1.x/misc.html#c.uv_buf_init"><code>uv_buf_init</code></a>,
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup"><code>uv_fs_req_cleanup</code></a>.</p>
 <p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
 <h4 id="example_3">Example<a class="headerlink" href="#example_3" title="Permanent link">&para;</a></h4>
 <p>Writes the string <em>Hello World</em> to <code>hello.txt</code>:</p>
@@ -400,7 +400,7 @@ escape 0;
 
 <ul>
 <li>Parameters<ul>
-<li><code>file</code>: <a href="#TODO">file handle</a> to write to</li>
+<li><code>file</code>: <a href="#uv_fs_file">file handle</a> to write to</li>
 <li><code>stat</code>: destination buffer</li>
 </ul>
 </li>
@@ -414,10 +414,10 @@ escape 0;
 </li>
 </ul>
 <p>Céu-libuv references:
-    <a href="#TODO"><code>ceu_uv_fs_fstat</code></a>,
-    <a href="#TODO"><code>UV_FS</code></a>.</p>
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_fstat"><code>ceu_uv_fs_fstat</code></a>,
+    <a href="#uv_fs"><code>UV_FS</code></a>.</p>
 <p>libuv references:
-    <a href="#TODO"><code>uv_fs_req_cleanup</code></a>.</p>
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup"><code>uv_fs_req_cleanup</code></a>.</p>
 <p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
 <h4 id="example_4">Example<a class="headerlink" href="#example_4" title="Permanent link">&para;</a></h4>
 <p>Prints the size of <code>file.txt</code> in bytes:</p>

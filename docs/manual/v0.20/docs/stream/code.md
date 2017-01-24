@@ -23,8 +23,8 @@ code/await UV_Stream_Listen (var& _uv_stream_t stream, var int backlog)
         - `<0`: error
 
 Céu-libuv references:
-    [`ceu_uv_listen`](#TODO),
-    [`UV_STREAM_LISTEN`](#TODO).
+    [`ceu_uv_listen`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_listen),
+    [`UV_STREAM_LISTEN`](#uv_stream_listen).
 
 <!---------------------------------------------------------------------------->
 
@@ -48,11 +48,11 @@ code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
         - returns only in case of error (always `<0`)
 
 Céu-libuv references:
-    [`ceu_uv_read_start`](#TODO),
-    [`UV_STREAM_READ`](#TODO).
+    [`ceu_uv_read_start`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_read_start),
+    [`UV_STREAM_READ`](#uv_stream_read).
 
 libuv references:
-    [`uv_read_stop`](#TODO).
+    [`uv_read_stop`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_read_stop).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
@@ -74,7 +74,7 @@ code/await UV_Stream_ReadLine (var& _uv_stream_t stream, vector&[] byte string)
     - `void`: nothing
 
 Céu-libuv references:
-    [`UV_Stream_Read`](#TODO).
+    [`UV_Stream_Read`](uv_stream_read_1).
 
 <!---------------------------------------------------------------------------->
 
@@ -96,8 +96,8 @@ code/await UV_Stream_Write (var& _uv_stream_t stream, vector&[] byte buf)
         - `<0`: error
 
 Céu-libuv references:
-    [`ceu_uv_write`](#TODO),
-    [`UV_STREAM_WRITE`](#TODO).
+    [`ceu_uv_write`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_write),
+    [`UV_STREAM_WRITE`](#uv_stream_write).
 
 *Note: all allocated libuv resources are automatically released on termination.*
 
