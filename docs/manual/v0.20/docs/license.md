@@ -1,7 +1,7 @@
 License
 =======
 
-Céu-Arduino is distributed under the MIT license reproduced below:
+Céu-libuv is distributed under the MIT license reproduced below:
 
 ```
  Copyright (C) 2012-2017 Francisco Sant'Anna
