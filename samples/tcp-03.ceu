@@ -59,21 +59,13 @@ end
 
 code/await Server (var _char&& ip, var int port, var int backlog) -> void
 do
-    var _sockaddr_in addr = _;
-    _uv_ip4_addr(&&ip[0], port, &&addr);
-
     var& _uv_tcp_t server;
-    watching UV_TCP_Open() -> (&server)
+    event& void ok_listen;
+    watching UV_TCP_Open_Bind_Listen(ip,port,DEFAULT_BACKLOG) -> (&server,&ok_listen)
     do
-        _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
-
-        event& void ok_listen;
-        watching UV_TCP_Listen(&server,DEFAULT_BACKLOG) -> (&ok_listen)
-        do
-            pool[10] Client cs;
-            every ok_listen do
-                spawn Client(&server) in cs;
-            end
+        pool[10] Client cs;
+        every ok_listen do
+            spawn Client(&server) in cs;
         end
     end
 end
