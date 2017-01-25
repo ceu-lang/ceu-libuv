@@ -1,49 +1,40 @@
 Mode of Operation
 =================
 
-`TODO`
-
-<!--
-
 The mode of operation specifies how Céu-libuv captures events from the
 environment (e.g., timers and incoming network traffic) and redirects them to
 the Céu application.
 It is implemented in C and is part of Céu-libuv.
 
-Céu-libuv maps each libuv callback to 
+Céu-libuv maps each libuv request/callback to a corresponding request/input in
+Céu.
+As an example, instead of reading from a stream with `uv_read_start`, Céu-libuv
+uses `ceu_uv_read_start` which generates
+[`UV_STREAM_READ`](../stream/#uv_stream_read) input events back to the
+application as follows:
 
-Each mode is described in pseudo-code as follows.
+```ceu
+#define ceu_uv_read_start(stream) uv_read_start(stream,...,ceu_uv_read_start_cb);
 
-- FS
-- tcp
-- thread
-- timers
+void ceu_uv_read_start_cb(uv_stream_t* stream, ...) {
+    <...>
+    ceu_input(CEU_INPUT_UV_STREAM_READ, <stream>);
+}
+```
 
-callback -> event
-
-Waiting Mode
-------------
-
-The *waiting mode* of Céu-SDL continually waits for SDL input events in an
-infinite loop:
+Under the hood, Céu-libuv uses one *event loop*, one *timer*, and one *async*
+libuv handles.
+The timer manages Céu timers.
+The async manages Céu asyncs and threads.
+The main event loop makes continuous calls to `uv_run` passing `UV_RUN_ONCE`:
 
 ```c
 int main (void) {
     ceu_start();
     while (<program-is-running>) {
-        int timeout = (<program-has-pending-async>) ? 0 : <next-timer-in-ms>;
-        if (SDL_WaitEventTimeout(<...>, timeout);
-            ceu_input(CEU_INPUT__*, <...>);     /* input SDL_QUIT, SDL_KEY*, SDL_MOUSE*, etc */
-        }
-        ceu_input(CEU_INPUT__NONE, <time>);     /* input async and timer */
-        ceu_input(CEU_INPUT_SDL_REDRAW, <...>); /* input SDL_REDRAW after every input */
+        uv_run(&loop, UV_RUN_ONCE);         // handles all libuv callbacks
+        ceu_input(CEU_INPUT__ASYNC, NULL);  // handles timers and asyncs
     }
     ceu_stop();
-    return <program-escape-value>;
 }
 ```
-
-The inputs are polled on each loop iteration and changes are notified to the
-Céu application through `ceu_input` calls.
-
--->

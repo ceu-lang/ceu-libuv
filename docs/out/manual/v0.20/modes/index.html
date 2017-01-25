@@ -136,39 +136,38 @@
             <div class="section">
               
                 <h1 id="mode-of-operation">Mode of Operation<a class="headerlink" href="#mode-of-operation" title="Permanent link">&para;</a></h1>
-<p><code>TODO</code></p>
-<!--
-
-The mode of operation specifies how Céu-libuv captures events from the
+<p>The mode of operation specifies how Céu-libuv captures events from the
 environment (e.g., timers and incoming network traffic) and redirects them to
 the Céu application.
-It is implemented in C and is part of Céu-libuv.
+It is implemented in C and is part of Céu-libuv.</p>
+<p>Céu-libuv maps each libuv request/callback to a corresponding request/input in
+Céu.
+As an example, instead of reading from a stream with <code>uv_read_start</code>, Céu-libuv
+uses <code>ceu_uv_read_start</code> which generates
+<a href="./../stream/#uv_stream_read"><code>UV_STREAM_READ</code></a> input events back to the
+application as follows:</p>
+<pre><code class="ceu">#define ceu_uv_read_start(stream) uv_read_start(stream,...,ceu_uv_read_start_cb);
 
-Céu-libuv maps each libuv callback to 
+void ceu_uv_read_start_cb(uv_stream_t* stream, ...) {
+    &lt;...&gt;
+    ceu_input(CEU_INPUT_UV_STREAM_READ, &lt;stream&gt;);
+}
+</code></pre>
 
-Each mode is described in pseudo-code as follows.
-
-- FS
-- tcp
-- thread
-- timers
-
-callback -> event
-
-Waiting Mode
-------------
-
-The *waiting mode* of Céu-SDL continually waits for SDL input events in an
-infinite loop:
-
-
-wzxhzdk:0
-
-
-The inputs are polled on each loop iteration and changes are notified to the
-Céu application through `ceu_input` calls.
-
--->
+<p>Under the hood, Céu-libuv uses one <em>event loop</em>, one <em>timer</em>, and one <em>async</em>
+libuv handles.
+The timer manages Céu timers.
+The async manages Céu asyncs and threads.
+The main event loop makes continuous calls to <code>uv_run</code> passing <code>UV_RUN_ONCE</code>:</p>
+<pre><code class="c">int main (void) {
+    ceu_start();
+    while (&lt;program-is-running&gt;) {
+        uv_run(&amp;loop, UV_RUN_ONCE);         // handles all libuv callbacks
+        ceu_input(CEU_INPUT__ASYNC, NULL);  // handles timers and asyncs
+    }
+    ceu_stop();
+}
+</code></pre>
               
             </div>
           </div>
