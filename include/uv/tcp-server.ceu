@@ -3,6 +3,10 @@
 
 #include "uv/tcp.ceu"
 
+#ifndef UV_TCP_SERVER_HANDLER_MAX
+#define UV_TCP_SERVER_HANDLER_MAX
+#endif
+
 code/await UV_TCP_Server_Client (var& _uv_tcp_t server) -> void     // TODO: error
 do
     var& _uv_tcp_t client;
