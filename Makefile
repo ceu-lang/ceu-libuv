@@ -1,5 +1,5 @@
 CEU_DIR  = $(error set absolute path to "<ceu>" repository)
-CEU_SRC  ?=
+CEU_SRC  ?= samples/tcp-01.ceu
 CEU_ARGS ?=
 
 all:
@@ -27,14 +27,6 @@ samples:
 	    echo "#########################################################";   \
 	    echo -n "Press <enter> to start...";                                \
 	    read _;                                                             \
-	    echo ceu --pre --pre-args=\"-I$(CEU_DIR)/include -I./include -I./samples\" \
-	              --pre-input=$$i                                           \
-	        --ceu --ceu-features-lua=true --ceu-features-thread=true --ceu-err-unused=pass --ceu-err-uninitialized=pass \
-	        --env --env-types=$(CEU_DIR)/env/types.h                        \
-	              --env-threads=./env/threads.h                             \
-	              --env-main=$(CEU_DIR)/env/main.c                          \
-	        --cc --cc-args=\"-lm -llua5.3 -luv\"                            \
-	             --cc-output=/tmp/$$(basename $$i .ceu);                    \
 	    ceu --pre --pre-args="-I$(CEU_DIR)/include -I./include -I./samples/" \
 	              --pre-input=$$i                                           \
 	        --ceu --ceu-features-lua=true --ceu-features-thread=true --ceu-err-unused=pass --ceu-err-uninitialized=pass \
