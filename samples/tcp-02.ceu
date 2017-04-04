@@ -19,10 +19,10 @@
 
 code/await Client (var& _uv_tcp_t server) -> void
 do
-    var& _uv_tcp_t client;
+    var&? UV_TCP_Open client = spawn UV_TCP_Open();
     var int? err1 =
-        watching UV_TCP_Open() -> (&client) do
-            var int ret = _uv_accept(&&server as _uv_stream_t&&, (&&client) as _uv_stream_t&&);
+        watching client do
+            var int ret = _uv_accept(&&server as _uv_stream_t&&, (&&client!.tcp) as _uv_stream_t&&);
             _ceu_dbg_assert(ret == 0);
 
             // READ/WRITE LOOP
@@ -39,18 +39,17 @@ do
 
             loop do
                 do
-                    event& usize ok_read;
+                    var&? UV_Stream_Read read = spawn UV_TCP_Read(&client!.tcp,&buf);
                     var int? err2 =
-                        watching UV_TCP_Read(&client,&buf) -> (&ok_read)
-                        do
-                            await ok_read;
+                        watching read do
+                            await read!.ok;
                         end;
                     _ceu_dbg_assert(not err2?);
                 end
 
                 // WRITE
                 buf = buf..[{'\0'}];
-                await UV_TCP_Write(&client, &buf);
+                await UV_TCP_Write(&client!.tcp, &buf);
             end
         end;
 
@@ -61,20 +60,18 @@ end
 
 _printf("I will terminate after 10s...\n");
 
-var& _uv_tcp_t server;
-watching UV_TCP_Open() -> (&server)
-do
+var&? UV_TCP_Open server = spawn UV_TCP_Open();
+watching server do
     var _sockaddr_in addr = _;
     _uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
-    _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
+    _uv_tcp_bind(&&server!.tcp, &&addr as _sockaddr&&, 0);
 
-    event& void ok_listen;
-    watching UV_TCP_Listen(&server,DEFAULT_BACKLOG) -> (&ok_listen)
-    do
+    var&? UV_Stream_Listen listen = spawn UV_TCP_Listen(&server!.tcp,DEFAULT_BACKLOG);
+    watching listen do
         pool[10] Client cs;
         watching 10s do
-            every ok_listen do
-                spawn Client(&server) in cs;
+            every listen!.ok do
+                spawn Client(&server!.tcp) in cs;
             end
         end
     end

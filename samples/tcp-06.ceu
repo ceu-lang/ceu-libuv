@@ -9,10 +9,9 @@
 
 #define DEFAULT_PORT 7000
 
-var& _uv_tcp_t tcp;
-event& void ok_connected;
-watching UV_TCP_Connect("127.0.0.1", DEFAULT_PORT) -> (&tcp, &ok_connected) do
-    await ok_connected;
+var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", DEFAULT_PORT);
+watching c do
+    await c!.ok;
 
     _printf("I will terminate after 10s...\n");
 
@@ -20,8 +19,8 @@ watching UV_TCP_Connect("127.0.0.1", DEFAULT_PORT) -> (&tcp, &ok_connected) do
     loop i in [0 -> 10[ do
         await 1s;
         vector[] byte string = [] .. "Alo mundo!\n";
-        await UV_TCP_Write(&tcp, &string);
-        await UV_TCP_ReadLine(&tcp, &string);
+        await UV_TCP_Write(&c!.tcp, &string);
+        await UV_TCP_ReadLine(&c!.tcp, &string);
         _printf("%s", &&string[0]);
     end
 end

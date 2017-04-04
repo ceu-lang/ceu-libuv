@@ -41,11 +41,10 @@ data UV_FS_File with
 end
 
 code/await UV_FS_Open (var _char&& path, var int flags, var int mode)
-                        -> (var& UV_FS_File file)
+                        -> (var UV_FS_File file)
                             -> int
 do
-    var UV_FS_File file_ = val UV_FS_File(_, -1);
-    file = &file_;
+    file = val UV_FS_File(_, -1);
 
     var _uv_fs_t req_open  = _;
     var _uv_fs_t req_close = _;
@@ -66,11 +65,11 @@ do
 #endif
 
     var _uv_fs_t&& req = await UV_FS until req==&&req_open;
-    file_.fd = req_open.result;
-    if file_.fd < 0 then
-        escape file_.fd;
+    file.fd = req_open.result;
+    if file.fd < 0 then
+        escape file.fd;
     end
-    emit file_.ok;
+    emit file.ok;
 
     await FOREVER;
 end

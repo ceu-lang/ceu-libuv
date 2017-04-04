@@ -1,4 +1,4 @@
 .*.swp
 .*.swo
 build/
-ceu-app-*/
+ceu-libuv-*/

@@ -38,12 +38,9 @@ input (_uv_stream_t&&, ssize) UV_STREAM_READ;
 input (_uv_write_t&&,  int)   UV_STREAM_WRITE;
 
 code/await UV_Stream_Listen (var& _uv_stream_t stream, var int backlog)
-                                -> (event& void ok)
+                                -> (event void ok)
                                     -> int // err
 do
-    event void ok_;
-    ok = &ok_;
-
     var int err1 = _ceu_uv_listen(&&stream, backlog);
     if err1 != 0 then
         escape err1;
@@ -54,18 +51,15 @@ do
     every (s,err2) in UV_STREAM_LISTEN do
         if s == &&stream then
             _ceu_dbg_assert(err2 == 0);   // UV_STREAM_ERROR already aborted me
-            emit ok_;
+            emit ok;
         end
     end
 end
 
 code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
-                            -> (event& usize ok)
+                            -> (event usize ok)
                                 -> int // err
 do
-    event usize ok_;
-    ok = &ok_;
-
     $buf = 0;
     stream._data = _PURIFY(&&buf);
 
@@ -84,7 +78,7 @@ do
     every (s, n_read) in UV_STREAM_READ do
         if s == &&stream then
             _ceu_dbg_assert(n_read >= 0);   // UV_STREAM_ERROR has already aborted me
-            emit ok_(n_read as usize);
+            emit ok(n_read as usize);
         end
     end
 end
@@ -92,11 +86,12 @@ end
 code/await UV_Stream_ReadLine (var& _uv_stream_t stream, vector&[] byte string)
                                 -> void
 do
-    event& usize ok;
-    watching UV_Stream_Read(&stream,&string) -> (&ok) do
+    var&? UV_Stream_Read s = spawn UV_Stream_Read(&stream,&string);
+    watching s do
         loop do
-            await ok;
-            var byte n=0, c=0;
+            await s!.ok;
+            var byte n = 0;
+            var byte c = 0;
             var int ret = _sscanf(&&string[0], "%*[^\n]%[\n]%c", &&n,&&c);
             _ceu_dbg_assert(ret < 2);
             if ret == 1 then

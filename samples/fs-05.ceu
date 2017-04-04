@@ -1,23 +1,21 @@
 #include "uv/fs.ceu"
 
-var& UV_FS_File file;
-
-watching UV_FS_Open("fs-01.txt", _O_RDONLY, 0) -> (&file)
-do
-    await file.ok;
-    if file.fd < 0 then
-        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(file.fd));
+var&? UV_FS_Open f = spawn UV_FS_Open("fs-01.txt", _O_RDONLY, 0);
+watching f do
+    await f!.file.ok;
+    if f!.file.fd < 0 then
+        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(f!.file.fd));
     end
-    _ceu_dbg_assert(file.fd >= 0);
+    _ceu_dbg_assert(f!.file.fd >= 0);
 
     var _uv_stat_t stat = _;
-    await UV_FS_Fstat(&file, &stat);
+    await UV_FS_Fstat(&f!.file, &stat);
     var usize size = stat.st_size;
 
     var usize off = 0;
     loop do
         vector[] byte line;
-        var ssize n = await UV_FS_ReadLine(&file,&line,off);
+        var ssize n = await UV_FS_ReadLine(&f!.file,&line,off);
         if n <= 0 then
             break;
         end

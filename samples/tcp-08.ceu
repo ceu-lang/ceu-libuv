@@ -25,21 +25,19 @@ end
 #define BACKLOG 128
 
 code/await Client (var int port) -> void do
-    var& _uv_tcp_t tcp;
-    event& void ok_connected;
-    watching UV_TCP_Connect("127.0.0.1", port) -> (&tcp, &ok_connected)
-    do
-        await ok_connected;
+    var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", port);
+    watching c do
+        await c!.ok;
 
         _printf("I will terminate after 10s...\n");
 
         loop do
             await 1s;
             vector[] byte string = [] .. "Alo mundo!\n";
-            await UV_TCP_Write(&tcp, &string);
+            await UV_TCP_Write(&c!.tcp, &string);
 // change to 0 to generate "write" errors instead of "read" errors
 #if 1
-            await UV_TCP_ReadLine(&tcp, &string);
+            await UV_TCP_ReadLine(&c!.tcp, &string);
 #endif
             _printf("[client] %s", &&string[0]);
         end

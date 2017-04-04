@@ -15,9 +15,9 @@
 #define DEFAULT_PORT 7000
 #define BUFFER_MAX   10
 
-var& _uv_tcp_t client;
+var&? UV_TCP_Open client = spawn UV_TCP_Open();
 var int? err =
-    watching UV_TCP_Open() -> (&client) do
+    watching client do
         var&? _uv_connect_t connect = &_malloc(sizeof(_uv_connect_t))
             finalize (connect) with
                 // free on uv callback
@@ -25,7 +25,7 @@ var int? err =
 
         var _sockaddr_in dest = _;
         _uv_ip4_addr("127.0.0.1", DEFAULT_PORT, &&dest);
-        _ceu_uv_tcp_connect(&&connect!, &&client, (&&dest as _sockaddr&&));
+        _ceu_uv_tcp_connect(&&connect!, &&client!.tcp, (&&dest as _sockaddr&&));
 
         var _uv_connect_t&& c;
         var int status;
@@ -38,8 +38,8 @@ var int? err =
         loop i in [0 -> 10[ do
             await 1s;
             vector[] byte string = [] .. "Alo mundo!\n";
-            await UV_TCP_Write(&client, &string);
-            await UV_TCP_ReadLine(&client, &string);
+            await UV_TCP_Write(&client!.tcp, &string);
+            await UV_TCP_ReadLine(&client!.tcp, &string);
             _printf("%s", &&string[0]);
         end
     end;

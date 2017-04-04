@@ -1,19 +1,19 @@
 #include "uv/fs.ceu"
 
-var& UV_FS_File w_file;
-var& UV_FS_File r_file;
-
 var int     w_flags = _O_CREAT|_O_WRONLY;
 var _mode_t w_mode  = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
+    
+var&? UV_FS_Open w = spawn UV_FS_Open("/tmp/output.txt",w_flags,w_mode);
 
 var int? w_err =
-    watching UV_FS_Open("/tmp/output.txt",w_flags,w_mode) -> (&w_file) do
+    watching w do
+        var&? UV_FS_Open r = spawn UV_FS_Open("/tmp/input.txt",_O_RDONLY,0);
         var int? r_err =
-            watching UV_FS_Open("/tmp/input.txt",_O_RDONLY,0) -> (&r_file) do
+            watching r do
                 par/and do
-                    await w_file.ok;
+                    await w!.file.ok;
                 with
-                    await r_file.ok;
+                    await r!.file.ok;
                 end
 
                 var usize off = 0;
@@ -21,14 +21,14 @@ var int? w_err =
                     vector[] byte line;
 
                     // read
-                    var ssize n = await UV_FS_ReadLine(&r_file,&line,off);
+                    var ssize n = await UV_FS_ReadLine(&r!.file,&line,off);
                     if n <= 0 then
                         break;
                     end
                     line = line .. [{'\n'}];
 
                     // write
-                    var ssize n = await UV_FS_Write(&w_file,&line,$line,off);
+                    var ssize n = await UV_FS_Write(&w!.file,&line,$line,off);
                     _ceu_dbg_assert(n>=0 and (n as usize)==$line);
 
                     off = off + (n as usize);

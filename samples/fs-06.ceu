@@ -1,15 +1,14 @@
 #include "uv/fs.ceu"
 
-var& UV_FS_File file;
-
+var&? UV_FS_Open f = spawn UV_FS_Open("fs-01.txt", _O_RDONLY, 0);
 var int? err =
-    watching UV_FS_Open("fs-01.txt", _O_RDONLY, 0) -> (&file) do
-        await file.ok;
+    watching f do
+        await f!.file.ok;
 
         var usize offset = 0;
         loop do
             vector[11] byte buf;
-            var ssize n = await UV_FS_Read(&file,&buf,$$buf-1,offset);
+            var ssize n = await UV_FS_Read(&f!.file,&buf,$$buf-1,offset);
             if n == 0 then
                 break;
             end
