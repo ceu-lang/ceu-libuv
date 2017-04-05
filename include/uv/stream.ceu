@@ -57,9 +57,10 @@ do
 end
 
 code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
-                            -> (event usize ok)
+                            -> (event usize ok, var usize next)
                                 -> int // err
 do
+    next = 0;
     $buf = 0;
     stream._data = _PURIFY(&&buf);
 
@@ -81,6 +82,30 @@ do
             emit ok(n_read as usize);
         end
     end
+end
+
+code/await UV_Stream_ReadUntil (var&? UV_Stream_Read reader, var usize limit) -> int
+do
+    watching reader do
+        if reader!.next >= limit then
+            escape 0;
+        end
+        loop do
+            var usize dt = await reader!.ok;
+/*
+            if dt < 0 then
+                // TODO: versions w/ assert/escape
+                _printf("error[%d]: %s\n", dt, _uv_strerror(dt));
+                _assert(0);
+                escape dt;
+            end
+*/
+            if reader!.next >= limit then
+                escape 0;
+            end
+        end
+    end
+    escape -1;
 end
 
 code/await UV_Stream_ReadLine (var& _uv_stream_t stream, vector&[] byte string)

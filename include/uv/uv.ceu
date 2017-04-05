@@ -11,8 +11,11 @@ native/plain
 ;
 
 native/nohold
+    _ceu_uv_tcp_getpeerport,
+    _ceu_uv_tcp_getsockport,
     _uv_buf_init,
     _uv_strerror,
+    _ID,
 ;
 
 native/pre do
@@ -21,6 +24,7 @@ end
 
 native/pos do
     ##define ceu_callback_env(cmd,evt,params) ceu_uv_callback(cmd,evt,params)
+    ##define ID(x) x
 
     uv_loop_t  ceu_uv_loop;
     uv_async_t ceu_uv_async;
@@ -99,12 +103,12 @@ native @pure
         _GET_HOST_U32(),
 
 native @nohold
-        _ceu_uv_tcp_getpeerport(),
-        _ceu_uv_tcp_getsockport(),
         _uv_inet_ntop(),
         _uv_tcp_getpeername(),
 
-native do
+#endif
+
+native/pre do
     int ceu_uv_tcp_getpeerport (uv_tcp_t* tcp) {
         sockaddr_in name;
         int namelen = sizeof(name);
@@ -115,6 +119,7 @@ native do
         //_printf("%s:%d\n", (_char&&)&&addr, port);
         return port;
     }
+
     int ceu_uv_tcp_getsockport (uv_tcp_t* tcp) {
         sockaddr_in name;
         int namelen = sizeof(name);
@@ -127,15 +132,12 @@ native do
     }
 end
 
-#define GET_HOST_U32(bytes,off) _ntohl(*((u32&&)&&(((_byte&&)&&bytes)[off])))
+#define GET_HOST_U32(bytes,off) _ntohl(*(&&((_ID(&&bytes[0]))[off]) as u32&&))
 
-#define PUT_NETWORK_U32(bytes,off,host)             \
-    do                                              \
-        var u32 network = _htonl(host);             \
-        _ceu_vector_copy_buffer(&&(bytes), off,     \
-                                (byte&&)&&network,  \
-                                sizeof(u32),1);     \
+#define PUT_NETWORK_U32(bytes,off,host)                                 \
+    do                                                                  \
+        var u32 network = _htonl(host);                                 \
+        _ceu_vector_buf_set(&&(bytes), off, &&network, sizeof(u32));    \
     end
 
-#endif
 #endif

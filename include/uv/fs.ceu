@@ -5,8 +5,10 @@
 #include "uv/uv.ceu"
 
 native/const
+    _O_APPEND,
     _O_CREAT,
     _O_RDONLY,
+    _O_TRUNC,
     _O_WRONLY,
     _S_IRUSR,
     _S_IWUSR,
