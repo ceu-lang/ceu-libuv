@@ -60,8 +60,11 @@ code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
                             -> (event usize ok, var usize next)
                                 -> int // err
 do
-    next = 0;
-    $buf = 0;
+    code/tight Reset (void) -> void do
+        outer.next = 0;
+        $outer.buf = 0;
+    end
+    call Reset();
     stream._data = _PURIFY(&&buf);
 
     var int err;
@@ -79,6 +82,7 @@ do
     every (s, n_read) in UV_STREAM_READ do
         if s == &&stream then
             _ceu_dbg_assert(n_read >= 0);   // UV_STREAM_ERROR has already aborted me
+            next = next + (n_read as usize);
             emit ok(n_read as usize);
         end
     end
@@ -190,7 +194,7 @@ printf(">>> FREE\n");
         ceu_input(CEU_INPUT_UV_STREAM_LISTEN, &p);
     }
 
-    ##define CEU_UV_STREAM_READ_ALLOC_DYN_INIT 128
+    ##define CEU_UV_STREAM_READ_ALLOC_DYN_INIT 1024
 
     void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
         ceu_dbg_assert(h->data != NULL);

@@ -3,6 +3,7 @@
 
 native/const
     _UV_EAI_MEMORY,
+    _ECONNRESET,
 ;
 
 native/plain
