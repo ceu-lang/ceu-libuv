@@ -3,7 +3,9 @@
 
 native/const
     _UV_EAI_MEMORY,
+    _EACCES,
     _ECONNRESET,
+    _ENOENT,
 ;
 
 native/plain

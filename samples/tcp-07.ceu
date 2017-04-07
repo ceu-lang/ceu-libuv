@@ -6,7 +6,9 @@
 
 #include "uv/tcp.ceu"
 
-code/await UV_TCP_Server_Handler (var& _uv_tcp_t tcp) -> int
+data UV_TCP_Server_Data;
+
+code/await UV_TCP_Server_Handler (var& UV_TCP_Server_Data d, var& _uv_tcp_t tcp) -> int
 do
     loop do
         vector[] byte string;
@@ -22,7 +24,8 @@ end
 #define PORT    7000
 #define BACKLOG 128
 
-spawn UV_TCP_Server("0.0.0.0", PORT+0, BACKLOG);
+var UV_TCP_Server_Data d = _;
+spawn UV_TCP_Server(&d, "0.0.0.0", PORT+0, BACKLOG);
 
 var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", PORT);
 watching c do

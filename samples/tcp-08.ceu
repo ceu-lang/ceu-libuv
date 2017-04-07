@@ -8,7 +8,9 @@
 
 #include "uv/tcp.ceu"
 
-code/await UV_TCP_Server_Handler (var& _uv_tcp_t tcp) -> int
+data UV_TCP_Server_Data;
+
+code/await UV_TCP_Server_Handler (var& UV_TCP_Server_Data d, var& _uv_tcp_t tcp) -> int
 do
     loop do
         vector[] byte string;
@@ -47,11 +49,12 @@ end
 _printf("I will terminate after 10s...\n");
 
 watching 10s do
+    var UV_TCP_Server_Data d = _;
     par do
-        await UV_TCP_Server("0.0.0.0", PORT+0, BACKLOG);
+        await UV_TCP_Server(&d, "0.0.0.0", PORT+0, BACKLOG);
     with
         watching 5s do
-            await UV_TCP_Server("0.0.0.0", PORT+1, BACKLOG);
+            await UV_TCP_Server(&d, "0.0.0.0", PORT+1, BACKLOG);
         end
         _printf("[server %d] stop\n", PORT+1);
     with
