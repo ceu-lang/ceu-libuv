@@ -121,7 +121,7 @@ do
         buf = buf..c;
     end
 
-    escape tot as ssize;
+    escape tot;
 end
 
 code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf,

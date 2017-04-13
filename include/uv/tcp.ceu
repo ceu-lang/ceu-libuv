@@ -106,7 +106,9 @@ do
             var _uv_connect_t&& c;
             var int err2;
             (c,err2) = await UV_STREAM_CONNECT until c==&&connect!;
-            _ceu_dbg_assert(err2 == 0);
+            if err2 != 0 then
+                escape err2;
+            end
 
             emit ok;
             await FOREVER;
