@@ -22,7 +22,7 @@ do
             event& usize ok_read;
             var&? UV_Stream_Read read = spawn UV_TCP_Read(&tcp, &string);
             watching read do
-                await read!.ok;
+                await read.ok;
             end
         end
         string = string..[{'\0'}];
@@ -47,19 +47,19 @@ do
     var&? UV_TCP_Open client = spawn UV_TCP_Open();
     var int? err =
         watching client do
-            var int ret1 = _uv_accept(&&server as _uv_stream_t&&, &&client!.tcp as _uv_stream_t&&);
+            var int ret1 = _uv_accept(&&server as _uv_stream_t&&, &&client.tcp as _uv_stream_t&&);
             _ceu_dbg_assert(ret1 == 0);
 
             var _sockaddr_in sock = _;
             var int len = sizeof(_sockaddr_in) as int;
-            var int ret2 = _uv_tcp_getsockname(&&client!.tcp, (&&sock as _sockaddr&&), &&len);
+            var int ret2 = _uv_tcp_getsockname(&&client.tcp, (&&sock as _sockaddr&&), &&len);
             _ceu_dbg_assert(ret2 == 0);
             var int port = _ntohs(sock.sin_port);
 
             if port == DEFAULT_PORT then
-                await Handler0(&client!.tcp);
+                await Handler0(&client.tcp);
             else/if port == DEFAULT_PORT+1 then
-                await Handler1(&client!.tcp);
+                await Handler1(&client.tcp);
             else
                 _ceu_dbg_assert(0);
             end
@@ -75,8 +75,8 @@ do
     var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen(ip,port,DEFAULT_BACKLOG);
     watching server do
         pool[10] Client cs;
-        every server!.ok do
-            spawn Client(&server!.tcp) in cs;
+        every server.ok do
+            spawn Client(&server.tcp) in cs;
         end
     end
 end

@@ -91,11 +91,11 @@ end
 code/await UV_Stream_ReadUntil (var&? UV_Stream_Read reader, var usize limit) -> int
 do
     watching reader do
-        if reader!.next >= limit then
+        if reader.next >= limit then
             escape 0;
         end
         loop do
-            var usize dt = await reader!.ok;
+            var usize dt = await reader.ok;
 /*
             if dt < 0 then
                 // TODO: versions w/ assert/escape
@@ -104,7 +104,7 @@ do
                 escape dt;
             end
 */
-            if reader!.next >= limit then
+            if reader.next >= limit then
                 escape 0;
             end
         end
@@ -118,7 +118,7 @@ do
     var&? UV_Stream_Read s = spawn UV_Stream_Read(&stream,&string);
     watching s do
         loop do
-            await s!.ok;
+            await s.ok;
             var byte n = 0;
             var byte c = 0;
             var int ret = _sscanf(&&string[0], "%*[^\n]%[\n]%c", &&n,&&c);

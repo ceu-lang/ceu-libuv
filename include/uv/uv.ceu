@@ -23,10 +23,12 @@ native/nohold
 
 native/pre do
     ##include <uv.h>
+    ##define CEU_CALLBACK_ENV CEU_CALLBACK_UV
+    tceu_callback_ret ceu_callback_uv (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line);
+    tceu_callback CEU_CALLBACK_UV = { &ceu_callback_uv, NULL };
 end
 
 native/pos do
-    ##define ceu_callback_env(cmd,evt,params) ceu_uv_callback(cmd,evt,params)
     ##define ID(x) x
 
     uv_loop_t  ceu_uv_loop;
@@ -47,7 +49,7 @@ native/pos do
         uv_async_send(&ceu_uv_async);
     }
 
-    tceu_callback_ret ceu_uv_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
+    tceu_callback_ret ceu_callback_uv (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line)
     {
         tceu_callback_ret ret = { .is_handled=1 };
 

@@ -29,7 +29,7 @@ spawn UV_TCP_Server(&d, "0.0.0.0", PORT+0, BACKLOG);
 
 var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", PORT);
 watching c do
-    await c!.ok;
+    await c.ok;
 
     _printf("I will terminate after 10s...\n");
 
@@ -37,8 +37,8 @@ watching c do
     loop i in [0 -> 10[ do
         await 1s;
         vector[] byte string = [] .. "Alo mundo!\n";
-        await UV_TCP_Write(&c!.tcp, &string);
-        await UV_TCP_ReadLine(&c!.tcp, &string);
+        await UV_TCP_Write(&c.tcp, &string);
+        await UV_TCP_ReadLine(&c.tcp, &string);
         _printf("[client] %s", &&string[0]);
     end
 end

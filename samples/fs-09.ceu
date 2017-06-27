@@ -3,10 +3,10 @@
 var&? UV_FS_Open f = spawn UV_FS_Open("fs-01.txt", _O_RDONLY, 0);
 var int? err =
     watching f do
-        await f!.file.ok;
+        await f.file.ok;
 
         var _uv_stat_t stat = _;
-        await UV_FS_Fstat(&f!.file, &stat);
+        await UV_FS_Fstat(&f.file, &stat);
         _printf("size = %ld\n", stat.st_size);
     end;
 

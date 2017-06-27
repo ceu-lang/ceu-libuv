@@ -7,13 +7,13 @@ var&? UV_FS_Open w = spawn UV_FS_Open("/tmp/output.txt",w_flags,w_mode);
 
 var int? w_err =
     watching w do
-        var&? UV_FS_Open r = spawn UV_FS_Open("/tmp/input.txt",_O_RDONLY,0);
+        var&? UV_FS_Open r = spawn UV_FS_Open("/tmp/hello.txt",_O_RDONLY,0);
         var int? r_err =
             watching r do
                 par/and do
-                    await w!.file.ok;
+                    await w.file.ok;
                 with
-                    await r!.file.ok;
+                    await r.file.ok;
                 end
 
                 var usize off = 0;
@@ -21,14 +21,14 @@ var int? w_err =
                     vector[] byte line;
 
                     // read
-                    var ssize n = await UV_FS_ReadLine(&r!.file,&line,off);
+                    var ssize n = await UV_FS_ReadLine(&r.file,&line,off);
                     if n <= 0 then
                         break;
                     end
                     line = line .. [{'\n'}];
 
                     // write
-                    var ssize n = await UV_FS_Write(&w!.file,&line,$line,off);
+                    var ssize n = await UV_FS_Write(&w.file,&line,$line,off);
                     _ceu_dbg_assert(n>=0 and (n as usize)==$line);
 
                     off = off + (n as usize);

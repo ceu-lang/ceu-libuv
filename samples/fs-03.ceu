@@ -6,11 +6,11 @@ var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
 
 var&? UV_FS_Open f = spawn UV_FS_Open(&&path[0], _O_CREAT|_O_WRONLY, mode);
 watching f do
-    await f!.file.ok;
-    if f!.file.fd < 0 then
-        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(f!.file.fd));
+    await f.file.ok;
+    if f.file.fd < 0 then
+        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(f.file.fd));
     end
-    _ceu_dbg_assert(f!.file.fd >= 0);
+    _ceu_dbg_assert(f.file.fd >= 0);
 
     vector[1025] byte buf;
     var int i;
@@ -19,7 +19,7 @@ watching f do
     end
     buf = buf..[{'\n'}];
 
-    var ssize n = await UV_FS_Write(&f!.file,&buf,$$buf,0);
+    var ssize n = await UV_FS_Write(&f.file,&buf,$$buf,0);
     _ceu_dbg_assert(n == 1025);
 
     [[

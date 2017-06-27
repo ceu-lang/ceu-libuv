@@ -71,12 +71,12 @@ do
     var&? UV_TCP_Open h = spawn UV_TCP_Open();
     var int? err1 =
         watching h do
-            tcp = &h!.tcp;
+            tcp = &h.tcp;
             _uv_tcp_bind(&&tcp, &&addr as _sockaddr&&, 0);
             var&? UV_Stream_Listen l = spawn UV_TCP_Listen(&tcp,backlog);
             var int? err2 =
                 watching l do
-                    ok = &l!.ok;
+                    ok = &l.ok;
                     await FOREVER;
                 end;
             escape err2!;
@@ -94,7 +94,7 @@ do
     var&? UV_TCP_Open h = spawn UV_TCP_Open();
     var int? err1 =
         watching h do
-            tcp = &h!.tcp;
+            tcp = &h.tcp;
 
             var&? _uv_connect_t connect = &_malloc(sizeof(_uv_connect_t))
                 finalize (connect) with

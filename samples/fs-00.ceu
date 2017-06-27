@@ -3,7 +3,7 @@
 var&? UV_FS_Open f = spawn UV_FS_Open("/non/existent/path", _O_RDONLY, 0);
 var int? err =
     watching f do
-        await f!.file.ok;
+        await f.file.ok;
         // file is ready for use
         _printf("open ok\n");
     end;

@@ -29,17 +29,17 @@ end
 code/await Client (var int port) -> void do
     var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", port);
     watching c do
-        await c!.ok;
+        await c.ok;
 
         _printf("I will terminate after 10s...\n");
 
         loop do
             await 1s;
             vector[] byte string = [] .. "Alo mundo!\n";
-            await UV_TCP_Write(&c!.tcp, &string);
+            await UV_TCP_Write(&c.tcp, &string);
 // change to 0 to generate "write" errors instead of "read" errors
 #if 1
-            await UV_TCP_ReadLine(&c!.tcp, &string);
+            await UV_TCP_ReadLine(&c.tcp, &string);
 #endif
             _printf("[client] %s", &&string[0]);
         end
