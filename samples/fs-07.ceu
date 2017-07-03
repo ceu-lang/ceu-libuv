@@ -7,7 +7,7 @@ var&? UV_FS_Open f = spawn UV_FS_Open("/tmp/hello.txt", _O_CREAT|_O_WRONLY, mode
 var int? err =
     watching f do
         await f.file.ok;
-        vector[] byte buf = [] .. "Hello World!\n";
+        var[] byte buf = [] .. "Hello World!\n";
         var ssize n = await UV_FS_Write(&f.file,&buf,$buf,0);
         if (n<0) or (n as usize)!=$buf then
             _printf("write error\n");

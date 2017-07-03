@@ -72,7 +72,7 @@ loop i in [0 -> 2[ do
 
     // READ/WRITE LOOP
 
-    vector[BUFFER_MAX] byte buf;
+    var[BUFFER_MAX] byte buf;
     var ssize n_read = 0;
 
     spawn do

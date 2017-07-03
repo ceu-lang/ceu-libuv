@@ -76,7 +76,7 @@ do
     await FOREVER;
 end
 
-code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf,
+code/await UV_FS_Read (var& UV_FS_File file, var&[] byte buf,
                        var usize size, var usize offset)
                         -> ssize
 do
@@ -98,7 +98,7 @@ do
     escape req_read.result;
 end
 
-code/await UV_FS_ReadLine (var& UV_FS_File file, vector&[] byte buf,
+code/await UV_FS_ReadLine (var& UV_FS_File file, var&[] byte buf,
                            var usize offset)
                             -> ssize
 do
@@ -107,7 +107,7 @@ do
     // TODO: reading 1-by-1
     var usize tot = 0;
     loop do
-        vector[1] byte c;
+        var[1] byte c;
         var ssize n = await UV_FS_Read(&file, &c, 1, offset);
         tot = tot + 1;
         offset = offset + 1;
@@ -124,7 +124,7 @@ do
     escape tot;
 end
 
-code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf,
+code/await UV_FS_Write (var& UV_FS_File file, var&[] byte buf,
                         var usize size, var usize offset)
                         -> ssize
 do

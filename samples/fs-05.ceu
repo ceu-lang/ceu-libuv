@@ -14,7 +14,7 @@ watching f do
 
     var usize off = 0;
     loop do
-        vector[] byte line;
+        var[] byte line;
         var ssize n = await UV_FS_ReadLine(&f.file,&line,off);
         if n <= 0 then
             break;

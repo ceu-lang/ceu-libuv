@@ -11,7 +11,7 @@ data UV_TCP_Server_Data;
 code/await UV_TCP_Server_Handler (var& UV_TCP_Server_Data d, var& _uv_tcp_t tcp) -> int
 do
     loop do
-        vector[] byte string;
+        var[] byte string;
         await UV_TCP_ReadLine(&tcp, &string);
         string = string..[{'\0'}];
         _printf("[server %p] %s", &&tcp, &&string[0]);
@@ -36,7 +36,7 @@ watching c do
     var int i;
     loop i in [0 -> 10[ do
         await 1s;
-        vector[] byte string = [] .. "Alo mundo!\n";
+        var[] byte string = [] .. "Alo mundo!\n";
         await UV_TCP_Write(&c.tcp, &string);
         await UV_TCP_ReadLine(&c.tcp, &string);
         _printf("[client] %s", &&string[0]);

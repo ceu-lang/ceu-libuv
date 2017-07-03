@@ -17,7 +17,7 @@
 code/await Handler0 (var& _uv_tcp_t tcp) -> int
 do
     loop do
-        vector[] byte string;
+        var[] byte string;
         do
             event& usize ok_read;
             var&? UV_Stream_Read read = spawn UV_TCP_Read(&tcp, &string);
@@ -34,7 +34,7 @@ end
 code/await Handler1 (var& _uv_tcp_t tcp) -> int
 do
     loop do
-        vector[] byte string;
+        var[] byte string;
         await UV_TCP_ReadLine(&tcp, &string);
         string = string..[{'\0'}];
         _printf("[handler-1] %s", &&string[0]);

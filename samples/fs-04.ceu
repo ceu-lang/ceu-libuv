@@ -13,7 +13,7 @@ watching f do
     var usize size = stat.st_size;
     _ceu_dbg_assert(size == 1025);
 
-    vector[10] byte buf;
+    var[10] byte buf;
     var ssize n = await UV_FS_Read(&f.file,&buf,10,size-10);
     if n < 0 then
         _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(n));

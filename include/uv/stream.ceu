@@ -56,7 +56,7 @@ do
     end
 end
 
-code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
+code/await UV_Stream_Read (var& _uv_stream_t stream, var&[] byte buf)
                             -> (event usize ok, var usize next)
                                 -> int // err
 do
@@ -112,7 +112,7 @@ do
     escape -1;
 end
 
-code/await UV_Stream_ReadLine (var& _uv_stream_t stream, vector&[] byte string)
+code/await UV_Stream_ReadLine (var& _uv_stream_t stream, var&[] byte string)
                                 -> void
 do
     var&? UV_Stream_Read s = spawn UV_Stream_Read(&stream,&string);
@@ -132,7 +132,7 @@ do
     _ceu_dbg_assert(0);   // UV_STREAM_ERROR has already aborted me
 end
 
-code/await UV_Stream_Write (var& _uv_stream_t stream, vector&[] byte bytes)
+code/await UV_Stream_Write (var& _uv_stream_t stream, var&[] byte bytes)
                                 -> int // err
 do
     var usize starting  = 0;

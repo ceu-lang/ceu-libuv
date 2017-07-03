@@ -26,7 +26,7 @@ do
 
             // READ/WRITE LOOP
 
-            vector[BUFFER_MAX] byte buf;
+            var[BUFFER_MAX] byte buf;
 
             spawn do
                 var _uv_stream_t&& s;

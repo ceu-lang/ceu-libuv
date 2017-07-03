@@ -8,7 +8,7 @@ var int? err =
 
         var usize offset = 0;
         loop do
-            vector[1024] byte buf;
+            var[1024] byte buf;
             var ssize n = await UV_FS_Read(&f.file,&buf,$$buf-1,offset);
             _ceu_dbg_assert(n >= 0);
             buf = buf .. [{'\0'}];
