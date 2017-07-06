@@ -44,12 +44,12 @@ data UV_FS_File with
     event  void  ok;
 end
 
-code/await UV_FS_Open (var _char&& path, var usize? buf_n, var int? flags, var int? mode)
+code/await UV_FS_Open (var _char&& path, var usize? buffer_size, var int? flags, var int? mode)
                         -> (var UV_FS_File file)
                             -> int
 do
-    if not buf_n? then
-        buf_n = 1024;
+    if not buffer_size? then
+        buffer_size = 1024;
     end
     if not flags? then
         flags = _O_RDONLY;
@@ -58,8 +58,8 @@ do
         mode = 0;
     end
 
-    var[buf_n!*] byte buf;
-    file = val UV_FS_File(&buf,_,_,_);
+    var[buffer_size!*] byte buffer;
+    file = val UV_FS_File(&buffer,_,_,_);
 
     var _uv_fs_t req_open  = _;
     var _uv_fs_t req_close = _;
