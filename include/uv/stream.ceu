@@ -88,7 +88,9 @@ do
     end
 end
 
-code/await UV_Stream_ReadUntil (var&? UV_Stream_Read reader, var usize limit) -> int
+code/await UV_Stream_Read_N (var&? UV_Stream_Read reader, var usize limit) -> int
+
+code/await UV_Stream_Read_Until (var&? UV_Stream_Read reader, var usize limit) -> int
 do
     watching reader do
         if reader.next >= limit then

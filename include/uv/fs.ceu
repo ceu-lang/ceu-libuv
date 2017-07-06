@@ -87,18 +87,20 @@ do
     var _uv_buf_t buf = _;
     var _uv_fs_t  req = _;
 
+    var int times = _;
     var int free = ($$file.buf - _ceu_vector_getini(&&file.buf)) as int;
     if free >= n then
-        // requires a single read
+        times = 1;    // requires a single read
         buf = _uv_buf_init(&&file.buf[$file.buf], n);
     else
-        // requires a second read
+        times = 2;    // requires a second read
         buf = _uv_buf_init(&&file.buf[$file.buf], free);
     end
 
-    // first read
+    var usize n_read = 0;
 
-    do/_
+    var int i;
+    loop i in [1->times] do
         var ssize ret;
         do
             ret = _ceu_uv_fs_read(&&req, file.fd, &&buf, 1, file.off);
@@ -106,101 +108,136 @@ do
             _uv_fs_req_cleanup(&&req);
         end
         if ret < 0 then
-            escape ret;
+            if i == 1 then
+                escape ret;
+            else
+                escape n_read;
+            end
         end
 
         var _uv_fs_t&& req_ = await UV_FS until req_==&&req;
         if req.result < 0 then
-            escape req.result;
+            if n == 1 then
+                escape req.result;
+            else
+                escape n_read;
+            end
         end
 
-        file.off = file.off + req.result;
-        if free >= n then
-            _ceu_dbg_assert(n >= req.result);
-            _ceu_vector_setlen(&&file.buf, req.result, 1);
-            escape req.result;
-        end
-    end
-
-    // second read
-
-    buf = _uv_buf_init(&&file.buf[free], n-free);
-
-    do/_
-        var ssize ret;
-        do
-            ret = _ceu_uv_fs_read(&&req, file.fd, &&buf, 1, file.off);
-        finalize (req, buf) with
-            _uv_fs_req_cleanup(&&req);
-        end
-        if ret < 0 then
-            escape ret;
-        end
-
-        var _uv_fs_t&& req_ = await UV_FS until req_==&&req;
-        if req.result < 0 then
-            escape req.result;
-        end
-
-        file.off = file.off + req.result;
         _ceu_dbg_assert(n >= req.result);
-        _ceu_vector_setlen(&&file.buf, req.result, 1);
-        escape req.result;
+        file.off = file.off + req.result;
+        n_read  = n_read  + req.result;
+        _ceu_vector_setlen(&&file.buf, $file.buf+req.result, 1);
+
+        // second read
+        if times == 2 then
+            buf = _uv_buf_init(&&file.buf[free], n-free);
+        end
     end
+
+    escape n_bytes;
 end
 
-#if 0
-code/await UV_FS_Read_Line (var& UV_FS_File file, var&[] byte buf,
-                            var usize offset)
-                             -> ssize
+code/await UV_FS_Read_Line (var& UV_FS_File file, var usize? by, var&[] byte line)
+                                -> ssize
 do
-    _ceu_dbg_assert($buf == 0);
+    if not by? then
+        by = 80;
+    end
 
-    // TODO: reading 1-by-1
-    var usize tot = 0;
+    var usize ini = $file.buf;              // from previous call: only non-line-break chars
+    var usize n_read = 0;
+
     loop do
-        var[1] byte c;
-        var ssize n = await UV_FS_Read(&file, &c, 1, offset);
-        tot = tot + 1;
-        offset = offset + 1;
-        if n <= 0 then
+        var usize n = do
+            var usize free = $$file.buf - $file.buf;
+            if by <= free then
+                escape by;
+            else
+                escape free;
+            end
+        end;
+
+        if n == 0 then
+            escape {UV_ENOBUFS};
+        end
+
+        n = await UV_FS_Read_N(&file, n);   // may read less than "n" bytes
+        if n < 0 then
+// TODO: falback buf and off
             escape n;
+        else/if n == 0 then
+// TODO: falback buf and off
+            escape {UV_EOF};
         end
-        _ceu_dbg_assert(n == 1);
-        if c[0] == {'\n'} then
-            break;
-        end
-        buf = buf..c;
-    end
+        n_read = n_read + n;
 
-    escape tot;
+        _ceu_dbg_assert($file.buf == ini+n);
+        var usize i;
+        loop i in [ini -> ini+n[            // skip existing (non-line-break) chars
+            if file.buf[i] == {'\n'} then
+                o.file.buf = o.file.buf - XX;
+                $o.file = XX;
+                escape n_read;
+            end
+        end
+    end
 end
-#endif
 
-code/await UV_FS_Write (var& UV_FS_File file, var&[] byte buf,
-                        var usize size, var usize offset)
-                        -> ssize
+code/await UV_FS_Write_N (var& UV_FS_File file, var usize n) -> ssize
 do
-    var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], size);
+    var _uv_buf_t buf = _;
+    var _uv_fs_t  req = _;
 
-    var _uv_fs_t req_write = _;
-    do finalize with
-        _uv_fs_req_cleanup(&&req_write);
-    end;
-
-    var ssize ret;
-    do
-        ret = _ceu_uv_fs_write(&&req_write, file.fd, &&buf_, 1, offset);
-    finalize (req_write, buf_) with
-        _uv_fs_req_cleanup(&&req_write);
+    var int times = _;
+    var int filled = ($$file.buf - _ceu_vector_getini(&&file.buf)) as int;
+    if filled >= n then
+        times = 1;   // requires a single write
+        buf = _uv_buf_init(&&file.buf[0], n);
+    else
+        times = 2;   // requires a second write
+        buf = _uv_buf_init(&&file.buf[0], filled);
     end
 
-    if ret < 0 then
-        escape ret;
+    var usize n_written = 0;
+
+    var int i;
+    loop i in [1->times] do
+        var ssize ret;
+        do
+            ret = _ceu_uv_fs_write(&&req, file.fd, &&buf, 1, file.off);
+        finalize (req, buf) with
+            _uv_fs_req_cleanup(&&req);
+        end
+        if ret < 0 then
+            if i == 1 then
+                escape ret;
+            else
+                escape n_written;
+            end
+        end
+
+        var _uv_fs_t&& req_ = await UV_FS until req_==&&req;
+        if req.result < 0 then
+            if i == 1 then
+                escape req.result;
+            else
+                escape n_written;
+            end
+        end
+
+        _ceu_dbg_assert(n >= req.result);
+        file.off  = file.off  + req.result;
+        n_written = n_written + req.result;
+        $file.buf = $file.buf - req.result;
+
+        // second read
+        if times == 2 then
+            buf = _uv_buf_init(&&file.buf[0], n-req.result);
+        end
     end
 
-    var _uv_fs_t&& req = await UV_FS until req==&&req_write;
-    escape req_write.result;
+    escape n_written;
 end
 
 code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat) -> int
