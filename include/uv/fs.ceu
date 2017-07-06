@@ -194,7 +194,7 @@ do
         var usize i;
         loop i in [0 -> $file.buffer[ do
             var byte c = file.buffer[0];
-            $file.buffer = $file.buf - 1;
+            $file.buffer = $file.buffer - 1;
             n_read = n_read + 1;
             if c == {'\n'} then
                 escape n_read;
@@ -205,16 +205,20 @@ do
     end
 end
 
-code/await UV_FS_Write_N (var& UV_FS_File file, var usize n) -> ssize
+code/await UV_FS_Write_N (var& UV_FS_File file, var usize? n) -> ssize
 do
+    if not n? then
+        n = $file.buffer;
+    end
+
     var _uv_buf_t buf = _;
     var _uv_fs_t  req = _;
 
     var int times = _;
     var int filled = ($$file.buffer - _ceu_vector_getini(&&file.buffer)) as int;
-    if filled >= n then
+    if filled >= n! then
         times = 1;   // requires a single write
-        buf = _uv_buf_init(&&file.buffer[0], n);
+        buf = _uv_buf_init(&&file.buffer[0], n!);
     else
         times = 2;   // requires a second write
         buf = _uv_buf_init(&&file.buffer[0], filled);
@@ -247,14 +251,14 @@ do
             end
         end
 
-        _ceu_dbg_assert(n >= req.result);
+        _ceu_dbg_assert(n! >= req.result);
         file.offset  = file.offset  + req.result;
         n_written = n_written + req.result;
         $file.buffer = $file.buffer - req.result;
 
         // second read
         if times == 2 then
-            buf = _uv_buf_init(&&file.buffer[0], n-req.result);
+            buf = _uv_buf_init(&&file.buffer[0], n!-req.result);
         end
     end
 

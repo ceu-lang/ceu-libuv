@@ -26,7 +26,7 @@ var int? w_err =
 
                     // write
                     var usize n1 = $w.file.buffer;
-                    var ssize n2 = await UV_FS_Write_N(&w.file,$w.file.buffer);
+                    var ssize n2 = await UV_FS_Write_N(&w.file,_);
                     _ceu_dbg_assert(n2>=0 and n2==n1);
                 end
             end;
