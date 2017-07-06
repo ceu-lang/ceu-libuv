@@ -18,15 +18,15 @@ var int? w_err =
 
                 loop do
                     // read
-                    var ssize n = await UV_FS_Read_Line(&r.file,&w.file.buf,_);
+                    var ssize n = await UV_FS_Read_Line(&r.file,&w.file.buffer,_);
                     if n <= 0 then
                         break;
                     end
-                    w.file.buf = w.file.buf .. [{'\n'}];
+                    w.file.buffer = w.file.buffer .. [{'\n'}];
 
                     // write
-                    var usize n1 = $w.file.buf;
-                    var ssize n2 = await UV_FS_Write_N(&w.file,$w.file.buf);
+                    var usize n1 = $w.file.buffer;
+                    var ssize n2 = await UV_FS_Write_N(&w.file,$w.file.buffer);
                     _ceu_dbg_assert(n2>=0 and n2==n1);
                 end
             end;

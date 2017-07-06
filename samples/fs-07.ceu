@@ -7,9 +7,9 @@ var&? UV_FS_Open o = spawn UV_FS_Open("/tmp/hello.txt", _, _O_CREAT|_O_WRONLY, m
 var int? err =
     watching o do
         await o.file.ok;
-        o.file.buf = [] .. "Hello World!\n";
-        var usize n1 = $o.file.buf;
-        var ssize n2 = await UV_FS_Write_N(&o.file,$o.file.buf);
+        o.file.buffer = [] .. "Hello World!\n";
+        var usize n1 = $o.file.buffer;
+        var ssize n2 = await UV_FS_Write_N(&o.file,$o.file.buffer);
         if (n2<0) or n2!=n1 then
             _printf("write error\n");
             _ceu_dbg_assert(0);

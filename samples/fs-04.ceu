@@ -3,10 +3,10 @@
 var&? UV_FS_Open o = spawn UV_FS_Open("fs-03.txt", 11, _O_RDONLY, 0);
 watching o do
     await o.file.ok;
-    if o.file.fd < 0 then
-        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.file.fd));
+    if o.file.handle < 0 then
+        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.file.handle));
     end
-    _ceu_dbg_assert(o.file.fd >= 0);
+    _ceu_dbg_assert(o.file.handle >= 0);
 
     var _uv_stat_t stat = _;
     await UV_FS_Fstat(&o.file, &stat);
@@ -21,9 +21,9 @@ watching o do
     _printf("n = %ld\n", n);
     _ceu_dbg_assert(n == 10);
 
-    o.file.buf = o.file.buf .. [{'\0'}];
-    _printf(">>> %s\n", &&o.file.buf[0]);
-    _ceu_dbg_assert(_strcmp("rstuvwxyz\n",&&o.file.buf[0]) == 0);
+    o.file.buffer = o.file.buffer .. [{'\0'}];
+    _printf(">>> %s\n", &&o.file.buffer[0]);
+    _ceu_dbg_assert(_strcmp("rstuvwxyz\n",&&o.file.buffer[0]) == 0);
 end
 
 escape 0;

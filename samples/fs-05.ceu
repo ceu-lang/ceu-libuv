@@ -4,10 +4,10 @@ var&? UV_FS_Open o = spawn UV_FS_Open("fs-01.txt", 64, _O_RDONLY, 0);
 var int? err =
     watching o do
         await o.file.ok;
-        if o.file.fd < 0 then
-            _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.file.fd));
+        if o.file.handle < 0 then
+            _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.file.handle));
         end
-        _ceu_dbg_assert(o.file.fd >= 0);
+        _ceu_dbg_assert(o.file.handle >= 0);
 
         var _uv_stat_t stat = _;
         await UV_FS_Fstat(&o.file, &stat);
