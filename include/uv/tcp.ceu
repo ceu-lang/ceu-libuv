@@ -29,13 +29,15 @@ native/pos do
     }
 end
 
-#define UV_TCP_Listen(tcp, backlog) UV_Stream_Listen((tcp) as _uv_stream_t&&, backlog)
 #define UV_TCP_Read(tcp, bytes) UV_Stream_Read((tcp) as _uv_stream_t&&, bytes)
 #define UV_TCP_ReadLine(tcp, bytes) UV_Stream_ReadLine((tcp) as _uv_stream_t&&, bytes)
-#define UV_TCP_Write(tcp, bytes) UV_Stream_Write((tcp) as _uv_stream_t&&, bytes)
 
-code/await UV_TCP_Open (void) -> (var& _uv_tcp_t tcp) -> int // err
+code/await UV_TCP_Open (var int? buffer_size) -> (var UV_Stream stream) -> int // err
 do
+    if not buffer_size? then
+        buffer_size = 1024;
+    end
+
     var&? _uv_tcp_t tcp_ = &_malloc(sizeof(_uv_tcp_t))
         finalize (tcp_) with
             // free after "uv_close" below
@@ -43,7 +45,10 @@ do
     if not tcp_? then
         escape _UV_EAI_MEMORY;
     end
-    tcp = &tcp_!;
+
+    var[buffer_size!*] byte buffer;
+    stream = val UV_Stream(&buffer, &tcp_! as _uv_stream_t&&);
+    stream.handle._data = _PURIFY(&&stream.buffer);
 
     var int err1;
     do
@@ -61,19 +66,18 @@ do
     escape err2;
 end
 
-code/await UV_TCP_Open_Bind_Listen (var _char&& ip, var int port, var int backlog)
-                                    -> (var& _uv_tcp_t tcp, event& void ok)
+code/await UV_TCP_Open_Bind_Listen (var _char&& ip, var int port, var int? backlog)
+                                    -> (var&? UV_TCP_Open tcp, event& void ok)
                                         -> int // err
 do
     var _sockaddr_in addr = _;
     _uv_ip4_addr(&&ip[0], port, &&addr);
 
-    var&? UV_TCP_Open h = spawn UV_TCP_Open();
+    tcp = spawn UV_TCP_Open(_);
     var int? err1 =
-        watching h do
-            tcp = &h.tcp;
-            _uv_tcp_bind(&&tcp, &&addr as _sockaddr&&, 0);
-            var&? UV_Stream_Listen l = spawn UV_TCP_Listen(&tcp,backlog);
+        watching tcp do
+            _uv_tcp_bind(&&tcp.stream.handle as _uv_tcp_t&&, &&addr as _sockaddr&&, 0);
+            var&? UV_Stream_Listen l = spawn UV_Stream_Listen(&tcp.stream,backlog);
             var int? err2 =
                 watching l do
                     ok = &l.ok;
@@ -84,6 +88,7 @@ do
     escape err1!;
 end
 
+#if 0
 code/await UV_TCP_Connect (var _char&& ip, var int port)
                             -> (var& _uv_tcp_t tcp, event void ok)
                                 -> int  // err
@@ -115,5 +120,6 @@ do
         end;
     escape err1!;    // can only reach here with "err" set
 end
+#endif
 
 #endif

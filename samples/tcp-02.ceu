@@ -14,15 +14,14 @@
 #include "uv/tcp.ceu"
 
 #define DEFAULT_PORT    7000
-#define DEFAULT_BACKLOG 128
 #define BUFFER_MAX      10
 
-code/await Client (var& _uv_tcp_t server) -> void
+code/await Client (var& UV_Stream server) -> void
 do
-    var&? UV_TCP_Open client = spawn UV_TCP_Open();
+    var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
     var int? err1 =
         watching client do
-            var int ret = _uv_accept(&&server as _uv_stream_t&&, (&&client.tcp) as _uv_stream_t&&);
+            var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
             _ceu_dbg_assert(ret == 0);
 
             // READ/WRITE LOOP
@@ -39,7 +38,7 @@ do
 
             loop do
                 do
-                    var&? UV_Stream_Read read = spawn UV_TCP_Read(&client.tcp,&buf);
+                    var&? UV_Stream_Read read = spawn UV_TCP_Read(&client.stream.handle,&buf);
                     var int? err2 =
                         watching read do
                             await read.ok;
@@ -49,7 +48,7 @@ do
 
                 // WRITE
                 buf = buf..[{'\0'}];
-                await UV_TCP_Write(&client.tcp, &buf);
+                await UV_TCP_Write(&client.stream.handle, &buf);
             end
         end;
 
@@ -60,18 +59,18 @@ end
 
 _printf("I will terminate after 10s...\n");
 
-var&? UV_TCP_Open server = spawn UV_TCP_Open();
+var&? UV_TCP_Open server = spawn UV_TCP_Open(_);
 watching server do
     var _sockaddr_in addr = _;
     _uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
-    _uv_tcp_bind(&&server.tcp, &&addr as _sockaddr&&, 0);
+    _uv_tcp_bind(&&server.stream.handle as _uv_tcp_t&&, &&addr as _sockaddr&&, 0);
 
-    var&? UV_Stream_Listen listen = spawn UV_TCP_Listen(&server.tcp,DEFAULT_BACKLOG);
+    var&? UV_Stream_Listen listen = spawn UV_Stream_Listen(&server.stream,_);
     watching listen do
         pool[10] Client cs;
         watching 10s do
             every listen.ok do
-                spawn Client(&server.tcp) in cs;
+                spawn Client(&server.stream) in cs;
             end
         end
     end

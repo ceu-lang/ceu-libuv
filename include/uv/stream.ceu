@@ -37,11 +37,20 @@ input (_uv_connect_t&&,int)   UV_STREAM_CONNECT;
 input (_uv_stream_t&&, ssize) UV_STREAM_READ;
 input (_uv_write_t&&,  int)   UV_STREAM_WRITE;
 
-code/await UV_Stream_Listen (var& _uv_stream_t stream, var int backlog)
+data UV_Stream with
+    var&[] byte         buffer;
+    var&   _uv_stream_t handle;
+end
+
+code/await UV_Stream_Listen (var& UV_Stream stream, var int? backlog)
                                 -> (event void ok)
                                     -> int // err
 do
-    var int err1 = _ceu_uv_listen(&&stream, backlog);
+    if not backlog? then
+        backlog = 128;
+    end
+
+    var int err1 = _ceu_uv_listen(&&stream.handle, backlog!);
     if err1 != 0 then
         escape err1;
     end
@@ -49,47 +58,49 @@ do
     var _uv_stream_t&& s;
     var int err2;
     every (s,err2) in UV_STREAM_LISTEN do
-        if s == &&stream then
+        if s == &&stream.handle then
             _ceu_dbg_assert(err2 == 0);   // UV_STREAM_ERROR already aborted me
             emit ok;
         end
     end
 end
 
-code/await UV_Stream_Read (var& _uv_stream_t stream, var&[] byte buf)
-                            -> (event usize ok, var usize next)
-                                -> int // err
+code/await UV_Stream_Read_N (var& UV_Stream stream, var ssize? n) -> ssize
 do
-    code/tight Reset (void) -> void do
-        outer.next = 0;
-        $outer.buf = 0;
+    if not n? then
+        n = 1;          // terminates after reading anything
     end
-    call Reset();
-    stream._data = _PURIFY(&&buf);
+
+// TODO: circular
 
     var int err;
     do
-        err = _ceu_uv_read_start(&&stream);
-    finalize (stream) with
-        _uv_read_stop(&&stream);   // finalize after each UV_STREAM_READ
+        err = _ceu_uv_read_start(&&stream.handle);
+    finalize (stream.handle) with
+        _uv_read_stop(&&stream.handle);   // finalize after each UV_STREAM_READ
     end
     if err != 0 then
         escape err;
     end
 
     var _uv_stream_t&& s;
-    var ssize n_read;
-    every (s, n_read) in UV_STREAM_READ do
-        if s == &&stream then
-            _ceu_dbg_assert(n_read >= 0);   // UV_STREAM_ERROR has already aborted me
-            next = next + (n_read as usize);
-            emit ok(n_read as usize);
+    var ssize n_tot = 0;
+    var ssize n_now;
+    every (s, n_now) in UV_STREAM_READ do
+        if s == &&stream.handle then
+            if n_now <= 0 then
+                escape n_now;
+            end
+            n_tot = n_tot + n_now;
+_printf("+++ %ld -> %ld\n", n_now, n_tot);
+            if n_tot >= n! then
+                escape n_tot;
+            end
         end
     end
 end
 
-code/await UV_Stream_Read_N (var&? UV_Stream_Read reader, var usize limit) -> int
-
+#if 0
 code/await UV_Stream_Read_Until (var&? UV_Stream_Read reader, var usize limit) -> int
 do
     watching reader do
@@ -133,35 +144,35 @@ do
     end
     _ceu_dbg_assert(0);   // UV_STREAM_ERROR has already aborted me
 end
+#endif
 
-code/await UV_Stream_Write (var& _uv_stream_t stream, var&[] byte bytes)
-                                -> int // err
+code/await UV_Stream_Write_N (var& UV_Stream stream, var usize? n) -> ssize
 do
-    var usize starting  = 0;
-    var usize excluding = $bytes;
-    _ceu_dbg_assert($bytes >= excluding);
-    _ceu_dbg_assert(starting <= excluding);
+    if not n? then
+        n = $stream.buffer;
+    end
 
-    var&? _uv_write_t req_write = &_malloc(sizeof(_uv_write_t))
-        finalize (req_write) with
+    var&? _uv_write_t req = &_malloc(sizeof(_uv_write_t))
+        finalize (req) with
             // free on uv callback
         end;
-    if not req_write? then
+    if not req? then
         escape _UV_EAI_MEMORY;
     end
 
-    var _uv_buf_t buf = _uv_buf_init(&&bytes[0], $bytes);
-                  buf.base = buf.base+starting;
-                  buf.len  = excluding-starting;
+// TODO: circular
 
-    _ceu_dbg_assert(_uv_is_writable(&&stream));
+    var _uv_buf_t buf = _uv_buf_init(&&stream.buffer[0], n!);
+    _ceu_dbg_assert(_uv_is_writable(&&stream.handle));
 
-    var int ret = _ceu_uv_write(&&req_write!, &&stream, &&buf);
+    var int ret = _ceu_uv_write(&&req!, &&stream.handle, &&buf);
     _ceu_dbg_assert(ret >= 0);
     var _uv_write_t&& w;
     var int err;
-    (w, err) = await UV_STREAM_WRITE until w==&&req_write!;
+    (w, err) = await UV_STREAM_WRITE until w==&&req!;
     _ceu_dbg_assert(err == 0);   // UV_STREAM_ERROR has already aborted me
+
+    $stream.buffer = $stream.buffer - n!;
 
     escape 0;
 end
@@ -206,6 +217,7 @@ printf(">>> FREE\n");
             ceu_vector_setmax(vec, CEU_UV_STREAM_READ_ALLOC_DYN_INIT, 0);
         }
 
+// TODO: circular
         *buf = uv_buf_init((char*)vec->buf+vec->len, vec->max-vec->len);
     }
 
