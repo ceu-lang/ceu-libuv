@@ -16,7 +16,7 @@ var int? err =
         var int i;
         loop i do
             var[] byte line;
-            var ssize n = await UV_FS_Read_Line(&o.file,_,&line);
+            var ssize n = await UV_FS_Read_Line(&o.file,&line,_);
             if n <= 0 then
                 break;
             end

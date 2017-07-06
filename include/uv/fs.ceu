@@ -147,7 +147,7 @@ do
     escape n_read;
 end
 
-code/await UV_FS_Read_Line (var& UV_FS_File file, var usize? by, var&[] byte line)
+code/await UV_FS_Read_Line (var& UV_FS_File file, var&[] byte line, var usize? by)
                                 -> ssize
 do
     var usize n_read = 0;

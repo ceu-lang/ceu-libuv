@@ -1,17 +1,19 @@
 #include "uv/fs.ceu"
 
-var&? UV_FS_Open f = spawn UV_FS_Open("fs-01.txt", _O_RDONLY, 0);
+var&? UV_FS_Open o = spawn UV_FS_Open("fs-01.txt",_,_,_);
 var int? err =
-    watching f do
-        await f.file.ok;
+    watching o do
+        await o.file.ok;
 
         var _uv_stat_t stat = _;
-        await UV_FS_Fstat(&f.file, &stat);
+        await UV_FS_Fstat(&o.file, &stat);
         _printf("size = %ld\n", stat.st_size);
+        _ceu_dbg_assert(stat.st_size == 48894);
     end;
 
 if err? then
     _printf("open error: %d\n", err!);
+    _ceu_dbg_assert(0);
 end
 
 escape 0;

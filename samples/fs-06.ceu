@@ -1,20 +1,18 @@
 #include "uv/fs.ceu"
 
-var&? UV_FS_Open f = spawn UV_FS_Open("fs-01.txt", _O_RDONLY, 0);
+var&? UV_FS_Open o = spawn UV_FS_Open("fs-01.txt", 11,_,_);
 var int? err =
-    watching f do
-        await f.file.ok;
+    watching o do
+        await o.file.ok;
 
-        var usize offset = 0;
         loop do
-            var[11] byte buf;
-            var ssize n = await UV_FS_Read(&f.file,&buf,$$buf-1,offset);
+            var ssize n = await UV_FS_Read_N(&o.file,$$o.file.buf-1);
             if n == 0 then
                 break;
             end
-            buf = buf .. [{'\0'}];
-            _printf("%s", &&buf[0]);
-            offset = offset + ($$buf-1);
+            o.file.buf = o.file.buf .. [{'\0'}];
+            _printf("%s", &&o.file.buf[0]);
+            $o.file.buf = 0;
         end
     end;
 
