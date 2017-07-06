@@ -44,12 +44,21 @@ data UV_FS_File with
     event  void  ok;
 end
 
-code/await UV_FS_Open (var _char&& path, var usize buf_n, var int flags, var int mode)
+code/await UV_FS_Open (var _char&& path, var usize? buf_n, var int? flags, var int? mode)
                         -> (var UV_FS_File file)
                             -> int
 do
-    var[buf_n*] byte buf;
+    if not buf_n? then
+        buf_n = 1024;
+    end
+    if not flags? then
+        flags = _O_RDONLY;
+    end
+    if not mode? then
+        mode = 0;
+    end
 
+    var[buf_n!*] byte buf;
     file = val UV_FS_File(&buf,_,_,_);
 
     var _uv_fs_t req_open  = _;
@@ -57,7 +66,7 @@ do
 
     var int ret;
     do
-        ret = _ceu_uv_fs_open(&&req_open, _PURIFY(&&path[0]), flags, mode);
+        ret = _ceu_uv_fs_open(&&req_open, _PURIFY(&&path[0]), flags!, mode!);
     finalize (req_open) with
         _ceu_uv_fs_close_(&&req_close, req_open.result);
         _uv_fs_req_cleanup(&&req_open);
@@ -135,24 +144,35 @@ do
         end
     end
 
-    escape n_bytes;
+    escape n_read;
 end
 
 code/await UV_FS_Read_Line (var& UV_FS_File file, var usize? by, var&[] byte line)
                                 -> ssize
 do
+    var usize n_read = 0;
+
+    var usize i;
+    loop i in [1 -> $file.buf] do       // "[0 -> $file.buf[" may underflow
+        var byte c = file.buf[0];
+        $file.buf = $file.buf - 1;
+        n_read = n_read + 1;
+        if c == {'\n'} then
+            escape n_read;
+        else
+            line = line .. [c];
+        end
+    end
+
     if not by? then
         by = 80;
     end
 
-    var usize ini = $file.buf;              // from previous call: only non-line-break chars
-    var usize n_read = 0;
-
     loop do
         var usize n = do
             var usize free = $$file.buf - $file.buf;
-            if by <= free then
-                escape by;
+            if by! <= free then
+                escape by!;
             else
                 escape free;
             end
@@ -162,23 +182,24 @@ do
             escape {UV_ENOBUFS};
         end
 
-        n = await UV_FS_Read_N(&file, n);   // may read less than "n" bytes
-        if n < 0 then
-// TODO: falback buf and off
+        var ssize n_ = await UV_FS_Read_N(&file, n);   // may read less than "n" bytes
+        if n_ < 0 then
             escape n;
-        else/if n == 0 then
-// TODO: falback buf and off
+        else/if n_ == 0 then
             escape {UV_EOF};
         end
-        n_read = n_read + n;
+        n = n_ as usize;
 
-        _ceu_dbg_assert($file.buf == ini+n);
+        _ceu_dbg_assert($file.buf == n);
         var usize i;
-        loop i in [ini -> ini+n[            // skip existing (non-line-break) chars
-            if file.buf[i] == {'\n'} then
-                o.file.buf = o.file.buf - XX;
-                $o.file = XX;
+        loop i in [0 -> $file.buf[ do
+            var byte c = file.buf[0];
+            $file.buf = $file.buf - 1;
+            n_read = n_read + 1;
+            if c == {'\n'} then
                 escape n_read;
+            else
+                line = line .. [c];
             end
         end
     end

@@ -1,9 +1,9 @@
 #include "uv/fs.ceu"
 
-var&? UV_FS_Open f = spawn UV_FS_Open("/non/existent/path", _O_RDONLY, 0);
+var&? UV_FS_Open o = spawn UV_FS_Open("/non/existent/path", _,_,_);
 var int? err =
-    watching f do
-        await f.file.ok;
+    watching o do
+        await o.file.ok;
         // file is ready for use
         _printf("open ok\n");
     end;

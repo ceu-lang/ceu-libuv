@@ -1,26 +1,30 @@
 #include "uv/fs.ceu"
 
 var&? UV_FS_Open o = spawn UV_FS_Open("fs-01.txt", 64, _O_RDONLY, 0);
-watching o do
-    await o.file.ok;
-    if o.file.fd < 0 then
-        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.file.fd));
-    end
-    _ceu_dbg_assert(o.file.fd >= 0);
-
-    var _uv_stat_t stat = _;
-    await UV_FS_Fstat(&o.file, &stat);
-    var usize size = stat.st_size;
-
-    loop do
-        var[] byte line;
-        var ssize n = await UV_FS_Read_Line(&o.file,_,&line);
-        if n <= 0 then
-            break;
+var int? err =
+    watching o do
+        await o.file.ok;
+        if o.file.fd < 0 then
+            _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.file.fd));
         end
-        _printf("line = %s [%d]\n", &&line[0], n as int);
-        $o.file = 0;
-    end
-end
+        _ceu_dbg_assert(o.file.fd >= 0);
+
+        var _uv_stat_t stat = _;
+        await UV_FS_Fstat(&o.file, &stat);
+        var usize size = stat.st_size;
+
+        var int i;
+        loop i do
+            var[] byte line;
+            var ssize n = await UV_FS_Read_Line(&o.file,_,&line);
+            if n <= 0 then
+                break;
+            end
+            line = line .. [{'\0'}];
+            _printf("line = %s [%ld]\n", &&line[0], n);
+        end
+        _ceu_dbg_assert(i == 10000);
+    end;
+_ceu_dbg_assert(not err?);
 
 escape 0;
