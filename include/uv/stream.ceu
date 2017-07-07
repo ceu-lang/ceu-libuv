@@ -70,6 +70,12 @@ do
     if not n? then
         n = 1;          // terminates after reading anything
     end
+    _ceu_dbg_assert($$file.buffer >= n!);
+
+    if $file.buffer >= n! then
+        escape 0;
+    end
+    n = n! - $file.buffer;
 
 // TODO: circular
 

@@ -91,7 +91,12 @@ end
 
 code/await UV_FS_Read_N (var& UV_FS_File file, var usize n) -> ssize
 do
-    _ceu_dbg_assert($$file.buffer-$file.buffer >= n);
+    _ceu_dbg_assert($$file.buffer >= n);
+
+    if $file.buffer >= n then
+        escape 0;
+    end
+    n = n - $file.buffer;
 
     var _uv_buf_t buf = _;
     var _uv_fs_t  req = _;
