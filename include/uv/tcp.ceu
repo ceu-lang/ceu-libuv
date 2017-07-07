@@ -32,6 +32,8 @@ end
 #define UV_TCP_Read(tcp, bytes) UV_Stream_Read((tcp) as _uv_stream_t&&, bytes)
 #define UV_TCP_ReadLine(tcp, bytes) UV_Stream_ReadLine((tcp) as _uv_stream_t&&, bytes)
 
+// TODO: receive two sizes (r/w), receive a bool to join r/w in one
+
 code/await UV_TCP_Open (var int? buffer_size) -> (var UV_Stream stream) -> int // err
 do
     if not buffer_size? then
