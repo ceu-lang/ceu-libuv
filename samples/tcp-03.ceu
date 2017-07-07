@@ -36,16 +36,18 @@ do
             end
 
             loop do
-                var ssize n = await UV_Stream_Read_N(&client.stream,_);
+                var ssize n = await UV_Stream_Read_N(&client.stream, 10);//$$client.stream.buffer-1);
                 _ceu_dbg_assert(n >= 0);
                 client.stream.buffer = client.stream.buffer .. [{'\0'}];
-_printf(">>> %s [%ld]\n", &&client.stream.buffer[0], $client.stream.buffer);
-_printf("\t");
-var usize i;
-loop i in [0 -> $client.stream.buffer[ do
-    _printf(".%c.", client.stream.buffer[i]);
-end
-_printf("\n");
+//_printf("====\n");
+//_printf(">>> %s [%ld]\n", &&client.stream.buffer[0], $client.stream.buffer);
+_printf("%s", &&client.stream.buffer[0]);
+//_printf("\t");
+//var usize i;
+//loop i in [0 -> $client.stream.buffer[ do
+    //_printf(".%c.", client.stream.buffer[i]);
+//end
+//_printf("\n");
 
                 // WRITE
                 await UV_Stream_Write_N(&client.stream, $client.stream.buffer-1);
@@ -75,4 +77,5 @@ spawn Server("0.0.0.0", DEFAULT_PORT+1, _);
 _printf("I will terminate after 10s...\n");
 await 10s;
 _printf("DONE!\n");
-escape 0;
+await FOREVER;
+//escape 0;

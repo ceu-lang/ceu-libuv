@@ -9,6 +9,7 @@ native/plain
     _uv_handle_t,
     _uv_stream_t,
     _uv_write_t,
+    _tceu_uv_stream_data,
 ;
 
 native/pure
@@ -30,6 +31,13 @@ native/nohold
 native
     _ceu_uv_read_start,
 ;
+
+native/pre do
+    typedef struct tceu_uv_stream_data {
+        tceu_vector* vector;
+        usize        n;         // n=0 means read any number of bytes and generates an input
+    } tceu_uv_stream_data;
+end
 
 input (_uv_stream_t&&, int)   UV_STREAM_ERROR;
 input (_uv_stream_t&&, int)   UV_STREAM_LISTEN;
@@ -65,45 +73,70 @@ do
     end
 end
 
-code/await UV_Stream_Read_N (var& UV_Stream stream, var ssize? n) -> ssize
+code/await UV_Stream_Read_N (var& UV_Stream stream, var usize? n) -> ssize
 do
     if not n? then
         n = 1;          // terminates after reading anything
     end
-    _ceu_dbg_assert($$file.buffer >= n!);
+    _ceu_dbg_assert($$stream.buffer >= n!);
 
-    if $file.buffer >= n! then
+    // "buffer" already contains the requested "n"
+    if $stream.buffer >= n! then
         escape 0;
     end
-    n = n! - $file.buffer;
+    n = n! - $stream.buffer;
 
-// TODO: circular
-
-    var int err;
-    do
-        err = _ceu_uv_read_start(&&stream.handle);
-    finalize (stream.handle) with
-        _uv_read_stop(&&stream.handle);   // finalize after each UV_STREAM_READ
+    var usize n_togo = _;
+    var int   times = _;
+    var int free = ($$stream.buffer - _ceu_vector_ptr(&&stream.buffer):ini) as int;
+    if free >= n! then
+        times = 1;    // requires a single read
+        n_togo = n!;
+    else
+        times = 2;    // requires a second read
+        n_togo = free;
     end
-    if err != 0 then
-        escape err;
-    end
+    (stream.handle._data as _tceu_uv_stream_data&&):n = n_togo;
 
-    var _uv_stream_t&& s;
-    var ssize n_tot = 0;
-    var ssize n_now;
-    every (s, n_now) in UV_STREAM_READ do
-        if s == &&stream.handle then
-            if n_now <= 0 then
-                escape n_now;
-            end
-            n_tot = n_tot + n_now;
-_printf("+++ %ld -> %ld\n", n_now, n_tot);
-            if n_tot >= n! then
-                escape n_tot;
+    var ssize n_read  = 0;
+
+    var int i;
+    loop i in [1->times] do
+        var int err;
+        do
+            err = _ceu_uv_read_start(&&stream.handle);
+        finalize (stream.handle) with
+            _uv_read_stop(&&stream.handle);   // finalize after each UV_STREAM_READ
+        end
+        if err != 0 then
+            if i == 1 then
+                escape err;
+            else
+                escape n_read;
             end
         end
+
+        var _uv_stream_t&& s;
+        var ssize ret;
+        (s, ret) = await UV_STREAM_READ until (s == &&stream.handle);
+        if ret <= 0 then
+            if i == 1 then
+                escape ret;
+            else
+                escape n_read;
+            end
+        end
+        _ceu_dbg_assert(ret == n_togo);
+        n_read = n_read + ret;
+
+        // second read
+        if times == 2 then
+            n_togo = (n! - free);
+            (stream.handle._data as _tceu_uv_stream_data&&):n = n_togo;
+        end
     end
+
+    escape n_togo;
 end
 
 #if 0
@@ -216,22 +249,29 @@ printf(">>> FREE\n");
     ##define CEU_UV_STREAM_READ_ALLOC_DYN_INIT 1024
 
     void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
-        ceu_dbg_assert(h->data != NULL);
-        tceu_vector* vec = (tceu_vector*) h->data;
+        tceu_uv_stream_data* data = (tceu_uv_stream_data*) h->data;
+        tceu_vector* vec = data->vector;
+        usize        n   = data->n;
+        ceu_dbg_assert(vec != NULL);
 
-        if (vec->is_dyn) {
-            ceu_vector_setmax(vec, CEU_UV_STREAM_READ_ALLOC_DYN_INIT, 0);
+        if (vec->is_dyn && !vec->is_freezed) {
+            ceu_vector_setmax(vec, (n==0 ? CEU_UV_STREAM_READ_ALLOC_DYN_INIT : n), 0);
         }
 
-// TODO: circular
-        *buf = uv_buf_init((char*)vec->buf+vec->len, vec->max-vec->len);
+        *buf = uv_buf_init(ceu_vector_buf_get(vec,vec->len), (n==0 ? (vec->max-vec->ini) : n));
     }
 
     void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* _) {
         ceu_dbg_assert(n != 0); // TODO: if this happens, try to understand why
 
-        ceu_dbg_assert(s->data != NULL);
-        tceu_vector* vec = (tceu_vector*) s->data;
+        tceu_uv_stream_data* data = (tceu_uv_stream_data*) s->data;
+        ceu_dbg_assert(data != NULL);
+        ceu_dbg_assert(n<0 || data->n==0 || data->n>=n);
+        if (data->n != 0) {
+            data->n -= n;
+        }
+
+        tceu_vector* vec = data->vector;
         if (n > 0) {
             if (ceu_vector_setlen_could(vec,vec->len+n,1) == 0) {
                 n = UV_ENOBUFS;
@@ -245,7 +285,7 @@ printf(">>> FREE\n");
             ceu_input(CEU_INPUT_UV_STREAM_ERROR, &p);
         }
 
-        {
+        if (data->n == 0) {
             tceu_input_UV_STREAM_READ p = { s, n };
             ceu_input(CEU_INPUT_UV_STREAM_READ, &p);
         }
