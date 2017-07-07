@@ -75,33 +75,36 @@ end
 
 code/await UV_Stream_Read_N (var& UV_Stream stream, var usize? n) -> ssize
 do
-    if not n? then
-        n = 1;          // terminates after reading anything
-    end
-    _ceu_dbg_assert($$stream.buffer >= n!);
+    var usize? n_togo;
+    var int?   times;
+    var int?   free;
+    if n? then
+        _ceu_dbg_assert($$stream.buffer >= n!);
 
-    // "buffer" already contains the requested "n"
-    if $stream.buffer >= n! then
-        escape 0;
-    end
-    n = n! - $stream.buffer;
+        // "buffer" already contains the requested "n"
+        if $stream.buffer >= n! then
+            escape 0;
+        end
+        n = n! - $stream.buffer;
 
-    var usize n_togo = _;
-    var int   times = _;
-    var int free = ($$stream.buffer - _ceu_vector_ptr(&&stream.buffer):ini) as int;
-    if free >= n! then
-        times = 1;    // requires a single read
-        n_togo = n!;
+        free = ($$stream.buffer - _ceu_vector_ptr(&&stream.buffer):ini) as int;
+        if free! >= n! then
+            times = 1;    // requires a single read
+            n_togo = n!;
+        else
+            times = 2;    // requires a second read
+            n_togo = free!;
+        end
+        (stream.handle._data as _tceu_uv_stream_data&&):n = n_togo!;
     else
-        times = 2;    // requires a second read
-        n_togo = free;
+        times = 1;
+        (stream.handle._data as _tceu_uv_stream_data&&):n = 0;
     end
-    (stream.handle._data as _tceu_uv_stream_data&&):n = n_togo;
 
     var ssize n_read  = 0;
 
     var int i;
-    loop i in [1->times] do
+    loop i in [1->times!] do
         var int err;
         do
             err = _ceu_uv_read_start(&&stream.handle);
@@ -126,17 +129,19 @@ do
                 escape n_read;
             end
         end
-        _ceu_dbg_assert(ret == n_togo);
+        if n? then
+            _ceu_dbg_assert(ret == n_togo!);
+        end
         n_read = n_read + ret;
 
         // second read
-        if times == 2 then
-            n_togo = (n! - free);
-            (stream.handle._data as _tceu_uv_stream_data&&):n = n_togo;
+        if times! == 2 then
+            n_togo = (n! - free!);
+            (stream.handle._data as _tceu_uv_stream_data&&):n = n_togo!;
         end
     end
 
-    escape n_togo;
+    escape n_read;
 end
 
 #if 0
