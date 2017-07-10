@@ -72,18 +72,19 @@ do
     escape err2;
 end
 
-code/await UV_TCP_Open_Bind_Listen (var _char&& ip, var int port, var int? backlog)
-                                    -> (var&? UV_TCP_Open tcp, event& void ok)
+code/await UV_TCP_Open_Bind_Listen (var _char&& ip, var int port, var int? backlog, var int? buffer_size)
+                                    -> (var& UV_Stream stream, event& void ok)
                                         -> int // err
 do
     var _sockaddr_in addr = _;
     _uv_ip4_addr(&&ip[0], port, &&addr);
 
-    tcp = spawn UV_TCP_Open(_);
+    var&? UV_TCP_Open tcp = spawn UV_TCP_Open(buffer_size);
     var int? err1 =
         watching tcp do
-            _uv_tcp_bind(&&tcp.stream.handle as _uv_tcp_t&&, &&addr as _sockaddr&&, 0);
-            var&? UV_Stream_Listen l = spawn UV_Stream_Listen(&tcp.stream,backlog);
+            stream = &tcp.stream;
+            _uv_tcp_bind(&&stream.handle as _uv_tcp_t&&, &&addr as _sockaddr&&, 0);
+            var&? UV_Stream_Listen l = spawn UV_Stream_Listen(&stream,backlog);
             var int? err2 =
                 watching l do
                     ok = &l.ok;
@@ -94,25 +95,23 @@ do
     escape err1!;
 end
 
-#if 0
-code/await UV_TCP_Connect (var _char&& ip, var int port)
-                            -> (var& _uv_tcp_t tcp, event void ok)
+code/await UV_TCP_Connect (var _char&& ip, var int port, var int? buffer_size)
+                            -> (var& UV_Stream stream, event void ok)
                                 -> int  // err
 do
     var _sockaddr_in dest = _;
     _uv_ip4_addr(ip, port, &&dest);
 
-    var&? UV_TCP_Open h = spawn UV_TCP_Open();
+    var&? UV_TCP_Open tcp = spawn UV_TCP_Open(buffer_size);
     var int? err1 =
-        watching h do
-            tcp = &h.tcp;
-
+        watching tcp do
+            stream = &tcp.stream;
             var&? _uv_connect_t connect = &_malloc(sizeof(_uv_connect_t))
                 finalize (connect) with
                     // free on uv callback
                 end
 
-            _ceu_uv_tcp_connect(&&connect!, &&tcp, (&&dest as _sockaddr&&));
+            _ceu_uv_tcp_connect(&&connect!, &&stream.handle as _uv_tcp_t&&, (&&dest as _sockaddr&&));
 
             var _uv_connect_t&& c;
             var int err2;
@@ -126,6 +125,5 @@ do
         end;
     escape err1!;    // can only reach here with "err" set
 end
-#endif
 
 #endif

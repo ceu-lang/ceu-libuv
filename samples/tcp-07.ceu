@@ -8,26 +8,24 @@
 
 data UV_TCP_Server_Data;
 
-code/await UV_TCP_Server_Handler (var& UV_TCP_Server_Data d, var& _uv_tcp_t tcp) -> int
+code/await UV_TCP_Server_Handler (var& UV_TCP_Server_Data d, var& UV_Stream stream) -> int
 do
     loop do
-        var[] byte string;
-        await UV_TCP_ReadLine(&tcp, &string);
-        string = string..[{'\0'}];
-        _printf("[server %p] %s", &&tcp, &&string[0]);
-        await UV_TCP_Write(&tcp, &string);
+        await UV_Stream_Read_N(&stream,_);
+        stream.buffer = stream.buffer..[{'\0'}];
+        _printf("[server %p] %s", &&stream, &&stream.buffer[0]);
+        await UV_Stream_Write_N(&stream,_);
     end
 end
 
 #include "uv/tcp-server.ceu"
 
-#define PORT    7000
-#define BACKLOG 128
+#define PORT 7000
 
 var UV_TCP_Server_Data d = _;
-spawn UV_TCP_Server(&d, "0.0.0.0", PORT+0, BACKLOG);
+spawn UV_TCP_Server(&d, "0.0.0.0", PORT, _, _);
 
-var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", PORT);
+var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", PORT, _);
 watching c do
     await c.ok;
 
@@ -36,10 +34,11 @@ watching c do
     var int i;
     loop i in [0 -> 10[ do
         await 1s;
-        var[] byte string = [] .. "Alo mundo!\n";
-        await UV_TCP_Write(&c.tcp, &string);
-        await UV_TCP_ReadLine(&c.tcp, &string);
-        _printf("[client] %s", &&string[0]);
+        c.stream.buffer = [] .. "Alo mundo!\n";
+        await UV_Stream_Write_N(&c.stream, _);
+        await UV_Stream_Read_N(&c.stream, _);
+        c.stream.buffer = c.stream.buffer .. [{'\0'}];
+        _printf("[client] %s", &&c.stream.buffer[0]);
     end
 end
 

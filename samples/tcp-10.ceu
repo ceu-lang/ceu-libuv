@@ -2,6 +2,7 @@
 #@ Description: Big file echo.
 #@ Usage:
 #@  - cat samples/fs-01.txt | nc localhost 7000
+#@      - prints from 1 -> 10000
 #endif
 
 #include "uv/tcp.ceu"
@@ -9,12 +10,12 @@
 #define DEFAULT_PORT 7000
 #define BUFFER_MAX     10
 
-code/await Client (var&? UV_TCP_Open server) -> void
+code/await Client (var& UV_Stream server) -> void
 do
     var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
     var int? err1 =
         watching client do
-            var int ret = _uv_accept(&&server!.stream.handle, &&client.stream.handle);
+            var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
             _ceu_dbg_assert(ret == 0);
 
             // READ/WRITE LOOP
@@ -53,10 +54,10 @@ do
     end
 end
 
-var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen("0.0.0.0",DEFAULT_PORT,_);
+var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen("0.0.0.0",DEFAULT_PORT,_,_);
 watching server do
     await server.ok;
-    await Client(&server.tcp);
+    await Client(&server.stream);
 end
 
 _printf("DONE!\n");

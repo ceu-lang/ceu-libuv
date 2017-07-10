@@ -9,19 +9,18 @@
 
 #define DEFAULT_PORT 7000
 
-var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", DEFAULT_PORT);
+var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", DEFAULT_PORT, _);
 watching c do
     await c.ok;
-
-    _printf("I will terminate after 10s...\n");
 
     var int i;
     loop i in [0 -> 10[ do
         await 1s;
-        var[] byte string = [] .. "Alo mundo!\n";
-        await UV_TCP_Write(&c.tcp, &string);
-        await UV_TCP_ReadLine(&c.tcp, &string);
-        _printf("%s", &&string[0]);
+        c.stream.buffer = [] .. "Alo mundo!\n";
+        await UV_Stream_Write_N(&c.stream,_);
+        await UV_Stream_Read_N(&c.stream,_);
+        c.stream.buffer = c.stream.buffer..[{'\0'}];
+        _printf("%s", &&c.stream.buffer[0]);
     end
 end
 

@@ -10,14 +10,13 @@
 
 data UV_TCP_Server_Data;
 
-code/await UV_TCP_Server_Handler (var& UV_TCP_Server_Data d, var& _uv_tcp_t tcp) -> int
+code/await UV_TCP_Server_Handler (var& UV_TCP_Server_Data d, var& UV_Stream stream) -> int
 do
     loop do
-        var[] byte string;
-        await UV_TCP_ReadLine(&tcp, &string);
-        string = string..[{'\0'}];
-        _printf("[server %p] %s", &&tcp, &&string[0]);
-        await UV_TCP_Write(&tcp, &string);
+        await UV_Stream_Read_N(&stream, _);
+        stream.buffer = stream.buffer..[{'\0'}];
+        _printf("[server %p] %s", &&stream, &&stream.buffer[0]);
+        await UV_Stream_Write_N(&stream, _);
     end
 end
 
@@ -27,7 +26,7 @@ end
 #define BACKLOG 128
 
 code/await Client (var int port) -> void do
-    var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", port);
+    var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", port, _);
     watching c do
         await c.ok;
 
@@ -35,13 +34,13 @@ code/await Client (var int port) -> void do
 
         loop do
             await 1s;
-            var[] byte string = [] .. "Alo mundo!\n";
-            await UV_TCP_Write(&c.tcp, &string);
+            c.stream.buffer = [] .. "Alo mundo!\n";
+            await UV_Stream_Write_N(&c.stream,_);
 // change to 0 to generate "write" errors instead of "read" errors
 #if 1
-            await UV_TCP_ReadLine(&c.tcp, &string);
+            await UV_Stream_Read_N(&c.stream,_);
 #endif
-            _printf("[client] %s", &&string[0]);
+            _printf("[client] %s", &&c.stream.buffer[0]);
         end
     end
 end
@@ -51,10 +50,10 @@ _printf("I will terminate after 10s...\n");
 watching 10s do
     var UV_TCP_Server_Data d = _;
     par do
-        await UV_TCP_Server(&d, "0.0.0.0", PORT+0, BACKLOG);
+        await UV_TCP_Server(&d, "0.0.0.0", PORT+0, BACKLOG, _);
     with
         watching 5s do
-            await UV_TCP_Server(&d, "0.0.0.0", PORT+1, BACKLOG);
+            await UV_TCP_Server(&d, "0.0.0.0", PORT+1, BACKLOG, _);
         end
         _printf("[server %d] stop\n", PORT+1);
     with

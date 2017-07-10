@@ -26,8 +26,6 @@ do
 
             // READ/WRITE LOOP
 
-            var[BUFFER_MAX] byte buf;
-
             spawn do
                 var _uv_stream_t&& s;
                 var int            err2;
@@ -37,18 +35,10 @@ do
             end
 
             loop do
-                do
-                    var&? UV_Stream_Read read = spawn UV_TCP_Read(&client.stream.handle,&buf);
-                    var int? err2 =
-                        watching read do
-                            await read.ok;
-                        end;
-                    _ceu_dbg_assert(not err2?);
-                end
+                await UV_Stream_Read_N(&client.stream,_);
 
                 // WRITE
-                buf = buf..[{'\0'}];
-                await UV_TCP_Write(&client.stream.handle, &buf);
+                await UV_Stream_Write_N(&client.stream,_);
             end
         end;
 
