@@ -45,6 +45,8 @@ input (_uv_connect_t&&,int)   UV_STREAM_CONNECT;
 input (_uv_stream_t&&, ssize) UV_STREAM_READ;
 input (_uv_write_t&&,  int)   UV_STREAM_WRITE;
 
+// TODO: full-duplex: read/write handle
+
 data UV_Stream with
     var&[] byte         buffer;
     var&   _uv_stream_t handle;
@@ -144,51 +146,45 @@ do
     escape n_read;
 end
 
-#if 0
-code/await UV_Stream_Read_Until (var&? UV_Stream_Read reader, var usize limit) -> int
+code/await UV_Stream_Read_Line (var& UV_Stream stream, var&[] byte line)
+                                -> ssize
 do
-    watching reader do
-        if reader.next >= limit then
-            escape 0;
-        end
-        loop do
-            var usize dt = await reader.ok;
-/*
-            if dt < 0 then
-                // TODO: versions w/ assert/escape
-                _printf("error[%d]: %s\n", dt, _uv_strerror(dt));
-                _assert(0);
-                escape dt;
-            end
-*/
-            if reader.next >= limit then
-                escape 0;
-            end
-        end
-    end
-    escape -1;
-end
+    var usize n_read = 0;
 
-code/await UV_Stream_ReadLine (var& _uv_stream_t stream, var&[] byte string)
-                                -> void
-do
-    var&? UV_Stream_Read s = spawn UV_Stream_Read(&stream,&string);
-    watching s do
-        loop do
-            await s.ok;
-            var byte n = 0;
-            var byte c = 0;
-            var int ret = _sscanf(&&string[0], "%*[^\n]%[\n]%c", &&n,&&c);
-            _ceu_dbg_assert(ret < 2);
-            if ret == 1 then
-                _ceu_dbg_assert(n == {'\n'});
-                escape;
+    var usize i;
+    loop i in [1 -> $stream.buffer] do       // "[0 -> $stream.buf[" may underflow
+        var byte c = stream.buffer[0];
+        $stream.buffer = $stream.buffer - 1;
+        n_read = n_read + 1;
+        if c == {'\n'} then
+            escape n_read;
+        else
+            line = line .. [c];
+        end
+    end
+
+    loop do
+        var ssize n = await UV_Stream_Read_N(&stream,_);
+        if n < 0 then
+            escape n;
+        end
+
+        _ceu_dbg_assert($stream.buffer == n);
+        var usize i;
+        loop i in [0 -> $stream.buffer[ do
+            var byte c = stream.buffer[0];
+            $stream.buffer = $stream.buffer - 1;
+            n_read = n_read + 1;
+            if c == {'\n'} then
+//{ *@(&&stream.buffer[_ceu_vector_idx(&&stream.buffer, $stream.buffer)]) = '\0'; }
+//_printf(">3> |%s|\n", &&stream.buffer[0]);
+                escape n_read;
+            else
+                line = line .. [c];
             end
         end
     end
-    _ceu_dbg_assert(0);   // UV_STREAM_ERROR has already aborted me
 end
-#endif
 
 code/await UV_Stream_Write_N (var& UV_Stream stream, var usize? n) -> ssize
 do

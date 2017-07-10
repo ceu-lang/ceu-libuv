@@ -41,7 +41,7 @@ do
                 client.stream.buffer = client.stream.buffer .. [{'\0'}];
 //_printf("====\n");
 //_printf(">>> %s [%ld]\n", &&client.stream.buffer[0], $client.stream.buffer);
-_printf("%s", &&client.stream.buffer[0]);
+//_printf("%s", &&client.stream.buffer[0]);
 //_printf("\t");
 //var usize i;
 //loop i in [0 -> $client.stream.buffer[ do
