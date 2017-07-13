@@ -741,7 +741,7 @@ code/await UV_TCP_Connect (var _char&& ip, var int port, var int? buffer_size)
 
 Céu-libuv references:
     [`ceu_uv_tcp_connect`](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_connect),
-    [`UV_STREAM_CONNECT`](../stream/#uv_stream_connnect).
+    [`UV_STREAM_CONNECT`](../stream/#uv_stream_connect).
 
 ##### Example
 
@@ -785,7 +785,7 @@ code/await UV_TCP_Open_Bind_Listen (var _char&&? ip, var int port, var int? back
 
 Céu-libuv references:
     [`UV_TCP_Open`](#uv_tcp_open),
-    [`UV_Stream_Listen`](../stream/../stream/#uv_stream_listen).
+    [`UV_Stream_Listen`](../stream/../stream/#uv_stream_listen_1).
 
 ##### Example
 
