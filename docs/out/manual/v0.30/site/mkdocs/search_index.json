@@ -1,0 +1,259 @@
+{
+    "docs": [
+        {
+            "location": "/", 
+            "text": "Introduction\n\n\nC\u00e9u-libuv supports the development of libuv applications in the programming\nlanguage \nC\u00e9u\n.", 
+            "title": "Introduction"
+        }, 
+        {
+            "location": "/#introduction", 
+            "text": "C\u00e9u-libuv supports the development of libuv applications in the programming\nlanguage  C\u00e9u .", 
+            "title": "Introduction"
+        }, 
+        {
+            "location": "/modes/", 
+            "text": "Mode of Operation\n\n\nThe mode of operation specifies how C\u00e9u-libuv captures events from the\nenvironment (e.g., timers and incoming network traffic) and redirects them to\nthe C\u00e9u application.\nIt is implemented in C and is part of C\u00e9u-libuv.\n\n\nC\u00e9u-libuv maps each libuv request/callback to a corresponding request/input in\nC\u00e9u.\nAs an example, instead of reading from a stream with \nuv_read_start\n, C\u00e9u-libuv\nuses \nceu_uv_read_start\n which generates\n\nUV_STREAM_READ\n input events back to the\napplication, as follows:\n\n\n#define ceu_uv_read_start(stream) uv_read_start(stream,...,ceu_uv_read_start_cb);\n\nvoid ceu_uv_read_start_cb(uv_stream_t* stream, ...) {\n    \n...\n\n    ceu_input(CEU_INPUT_UV_STREAM_READ, \nstream\n);\n}\n\n\n\n\nUnder the hood, C\u00e9u-libuv uses one \nevent loop\n, one \ntimer\n, and one \nasync\n\nlibuv handles.\nThe timer manages C\u00e9u timers.\nThe async manages C\u00e9u asyncs and threads.\nThe main event loop makes continuous calls to \nuv_run\n passing \nUV_RUN_ONCE\n:\n\n\nint main (void) {\n    ceu_start();\n    while (\nprogram-is-running\n) {\n        uv_run(\nloop, UV_RUN_ONCE);         // handles all libuv callbacks\n        ceu_input(CEU_INPUT__ASYNC, NULL);  // handles timers and asyncs\n    }\n    ceu_stop();\n}", 
+            "title": "Mode of Operation"
+        }, 
+        {
+            "location": "/modes/#mode-of-operation", 
+            "text": "The mode of operation specifies how C\u00e9u-libuv captures events from the\nenvironment (e.g., timers and incoming network traffic) and redirects them to\nthe C\u00e9u application.\nIt is implemented in C and is part of C\u00e9u-libuv.  C\u00e9u-libuv maps each libuv request/callback to a corresponding request/input in\nC\u00e9u.\nAs an example, instead of reading from a stream with  uv_read_start , C\u00e9u-libuv\nuses  ceu_uv_read_start  which generates UV_STREAM_READ  input events back to the\napplication, as follows:  #define ceu_uv_read_start(stream) uv_read_start(stream,...,ceu_uv_read_start_cb);\n\nvoid ceu_uv_read_start_cb(uv_stream_t* stream, ...) {\n     ... \n    ceu_input(CEU_INPUT_UV_STREAM_READ,  stream );\n}  Under the hood, C\u00e9u-libuv uses one  event loop , one  timer , and one  async \nlibuv handles.\nThe timer manages C\u00e9u timers.\nThe async manages C\u00e9u asyncs and threads.\nThe main event loop makes continuous calls to  uv_run  passing  UV_RUN_ONCE :  int main (void) {\n    ceu_start();\n    while ( program-is-running ) {\n        uv_run( loop, UV_RUN_ONCE);         // handles all libuv callbacks\n        ceu_input(CEU_INPUT__ASYNC, NULL);  // handles timers and asyncs\n    }\n    ceu_stop();\n}", 
+            "title": "Mode of Operation"
+        }, 
+        {
+            "location": "/fs/", 
+            "text": "File System\n\n\nProvides file system operations.\n\n\nlibuv reference: \nhttp://docs.libuv.org/en/v1.x/fs.html\n\n\nInput Events\n\n\nUV_FS\n\n\ninput _uv_fs_t\n UV_FS;\n\n\n\n\n\n\nOccurrence:\n\n\nWhenever a filesystem operation completes.\n\n\n\n\n\n\nPayload:\n\n\n_uv_fs_t\n: pointer to the operation request\n\n\n\n\n\n\n\n\nlibuv reference: \nhttp://docs.libuv.org/en/v1.x/fs.html\n\n\nData Abstractions\n\n\nUV_FS_File\n\n\nA file handle.\n\n\ndata UV_FS_File with\n    var\n[] byte  buffer;\n    var    usize offset =  0;\n    var    int   handle = -1;\n    event  void  ok;\nend\n\n\n\n\n\n\nFields:\n\n\nbuffer\n: alias to the read \n write buffer\n\n\noffset\n: current offset for read \n write operations\n\n\nhandle\n: underlying operating system handle\n\n\nok\n:     event signalled when the file is opened successfully\n\n\n\n\n\n\n\n\nCode Abstractions\n\n\nUV_FS_Open\n\n\nOpens a file.\n\n\ncode/await UV_FS_Open (var _char\n path, var usize? buffer_size, var int? flags, var int? mode)\n                        -\n (var UV_FS_File file)\n                            -\n int\n\n\n\n\n\n\n\nParameters\n\n\npath\n:           path to the file\n\n\nbuffer_size\n:    size of the read \n write ring buffer (default: \n1024\n)\n\n\nflags\n:          access mode flags (default: \n_O_RDONLY\n)\n\n\nmode\n:           file permission mode (default: \n0\n)\n\n\n\n\n\n\nPublic fields\n\n\nfile\n:           \nfile handle\n\n\n\n\n\n\nReturn\n\n\nint\n: open error\n\n\nreturns only in case of an error (always \n0\n)\n\n\n\n\n\n\n\n\n\n\n\n\nThe file is only ready for use after \nfile.ok\n is triggered.\n\n\nC\u00e9u-libuv references:\n    \nUV_FS\n.\n\n\nlibuv references:\n    \nceu_uv_fs_open\n,\n    \nuv_fs_close\n,\n    \nuv_fs_req_cleanup\n.\n\n\nExample\n\n\nOpens \nfile.txt\n and prints \nopen ok\n after the file is ready for use.\nIn case of failure, prints \nopen error\n along with the error code:\n\n\n#include \nuv/fs.ceu\n\n\nvar\n? UV_FS_Open o = spawn UV_FS_Open(\nfile.txt\n,_,_,_);\nvar int? err =\n    watching o do\n        await o.file.ok;\n        _printf(\nopen ok\\n\n);   // file is ready for use\n    end;\nif err? then\n    _printf(\nopen error: %d\\n\n, err!);\nend\n\nescape 0;\n\n\n\n\n\n\n\nUV_FS_Read_N\n\n\nReads a specified number of bytes in the \nfile handle\n to its buffer.\n\n\ncode/await UV_FS_Read_N (var\n UV_FS_File file, var usize n) -\n ssize\n\n\n\n\n\n\nParameters\n\n\nfile\n:   \nfile handle\n to read\n\n\nn\n:      number of bytes to read\n\n\n\n\n\n\nReturn\n\n\nssize\n: number of bytes read from \nfile\n\n\n=0\n: number of bytes (less than or equal to \nn\n)\n\n\n0\n:  read error\n\n\n\n\n\n\n\n\n\n\n\n\nC\u00e9u-libuv references:\n    \nceu_uv_fs_read\n,\n    \nUV_FS\n.\n\n\nlibuv references:\n    \nuv_buf_init\n,\n    \nuv_fs_req_cleanup\n.\n\n\nExample\n\n\nPrints the contents of \nfile.txt\n in a loop that reads the file in chunks of 10\nbytes:\n\n\n#include \nuv/fs.ceu\n\n\nvar\n? UV_FS_Open o = spawn UV_FS_Open(\nfile.txt\n, 11, _,_);\nvar int? err =\n    watching o do\n        await o.file.ok;\n\n        loop do\n            var ssize n = await UV_FS_Read_N(\no.file, $$o.file.buffer-1);\n            if n == 0 then\n                break;\n            end\n            o.file.buffer = o.file.buffer .. [{'\\0'}];\n            _printf(\n%s\n, \no.file.buffer[0]);\n            $o.file.buffer = 0;\n        end\n    end;\n_ceu_dbg_assert(not err?);\n\nescape 0;\n\n\n\n\n\n\n\n\nUV_FS_Read_Line\n\n\nReads a line from a \nfile handle\n.\n\n\ncode/await UV_FS_Read_Line (var\n UV_FS_File file, var\n[] byte line, var usize? by) -\n ssize\n\n\n\n\n\n\nParameters\n\n\nfile\n:   \nfile handle\n to read\n\n\nline\n:   alias to destination buffer (excludes the leading \n\\n\n)\n\n\nby\n:     size of read chunks in bytes (default: \n128\n)\n\n\n\n\n\n\nReturn\n\n\nssize\n: number of bytes read from \nfile\n\n\n=0\n: number of bytes (includes the leading \n\\n\n and extra bytes)\n\n\n0\n:  read error\n\n\n\n\n\n\n\n\n\n\n\n\nThe \nfile handle\n buffer advances to the byte after the \n\\n\n.\n\n\nC\u00e9u-libuv references:\n    \nUV_FS_Read_N\n.\n\n\nExample\n\n\nPrints the contents of \nfile.txt\n in a loop that reads the file line by line:\n\n\n#include \nuv/fs.ceu\n\n\nvar\n? UV_FS_Open o = spawn UV_FS_Open(\nfile.txt\n,_,_,_);\nwatching o do\n    await o.file.ok;\n    loop do\n        var[] byte line;\n        var ssize n = await UV_FS_Read_Line(\no.file,\nline,_);\n        if n \n= 0 then\n            break;\n        end\n        line = line .. [{'\\0'}];\n        _printf(\n%s\\n\n, \nline[0], n);\n    end\nend\n\nescape 0;\n\n\n\n\n\n\n\nUV_FS_Write_N\n\n\nWrites a specified number of bytes in the \nfile handle\n from its buffer.\n\n\ncode/await UV_FS_Write_N (var\n UV_FS_File file, var usize? n) -\n ssize\n\n\n\n\n\n\nParameters\n\n\nfile\n:   \nfile handle\n to write\n\n\nn\n:      number of bytes to write (default: current size of the \nfile\n buffer)\n\n\n\n\n\n\nReturn\n\n\nssize\n: number of bytes written\n\n\n=0\n: number of bytes\n\n\n0\n:  write error\n\n\n\n\n\n\n\n\n\n\n\n\nC\u00e9u-libuv references:\n    \nceu_uv_fs_write\n,\n    \nUV_FS\n.\n\n\nlibuv references:\n    \nuv_buf_init\n,\n    \nuv_fs_req_cleanup\n.\n\n\nExample\n\n\nWrites the string \nHello World\n to \nhello.txt\n:\n\n\n#include \nuv/fs.ceu\n\n\nvar\n UV_FS_File file;\n\nvar _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;\nvar\n? UV_FS_Open o = spawn UV_FS_Open(\nhello.txt\n, _, _O_CREAT|_O_WRONLY, mode);\nwatching o do\n    await o.file.ok;\n    o.file.buffer = [] .. \nHello World!\\n\n;\n    var usize n1 = $o.file.buffer;\n    var ssize n2 = await UV_FS_Write_N(\no.file,$o.file.buffer);\n    _ceu_dbg_assert(n2\n=0 and n2==n1);\nend;\n\nescape 0;\n\n\n\n\n\n\n\nUV_FS_Fstat\n\n\nReads information about a file.\n\n\ncode/await UV_FS_Fstat (var\n UV_FS_File file, var\n _uv_stat_t stat)\n                        -\n int\n\n\n\n\n\n\nParameters\n\n\nfile\n: \nfile handle\n to write to\n\n\nstat\n: destination buffer\n\n\n\n\n\n\nReturn\n\n\nint\n: operation status\n\n\n0\n: success\n\n\n0\n: error\n\n\n\n\n\n\n\n\n\n\n\n\nC\u00e9u-libuv references:\n    \nceu_uv_fs_fstat\n,\n    \nUV_FS\n.\n\n\nlibuv references:\n    \nuv_fs_req_cleanup\n.\n\n\nExample\n\n\nPrints the size of \nfile.txt\n in bytes:\n\n\n#include \nuv/fs.ceu\n\n\nvar\n UV_FS_File file;\n\nvar int? err =\n    watching UV_FS_Open(\nfile.txt\n, _O_RDONLY, 0) -\n (\nfile)\n    do\n        await file.ok;\n\n        var _uv_stat_t stat = _;\n        await UV_FS_Fstat(\nfile, \nstat);\n        _printf(\nsize = %ld\\n\n, stat.st_size);\n    end;\n\nif err? then\n    _printf(\nopen error: %d\\n\n, err!);\nend\n\nescape 0;", 
+            "title": "File System"
+        }, 
+        {
+            "location": "/fs/#file-system", 
+            "text": "Provides file system operations.  libuv reference:  http://docs.libuv.org/en/v1.x/fs.html", 
+            "title": "File System"
+        }, 
+        {
+            "location": "/fs/#input-events", 
+            "text": "", 
+            "title": "Input Events"
+        }, 
+        {
+            "location": "/fs/#uv_fs", 
+            "text": "input _uv_fs_t  UV_FS;   Occurrence:  Whenever a filesystem operation completes.    Payload:  _uv_fs_t : pointer to the operation request     libuv reference:  http://docs.libuv.org/en/v1.x/fs.html", 
+            "title": "UV_FS"
+        }, 
+        {
+            "location": "/fs/#data-abstractions", 
+            "text": "", 
+            "title": "Data Abstractions"
+        }, 
+        {
+            "location": "/fs/#uv_fs_file", 
+            "text": "A file handle.  data UV_FS_File with\n    var [] byte  buffer;\n    var    usize offset =  0;\n    var    int   handle = -1;\n    event  void  ok;\nend   Fields:  buffer : alias to the read   write buffer  offset : current offset for read   write operations  handle : underlying operating system handle  ok :     event signalled when the file is opened successfully", 
+            "title": "UV_FS_File"
+        }, 
+        {
+            "location": "/fs/#code-abstractions", 
+            "text": "", 
+            "title": "Code Abstractions"
+        }, 
+        {
+            "location": "/fs/#uv_fs_open", 
+            "text": "Opens a file.  code/await UV_FS_Open (var _char  path, var usize? buffer_size, var int? flags, var int? mode)\n                        -  (var UV_FS_File file)\n                            -  int   Parameters  path :           path to the file  buffer_size :    size of the read   write ring buffer (default:  1024 )  flags :          access mode flags (default:  _O_RDONLY )  mode :           file permission mode (default:  0 )    Public fields  file :            file handle    Return  int : open error  returns only in case of an error (always  0 )       The file is only ready for use after  file.ok  is triggered.  C\u00e9u-libuv references:\n     UV_FS .  libuv references:\n     ceu_uv_fs_open ,\n     uv_fs_close ,\n     uv_fs_req_cleanup .", 
+            "title": "UV_FS_Open"
+        }, 
+        {
+            "location": "/fs/#example", 
+            "text": "Opens  file.txt  and prints  open ok  after the file is ready for use.\nIn case of failure, prints  open error  along with the error code:  #include  uv/fs.ceu \n\nvar ? UV_FS_Open o = spawn UV_FS_Open( file.txt ,_,_,_);\nvar int? err =\n    watching o do\n        await o.file.ok;\n        _printf( open ok\\n );   // file is ready for use\n    end;\nif err? then\n    _printf( open error: %d\\n , err!);\nend\n\nescape 0;", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/fs/#uv_fs_read_n", 
+            "text": "Reads a specified number of bytes in the  file handle  to its buffer.  code/await UV_FS_Read_N (var  UV_FS_File file, var usize n) -  ssize   Parameters  file :    file handle  to read  n :      number of bytes to read    Return  ssize : number of bytes read from  file  =0 : number of bytes (less than or equal to  n )  0 :  read error       C\u00e9u-libuv references:\n     ceu_uv_fs_read ,\n     UV_FS .  libuv references:\n     uv_buf_init ,\n     uv_fs_req_cleanup .", 
+            "title": "UV_FS_Read_N"
+        }, 
+        {
+            "location": "/fs/#example_1", 
+            "text": "Prints the contents of  file.txt  in a loop that reads the file in chunks of 10\nbytes:  #include  uv/fs.ceu \n\nvar ? UV_FS_Open o = spawn UV_FS_Open( file.txt , 11, _,_);\nvar int? err =\n    watching o do\n        await o.file.ok;\n\n        loop do\n            var ssize n = await UV_FS_Read_N( o.file, $$o.file.buffer-1);\n            if n == 0 then\n                break;\n            end\n            o.file.buffer = o.file.buffer .. [{'\\0'}];\n            _printf( %s ,  o.file.buffer[0]);\n            $o.file.buffer = 0;\n        end\n    end;\n_ceu_dbg_assert(not err?);\n\nescape 0;", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/fs/#uv_fs_read_line", 
+            "text": "Reads a line from a  file handle .  code/await UV_FS_Read_Line (var  UV_FS_File file, var [] byte line, var usize? by) -  ssize   Parameters  file :    file handle  to read  line :   alias to destination buffer (excludes the leading  \\n )  by :     size of read chunks in bytes (default:  128 )    Return  ssize : number of bytes read from  file  =0 : number of bytes (includes the leading  \\n  and extra bytes)  0 :  read error       The  file handle  buffer advances to the byte after the  \\n .  C\u00e9u-libuv references:\n     UV_FS_Read_N .", 
+            "title": "UV_FS_Read_Line"
+        }, 
+        {
+            "location": "/fs/#example_2", 
+            "text": "Prints the contents of  file.txt  in a loop that reads the file line by line:  #include  uv/fs.ceu \n\nvar ? UV_FS_Open o = spawn UV_FS_Open( file.txt ,_,_,_);\nwatching o do\n    await o.file.ok;\n    loop do\n        var[] byte line;\n        var ssize n = await UV_FS_Read_Line( o.file, line,_);\n        if n  = 0 then\n            break;\n        end\n        line = line .. [{'\\0'}];\n        _printf( %s\\n ,  line[0], n);\n    end\nend\n\nescape 0;", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/fs/#uv_fs_write_n", 
+            "text": "Writes a specified number of bytes in the  file handle  from its buffer.  code/await UV_FS_Write_N (var  UV_FS_File file, var usize? n) -  ssize   Parameters  file :    file handle  to write  n :      number of bytes to write (default: current size of the  file  buffer)    Return  ssize : number of bytes written  =0 : number of bytes  0 :  write error       C\u00e9u-libuv references:\n     ceu_uv_fs_write ,\n     UV_FS .  libuv references:\n     uv_buf_init ,\n     uv_fs_req_cleanup .", 
+            "title": "UV_FS_Write_N"
+        }, 
+        {
+            "location": "/fs/#example_3", 
+            "text": "Writes the string  Hello World  to  hello.txt :  #include  uv/fs.ceu \n\nvar  UV_FS_File file;\n\nvar _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;\nvar ? UV_FS_Open o = spawn UV_FS_Open( hello.txt , _, _O_CREAT|_O_WRONLY, mode);\nwatching o do\n    await o.file.ok;\n    o.file.buffer = [] ..  Hello World!\\n ;\n    var usize n1 = $o.file.buffer;\n    var ssize n2 = await UV_FS_Write_N( o.file,$o.file.buffer);\n    _ceu_dbg_assert(n2 =0 and n2==n1);\nend;\n\nescape 0;", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/fs/#uv_fs_fstat", 
+            "text": "Reads information about a file.  code/await UV_FS_Fstat (var  UV_FS_File file, var  _uv_stat_t stat)\n                        -  int   Parameters  file :  file handle  to write to  stat : destination buffer    Return  int : operation status  0 : success  0 : error       C\u00e9u-libuv references:\n     ceu_uv_fs_fstat ,\n     UV_FS .  libuv references:\n     uv_fs_req_cleanup .", 
+            "title": "UV_FS_Fstat"
+        }, 
+        {
+            "location": "/fs/#example_4", 
+            "text": "Prints the size of  file.txt  in bytes:  #include  uv/fs.ceu \n\nvar  UV_FS_File file;\n\nvar int? err =\n    watching UV_FS_Open( file.txt , _O_RDONLY, 0) -  ( file)\n    do\n        await file.ok;\n\n        var _uv_stat_t stat = _;\n        await UV_FS_Fstat( file,  stat);\n        _printf( size = %ld\\n , stat.st_size);\n    end;\n\nif err? then\n    _printf( open error: %d\\n , err!);\nend\n\nescape 0;", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/stream/", 
+            "text": "Stream\n\n\nProvides stream operations.\n\n\nlibuv reference: \nhttp://docs.libuv.org/en/v1.x/stream.html\n\n\nInput Events\n\n\nUV_STREAM_LISTEN\n\n\ninput (_uv_stream_t\n, int) UV_STREAM_LISTEN;\n\n\n\n\n\n\nOccurrence:\n\n\nWhenever a stream server receives an incoming connection.\n\n\n\n\n\n\nPayload:\n\n\n_uv_stream_t\n: pointer to the stream server\n\n\n\n\n\n\n\n\nlibuv reference: \nhttp://docs.libuv.org/en/v1.x/stream.html#c.uv_connection_cb\n\n\nUV_STREAM_CONNECT\n\n\ninput (_uv_connect_t\n, int) UV_STREAM_CONNECT;\n\n\n\n\n\n\nOccurrence:\n\n\nWhenever a connection opens.\n\n\n\n\n\n\nPayload:\n\n\n_uv_connect_t\n: pointer to the connection\n\n\nint\n: open status\n\n\n0\n: success\n\n\n0\n: error\n\n\n\n\n\n\n\n\n\n\n\n\nlibuv reference: \nhttp://docs.libuv.org/en/v1.x/stream.html#c.uv_connect_cb\n\n\nUV_STREAM_READ\n\n\ninput (_uv_stream_t\n, ssize) UV_STREAM_READ;\n\n\n\n\n\n\nOccurrence:\n\n\nWhenever data is available on a stream.\n\n\n\n\n\n\nPayload:\n\n\n_uv_stream_t\n: pointer to the stream\n\n\nssize\n: number of bytes available\n\n\n0\n: data available\n\n\n0\n: error\n\n\n\n\n\n\n\n\n\n\n\n\nlibuv reference: \nhttp://docs.libuv.org/en/v1.x/stream.html#c.uv_read_cb\n\n\nUV_STREAM_WRITE\n\n\ninput (_uv_write_t\n, int) UV_STREAM_WRITE;\n\n\n\n\n\n\nOccurrence:\n\n\nWhenever writing to a stream completes.\n\n\n\n\n\n\nPayload:\n\n\n_uv_write_T\n: pointer to the write request\n\n\nint\n: completion status\n\n\n0\n: success\n\n\n0\n: error\n\n\n\n\n\n\n\n\n\n\n\n\nlibuv reference: \nhttp://docs.libuv.org/en/v1.x/stream.html#c.uv_write_cb\n\n\nUV_STREAM_ERROR\n\n\ninput (_uv_stream_t\n, int) UV_STREAM_ERROR;\n\n\n\n\n\n\nOccurrence:\n\n\nWhenever a read or write error occurs in a stream.\n\n\n\n\n\n\nPayload:\n\n\n_uv_stream_t\n: pointer to the stream\n\n\nint\n: error code\n\n\n\n\n\n\n\n\nUV_STREAM_ERROR\n always occurs before the corresponding \nUV_STREAM_READ\n or\n\nUV_STREAM_WRITE\n.\n\n\nlibuv reference: \nhttp://docs.libuv.org/en/v1.x/errors.html\n\n\nData Abstractions\n\n\nUV_Stream\n\n\nA stream handle.\n\n\ndata UV_Stream with\n    var\n[] byte         buffer;\n    var\n   _uv_stream_t handle;\nend\n\n\n\n\n\n\nFields:\n\n\nbuffer\n: alias to the read \n write buffer\n\n\nhandle\n: underlying operating system handle\n\n\n\n\n\n\n\n\nCode Abstractions\n\n\n\n\n\nUV_Stream_Listen\n\n\nStarts listening for incoming connections in a \nstream handle\n.\n\n\ncode/await UV_Stream_Listen (var\n UV_Stream stream, var int? backlog)\n                                -\n (event void ok)\n                                    -\n int\n\n\n\n\n\n\nParameters\n\n\nstream\n:  \nstream handle\n to listen\n\n\nbacklog\n: number of connections the kernel might queue (default: \n128\n)\n\n\n\n\n\n\nPublic fields\n\n\nok\n: event signalled on every new incoming connection\n\n\n\n\n\n\nReturn\n\n\nint\n: operation status\n\n\n0\n: success\n\n\n0\n: error\n\n\n\n\n\n\n\n\n\n\n\n\nC\u00e9u-libuv references:\n    \nceu_uv_listen\n,\n    \nUV_STREAM_LISTEN\n.\n\n\nExample\n\n\nOpens a \nTCP stream\n, binds it to port \n7000\n, and then\nenters in listen mode.\nEach incoming connection triggers the event \nok\n.\n\n\n#include \nuv/tcp.ceu\n\n\nvar\n? UV_TCP_Open tcp = spawn UV_TCP_Open(_);\nwatching tcp do\n    var _sockaddr_in addr = _;\n    _uv_ip4_addr(\n0.0.0.0\n, 7000, \naddr);\n    _uv_tcp_bind(\ntcp.stream.handle as _uv_tcp_t\n, \naddr as _sockaddr\n, 0);\n\n    var\n? UV_Stream_Listen listen = spawn UV_Stream_Listen(\ntcp.stream,_);\n    watching listen do\n        every listen.ok do\n            \n...\n   // handle incoming connections\n        end\n    end\nend\n\nescape 0;\n\n\n\n\n\n\n\nUV_Stream_Read_N\n\n\nReads a specified number of bytes in the \nstream handle\n to its buffer.\n\n\ncode/await UV_Stream_Read_N (var\n UV_Stream stream, var usize? n) -\n ssize\n\n\n\n\n\n\nParameters\n\n\nstream\n: \nstream handle\n to read\n\n\nn\n:      number of bytes to read (default: whatever arrives in the stream)\n\n\n\n\n\n\nReturn\n\n\nssize\n: number of bytes read from \nstream\n\n\n=0\n: number of bytes (not related to \nn\n)\n\n\n0\n:  read error\n\n\n\n\n\n\n\n\n\n\n\n\nAfter returning, if no errors occur, the \nstream handle\n buffer\nwill contain at least \nn\n bytes.\nIf the buffer already contains \nn\n bytes in the beginning, no read occurs and\n\n0\n is returned.\n\n\nC\u00e9u-libuv references:\n    \nceu_uv_read_start\n,\n    \nUV_STREAM_READ\n.\n\n\nlibuv references:\n    \nuv_read_stop\n.\n\n\nExample\n\n\nConnects to \n127.0.0.1:7000\n and reads and writes in a loop:\n\n\n#include \nuv/tcp.ceu\n\n\nvar\n? UV_TCP_Connect c = spawn UV_TCP_Connect(\n127.0.0.1\n, 7000, _);\nwatching c do\n    await c.ok;\n\n    loop do\n        await UV_Stream_Read_N(\nc.stream,_);    // reads anything\n        _printf(\n%s\\n\n, \nc.stream.buffer[0]);  // shows it in the screen\n        await UV_Stream_Write_N(\nc.stream,_);   // writes it back\n    end\nend\n\nescape 0;\n\n\n\n\n\n\n\nUV_Stream_Read_Line\n\n\nReads a line from a \nstream handle\n.\n\n\ncode/await UV_Stream_Read_Line (var\n UV_Stream stream, var\n[] byte line) -\n ssize\n\n\n\n\n\n\nParameters\n\n\nstream\n: \nstream handle\n to read\n\n\nline\n:   alias to destination buffer (excludes the leading \n\\n\n)\n\n\n\n\n\n\nReturn\n\n\nssize\n: number of bytes read from \nstream\n\n\n=0\n: number of bytes (not related to \nn\n)\n\n\n0\n:  read error\n\n\n\n\n\n\n\n\n\n\n\n\nC\u00e9u-libuv references:\n    \nUV_Stream_Read_N\n.\n\n\nExample\n\n\nConnects to \n127.0.0.1:7000\n and reads and writes in a loop:\n\n\n#include \nuv/tcp.ceu\n\n\nvar\n? UV_TCP_Connect c = spawn UV_TCP_Connect(\n127.0.0.1\n, 7000, _);\nwatching c do\n    await c.ok;\n\n    loop do\n        var[] byte line;\n        await UV_Stream_Read_Line(\nc.stream,\nline);     // reads a line\n        _printf(\n%s\\n\n, \nline[0]);                     // shows it in the screen\n        line = line .. \n\\n\n .. c.stream.buffer;\n        c.stream.buffer = [] .. line;\n        await UV_Stream_Write_N(\nc.stream,_);           // writes it back\n    end\nend\n\nescape 0;\n\n\n\n\n\n\n\nUV_Stream_Write_N\n\n\nWrites a specified number of bytes in the \nstream handle\n from its buffer.\n\n\ncode/await UV_Stream_Write_N (var\n UV_Stream stream, var usize? n) -\n ssize\n\n\n\n\n\n\nParameters\n\n\nstream\n: \nstream handle\n to write\n\n\nn\n:      number of bytes to write (default: current size of the \nstream\n buffer)\n\n\n\n\n\n\nReturn\n\n\nssize\n: number of bytes written\n\n\n=0\n: number of bytes\n\n\n0\n:  write error\n\n\n\n\n\n\n\n\n\n\n\n\nC\u00e9u-libuv references:\n    \nceu_uv_write\n,\n    \nUV_STREAM_WRITE\n.\n\n\nExample\n\n\nConnects to \n127.0.0.1:7000\n and reads and writes in a loop:\n\n\n#include \nuv/tcp.ceu\n\n\nvar\n? UV_TCP_Connect c = spawn UV_TCP_Connect(\n127.0.0.1\n, 7000, _);\nwatching c do\n    await c.ok;\n\n    loop do\n        await UV_Stream_Read_N(\nc.stream,_);    // reads anything\n        _printf(\n%s\\n\n, \nc.stream.buffer[0]);  // shows it in the screen\n        await UV_Stream_Write_N(\nc.stream,_);   // writes it back\n    end\nend\n\nescape 0;", 
+            "title": "Stream"
+        }, 
+        {
+            "location": "/stream/#stream", 
+            "text": "Provides stream operations.  libuv reference:  http://docs.libuv.org/en/v1.x/stream.html", 
+            "title": "Stream"
+        }, 
+        {
+            "location": "/stream/#input-events", 
+            "text": "", 
+            "title": "Input Events"
+        }, 
+        {
+            "location": "/stream/#uv_stream_listen", 
+            "text": "input (_uv_stream_t , int) UV_STREAM_LISTEN;   Occurrence:  Whenever a stream server receives an incoming connection.    Payload:  _uv_stream_t : pointer to the stream server     libuv reference:  http://docs.libuv.org/en/v1.x/stream.html#c.uv_connection_cb", 
+            "title": "UV_STREAM_LISTEN"
+        }, 
+        {
+            "location": "/stream/#uv_stream_connect", 
+            "text": "input (_uv_connect_t , int) UV_STREAM_CONNECT;   Occurrence:  Whenever a connection opens.    Payload:  _uv_connect_t : pointer to the connection  int : open status  0 : success  0 : error       libuv reference:  http://docs.libuv.org/en/v1.x/stream.html#c.uv_connect_cb", 
+            "title": "UV_STREAM_CONNECT"
+        }, 
+        {
+            "location": "/stream/#uv_stream_read", 
+            "text": "input (_uv_stream_t , ssize) UV_STREAM_READ;   Occurrence:  Whenever data is available on a stream.    Payload:  _uv_stream_t : pointer to the stream  ssize : number of bytes available  0 : data available  0 : error       libuv reference:  http://docs.libuv.org/en/v1.x/stream.html#c.uv_read_cb", 
+            "title": "UV_STREAM_READ"
+        }, 
+        {
+            "location": "/stream/#uv_stream_write", 
+            "text": "input (_uv_write_t , int) UV_STREAM_WRITE;   Occurrence:  Whenever writing to a stream completes.    Payload:  _uv_write_T : pointer to the write request  int : completion status  0 : success  0 : error       libuv reference:  http://docs.libuv.org/en/v1.x/stream.html#c.uv_write_cb", 
+            "title": "UV_STREAM_WRITE"
+        }, 
+        {
+            "location": "/stream/#uv_stream_error", 
+            "text": "input (_uv_stream_t , int) UV_STREAM_ERROR;   Occurrence:  Whenever a read or write error occurs in a stream.    Payload:  _uv_stream_t : pointer to the stream  int : error code     UV_STREAM_ERROR  always occurs before the corresponding  UV_STREAM_READ  or UV_STREAM_WRITE .  libuv reference:  http://docs.libuv.org/en/v1.x/errors.html", 
+            "title": "UV_STREAM_ERROR"
+        }, 
+        {
+            "location": "/stream/#data-abstractions", 
+            "text": "", 
+            "title": "Data Abstractions"
+        }, 
+        {
+            "location": "/stream/#uv_stream", 
+            "text": "A stream handle.  data UV_Stream with\n    var [] byte         buffer;\n    var    _uv_stream_t handle;\nend   Fields:  buffer : alias to the read   write buffer  handle : underlying operating system handle", 
+            "title": "UV_Stream"
+        }, 
+        {
+            "location": "/stream/#code-abstractions", 
+            "text": "", 
+            "title": "Code Abstractions"
+        }, 
+        {
+            "location": "/stream/#uv_stream_listen_1", 
+            "text": "Starts listening for incoming connections in a  stream handle .  code/await UV_Stream_Listen (var  UV_Stream stream, var int? backlog)\n                                -  (event void ok)\n                                    -  int   Parameters  stream :   stream handle  to listen  backlog : number of connections the kernel might queue (default:  128 )    Public fields  ok : event signalled on every new incoming connection    Return  int : operation status  0 : success  0 : error       C\u00e9u-libuv references:\n     ceu_uv_listen ,\n     UV_STREAM_LISTEN .", 
+            "title": "UV_Stream_Listen"
+        }, 
+        {
+            "location": "/stream/#example", 
+            "text": "Opens a  TCP stream , binds it to port  7000 , and then\nenters in listen mode.\nEach incoming connection triggers the event  ok .  #include  uv/tcp.ceu \n\nvar ? UV_TCP_Open tcp = spawn UV_TCP_Open(_);\nwatching tcp do\n    var _sockaddr_in addr = _;\n    _uv_ip4_addr( 0.0.0.0 , 7000,  addr);\n    _uv_tcp_bind( tcp.stream.handle as _uv_tcp_t ,  addr as _sockaddr , 0);\n\n    var ? UV_Stream_Listen listen = spawn UV_Stream_Listen( tcp.stream,_);\n    watching listen do\n        every listen.ok do\n             ...    // handle incoming connections\n        end\n    end\nend\n\nescape 0;", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/stream/#uv_stream_read_n", 
+            "text": "Reads a specified number of bytes in the  stream handle  to its buffer.  code/await UV_Stream_Read_N (var  UV_Stream stream, var usize? n) -  ssize   Parameters  stream :  stream handle  to read  n :      number of bytes to read (default: whatever arrives in the stream)    Return  ssize : number of bytes read from  stream  =0 : number of bytes (not related to  n )  0 :  read error       After returning, if no errors occur, the  stream handle  buffer\nwill contain at least  n  bytes.\nIf the buffer already contains  n  bytes in the beginning, no read occurs and 0  is returned.  C\u00e9u-libuv references:\n     ceu_uv_read_start ,\n     UV_STREAM_READ .  libuv references:\n     uv_read_stop .", 
+            "title": "UV_Stream_Read_N"
+        }, 
+        {
+            "location": "/stream/#example_1", 
+            "text": "Connects to  127.0.0.1:7000  and reads and writes in a loop:  #include  uv/tcp.ceu \n\nvar ? UV_TCP_Connect c = spawn UV_TCP_Connect( 127.0.0.1 , 7000, _);\nwatching c do\n    await c.ok;\n\n    loop do\n        await UV_Stream_Read_N( c.stream,_);    // reads anything\n        _printf( %s\\n ,  c.stream.buffer[0]);  // shows it in the screen\n        await UV_Stream_Write_N( c.stream,_);   // writes it back\n    end\nend\n\nescape 0;", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/stream/#uv_stream_read_line", 
+            "text": "Reads a line from a  stream handle .  code/await UV_Stream_Read_Line (var  UV_Stream stream, var [] byte line) -  ssize   Parameters  stream :  stream handle  to read  line :   alias to destination buffer (excludes the leading  \\n )    Return  ssize : number of bytes read from  stream  =0 : number of bytes (not related to  n )  0 :  read error       C\u00e9u-libuv references:\n     UV_Stream_Read_N .", 
+            "title": "UV_Stream_Read_Line"
+        }, 
+        {
+            "location": "/stream/#example_2", 
+            "text": "Connects to  127.0.0.1:7000  and reads and writes in a loop:  #include  uv/tcp.ceu \n\nvar ? UV_TCP_Connect c = spawn UV_TCP_Connect( 127.0.0.1 , 7000, _);\nwatching c do\n    await c.ok;\n\n    loop do\n        var[] byte line;\n        await UV_Stream_Read_Line( c.stream, line);     // reads a line\n        _printf( %s\\n ,  line[0]);                     // shows it in the screen\n        line = line ..  \\n  .. c.stream.buffer;\n        c.stream.buffer = [] .. line;\n        await UV_Stream_Write_N( c.stream,_);           // writes it back\n    end\nend\n\nescape 0;", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/stream/#uv_stream_write_n", 
+            "text": "Writes a specified number of bytes in the  stream handle  from its buffer.  code/await UV_Stream_Write_N (var  UV_Stream stream, var usize? n) -  ssize   Parameters  stream :  stream handle  to write  n :      number of bytes to write (default: current size of the  stream  buffer)    Return  ssize : number of bytes written  =0 : number of bytes  0 :  write error       C\u00e9u-libuv references:\n     ceu_uv_write ,\n     UV_STREAM_WRITE .", 
+            "title": "UV_Stream_Write_N"
+        }, 
+        {
+            "location": "/stream/#example_3", 
+            "text": "Connects to  127.0.0.1:7000  and reads and writes in a loop:  #include  uv/tcp.ceu \n\nvar ? UV_TCP_Connect c = spawn UV_TCP_Connect( 127.0.0.1 , 7000, _);\nwatching c do\n    await c.ok;\n\n    loop do\n        await UV_Stream_Read_N( c.stream,_);    // reads anything\n        _printf( %s\\n ,  c.stream.buffer[0]);  // shows it in the screen\n        await UV_Stream_Write_N( c.stream,_);   // writes it back\n    end\nend\n\nescape 0;", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/tcp/", 
+            "text": "TCP\n\n\nProvides TCP operations.\n\n\nlibuv reference: \nhttp://docs.libuv.org/en/v1.x/tcp.html\n\n\n\n\n\nCode Abstractions\n\n\n\n\n\nUV_TCP_Open\n\n\nOpens a \nTCP\n\n\nstream\n.\n\n\ncode/await UV_TCP_Open (var int? buffer_size) -\n (var UV_Stream stream) -\n int\n\n\n\n\n\n\nParameters\n\n\nbuffer_size\n:    size of the read \n write ring buffer (default: \n1024\n)\n\n\n\n\n\n\nPublic fields\n\n\nstream\n:         opened and uninitialized \nTCP\n \nstream\n\n\n\n\n\n\nReturn\n\n\nint\n: TCP error\n\n\nreturns only in case of error (always \n0\n)\n\n\n\n\n\n\n\n\n\n\n\n\nC\u00e9u-libuv references:\n    \nceu_uv_tcp_init\n,\n    \nceu_uv_close\n,\n    \nUV_STREAM_ERROR\n.\n\n\nExample\n\n\n#include \nuv/tcp.ceu\n\n\nvar\n? UV_TCP_Open tcp = spawn UV_TCP_Open(_);\nvar int? err =\n    watching tcp do\n        \n...\n   // use the raw `tcp` stream\n    end;\nif err? then\n    _fprintf(_stderr, \n%s\\n\n, _uv_strerror(err!));\nend\n\nescape 0;\n\n\n\n\n\n\n\nOpens a \nTCP\n\n\nstream\n and connects it.\n\n\ncode/await UV_TCP_Connect (var _char\n ip, var int port, var int? buffer_size)\n                            -\n (var\n UV_Stream stream, event void ok)\n                                -\n int\n\n\n\n\n\n\nParameters\n\n\nip\n:          remote host\n\n\nport\n:        remote port\n\n\nbuffer_size\n: size of the read \n write \nstream\n ring buffer (default: \n1024\n)\n\n\n\n\n\n\nPublic fields\n\n\nstream\n:      \nTCP\n \nstream\n\n\nok\n:          event signalled when \nstream\n connects and is ready for use\n\n\n\n\n\n\nReturn\n\n\nint\n: TCP error\n\n\nreturns only in case of error (always \n0\n)\n\n\n\n\n\n\n\n\n\n\n\n\nC\u00e9u-libuv references:\n    \nceu_uv_tcp_connect\n,\n    \nUV_STREAM_CONNECT\n.\n\n\nExample\n\n\n#include \nuv/tcp.ceu\n\n\nvar\n? UV_TCP_Connect c = spawn UV_TCP_Connect(\n127.0.0.1\n, 7000, _);\nwatching c do\n    await c.ok;\n    \n...\n   // use the connected TCP `c.stream`\nend\n\nescape 0;\n\n\n\n\n\n\n\nUV_TCP_Open_Bind_Listen\n\n\nOpens a \nTCP\n\n\nstream\n, binds it to an IP and port, and listens for incoming\nconnections.\n\n\ncode/await UV_TCP_Open_Bind_Listen (var _char\n? ip, var int port, var int? backlog, var int? buffer_size)\n                                    -\n (var\n UV_Stream stream, event\n void ok)\n                                        -\n int\n\n\n\n\n\n\nParameters\n\n\nip\n:          local host (default: \n\"0.0.0.0\"\n)\n\n\nport\n:        local port\n\n\nbacklog\n:     number of connections the kernel might queue (default: \n128\n)\n\n\nbuffer_size\n: size of the read \n write \nstream\n ring buffer (default: \n1024\n)\n\n\n\n\n\n\nPublic fields\n\n\nstream\n:  \nTCP\n \nstream\n\n\nok\n:      event signalled on every new incoming connection\n\n\n\n\n\n\nReturn\n\n\nint\n: TCP error\n\n\nreturns only in case of error (always \n0\n)\n\n\n\n\n\n\n\n\n\n\n\n\nC\u00e9u-libuv references:\n    \nUV_TCP_Open\n,\n    \nUV_Stream_Listen\n.\n\n\nExample\n\n\nListen on port \n7000\n:\n\n\n#include \nuv/tcp.ceu\n\n\nvar\n? UV_TCP_Open_Bind_Listen tcp = spawn UV_TCP_Open_Bind_Listen(\n0.0.0.0\n, 7000, _,_);\nwatching tcp do\n    every tcp.ok do\n        \n...\n   // handle incoming connections\n    end\nend\n\nescape 0;\n\n\n\n\n\n\n\nOpens a \nTCP\n\n\nstream\n, binds it to an IP and port, listens for incoming\nconnections, and spawns a handler on every new connection.\n\n\ncode/await UV_TCP_Server (var _char\n? ip, var int port,\n                          var int? backlog, var int? buffer_size,\n                          var\n? UV_TCP_Server_Data shared)\n                            -\n int\n\n\n\n\n\n\n\nParameters\n\n\nip\n:          local host (default: \n\"0.0.0.0\"\n)\n\n\nport\n:        local port\n\n\nbacklog\n:     number of connections the kernel might queue (default: \n128\n)\n\n\nbuffer_size\n: size of the read \n write \nstream\n ring buffer (default: \n1024\n)\n\n\nshared\n:      an optional payload to be shared with all handlers\n\n\n\n\n\n\nReturn\n\n\nint\n: TCP error\n\n\nreturns only in case of error (always \n0\n)\n\n\n\n\n\n\n\n\n\n\n\n\nThe handler is a user-defined \ncode/await\n with the fixed identifier\n\nUV_TCP_Server_Handler\n, which must be declared in between the includes for\n\nuv/tcp.ceu\n and \nuv/tcp-server.ceu\n, as follows:\n\n\n#include \nuv/tcp.ceu\n\ncode/await UV_TCP_Server_Handler (var\n UV_Stream stream, var\n? UV_TCP_Server_Data shared) -\n void do\n    \n...\n       // handles a new client connection\nend\n#include \nuv/tcp-server.ceu\n\n\n...\n\n\n\n\n\nThe handler receives a \nTCP\n\n\nstream\n of the connected client.\n\n\nIf the macro \nUV_TCP_SERVER_HANDLER_MAX\n is defined, the server uses a bounded\npool of \nUV_TCP_Server_Handler\n of that size.\n\n\nC\u00e9u-libuv references:\n    \nUV_TCP_Open_Bind_Listen\n,\n    \nUV_TCP_Open\n.\n\n\nlibuv references:\n    [\n_uv_accept\n].\n\n\nExample:\n\n\nExecutes a server on \n0.0.0.0:7000\n and handles each connection inside\n\nUV_TCP_Server_Handler\n:\n\n\n#include \nuv/tcp.ceu\n\n\ndata UV_TCP_Server_Data;    // empty data\n\ncode/await UV_TCP_Server_Handler (var\n UV_Stream stream, var\n? UV_TCP_Server_Data shared) -\n void do\n    \n...\n                   // handles a new client connection\nend\n\n#include \nuv/tcp-server.ceu\n\n\nawait UV_TCP_Server(\n0.0.0.0\n, 7000, _,_,_);", 
+            "title": "TCP"
+        }, 
+        {
+            "location": "/tcp/#tcp", 
+            "text": "Provides TCP operations.  libuv reference:  http://docs.libuv.org/en/v1.x/tcp.html", 
+            "title": "TCP"
+        }, 
+        {
+            "location": "/tcp/#code-abstractions", 
+            "text": "", 
+            "title": "Code Abstractions"
+        }, 
+        {
+            "location": "/tcp/#uv_tcp_open", 
+            "text": "Opens a  TCP  stream .  code/await UV_TCP_Open (var int? buffer_size) -  (var UV_Stream stream) -  int   Parameters  buffer_size :    size of the read   write ring buffer (default:  1024 )    Public fields  stream :         opened and uninitialized  TCP   stream    Return  int : TCP error  returns only in case of error (always  0 )       C\u00e9u-libuv references:\n     ceu_uv_tcp_init ,\n     ceu_uv_close ,\n     UV_STREAM_ERROR .", 
+            "title": "UV_TCP_Open"
+        }, 
+        {
+            "location": "/tcp/#example", 
+            "text": "#include  uv/tcp.ceu \n\nvar ? UV_TCP_Open tcp = spawn UV_TCP_Open(_);\nvar int? err =\n    watching tcp do\n         ...    // use the raw `tcp` stream\n    end;\nif err? then\n    _fprintf(_stderr,  %s\\n , _uv_strerror(err!));\nend\n\nescape 0;   Opens a  TCP  stream  and connects it.  code/await UV_TCP_Connect (var _char  ip, var int port, var int? buffer_size)\n                            -  (var  UV_Stream stream, event void ok)\n                                -  int   Parameters  ip :          remote host  port :        remote port  buffer_size : size of the read   write  stream  ring buffer (default:  1024 )    Public fields  stream :       TCP   stream  ok :          event signalled when  stream  connects and is ready for use    Return  int : TCP error  returns only in case of error (always  0 )       C\u00e9u-libuv references:\n     ceu_uv_tcp_connect ,\n     UV_STREAM_CONNECT .", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/tcp/#example_1", 
+            "text": "#include  uv/tcp.ceu \n\nvar ? UV_TCP_Connect c = spawn UV_TCP_Connect( 127.0.0.1 , 7000, _);\nwatching c do\n    await c.ok;\n     ...    // use the connected TCP `c.stream`\nend\n\nescape 0;", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/tcp/#uv_tcp_open_bind_listen", 
+            "text": "Opens a  TCP  stream , binds it to an IP and port, and listens for incoming\nconnections.  code/await UV_TCP_Open_Bind_Listen (var _char ? ip, var int port, var int? backlog, var int? buffer_size)\n                                    -  (var  UV_Stream stream, event  void ok)\n                                        -  int   Parameters  ip :          local host (default:  \"0.0.0.0\" )  port :        local port  backlog :     number of connections the kernel might queue (default:  128 )  buffer_size : size of the read   write  stream  ring buffer (default:  1024 )    Public fields  stream :   TCP   stream  ok :      event signalled on every new incoming connection    Return  int : TCP error  returns only in case of error (always  0 )       C\u00e9u-libuv references:\n     UV_TCP_Open ,\n     UV_Stream_Listen .", 
+            "title": "UV_TCP_Open_Bind_Listen"
+        }, 
+        {
+            "location": "/tcp/#example_2", 
+            "text": "Listen on port  7000 :  #include  uv/tcp.ceu \n\nvar ? UV_TCP_Open_Bind_Listen tcp = spawn UV_TCP_Open_Bind_Listen( 0.0.0.0 , 7000, _,_);\nwatching tcp do\n    every tcp.ok do\n         ...    // handle incoming connections\n    end\nend\n\nescape 0;   Opens a  TCP  stream , binds it to an IP and port, listens for incoming\nconnections, and spawns a handler on every new connection.  code/await UV_TCP_Server (var _char ? ip, var int port,\n                          var int? backlog, var int? buffer_size,\n                          var ? UV_TCP_Server_Data shared)\n                            -  int   Parameters  ip :          local host (default:  \"0.0.0.0\" )  port :        local port  backlog :     number of connections the kernel might queue (default:  128 )  buffer_size : size of the read   write  stream  ring buffer (default:  1024 )  shared :      an optional payload to be shared with all handlers    Return  int : TCP error  returns only in case of error (always  0 )       The handler is a user-defined  code/await  with the fixed identifier UV_TCP_Server_Handler , which must be declared in between the includes for uv/tcp.ceu  and  uv/tcp-server.ceu , as follows:  #include  uv/tcp.ceu \ncode/await UV_TCP_Server_Handler (var  UV_Stream stream, var ? UV_TCP_Server_Data shared) -  void do\n     ...        // handles a new client connection\nend\n#include  uv/tcp-server.ceu  ...   The handler receives a  TCP  stream  of the connected client.  If the macro  UV_TCP_SERVER_HANDLER_MAX  is defined, the server uses a bounded\npool of  UV_TCP_Server_Handler  of that size.  C\u00e9u-libuv references:\n     UV_TCP_Open_Bind_Listen ,\n     UV_TCP_Open .  libuv references:\n    [ _uv_accept ].", 
+            "title": "Example"
+        }, 
+        {
+            "location": "/tcp/#example_3", 
+            "text": "Executes a server on  0.0.0.0:7000  and handles each connection inside UV_TCP_Server_Handler :  #include  uv/tcp.ceu \n\ndata UV_TCP_Server_Data;    // empty data\n\ncode/await UV_TCP_Server_Handler (var  UV_Stream stream, var ? UV_TCP_Server_Data shared) -  void do\n     ...                    // handles a new client connection\nend\n\n#include  uv/tcp-server.ceu \n\nawait UV_TCP_Server( 0.0.0.0 , 7000, _,_,_);", 
+            "title": "Example:"
+        }, 
+        {
+            "location": "/license/", 
+            "text": "License\n\n\nC\u00e9u-libuv is distributed under the MIT license reproduced below:\n\n\n Copyright (C) 2012-2017 Francisco Sant'Anna\n\n Permission is hereby granted, free of charge, to any person obtaining a copy of\n this software and associated documentation files (the \nSoftware\n), to deal in\n the Software without restriction, including without limitation the rights to\n use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies\n of the Software, and to permit persons to whom the Software is furnished to do\n so, subject to the following conditions:\n\n The above copyright notice and this permission notice shall be included in all\n copies or substantial portions of the Software.\n\n THE SOFTWARE IS PROVIDED \nAS IS\n, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n SOFTWARE.", 
+            "title": "License"
+        }, 
+        {
+            "location": "/license/#license", 
+            "text": "C\u00e9u-libuv is distributed under the MIT license reproduced below:   Copyright (C) 2012-2017 Francisco Sant'Anna\n\n Permission is hereby granted, free of charge, to any person obtaining a copy of\n this software and associated documentation files (the  Software ), to deal in\n the Software without restriction, including without limitation the rights to\n use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies\n of the Software, and to permit persons to whom the Software is furnished to do\n so, subject to the following conditions:\n\n The above copyright notice and this permission notice shall be included in all\n copies or substantial portions of the Software.\n\n THE SOFTWARE IS PROVIDED  AS IS , WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n SOFTWARE.", 
+            "title": "License"
+        }
+    ]
+}

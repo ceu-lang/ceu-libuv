@@ -25,7 +25,7 @@ Céu.
 As an example, instead of reading from a stream with `uv_read_start`, Céu-libuv
 uses `ceu_uv_read_start` which generates
 [`UV_STREAM_READ`](../stream/#uv_stream_read) input events back to the
-application as follows:
+application, as follows:
 
 ```ceu
 ##define ceu_uv_read_start(stream) uv_read_start(stream,...,ceu_uv_read_start_cb);

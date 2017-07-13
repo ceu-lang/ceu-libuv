@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <title>TCP - Céu-libuv v0.20 - Reference Manual</title>
+  
+
+  <link rel="shortcut icon" href="../img/favicon.ico">
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "TCP";
+    var mkdocs_page_input_path = "tcp/index.md";
+    var mkdocs_page_url = "/tcp/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script>
+  <script src="../js/theme.js"></script> 
+
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Céu-libuv v0.20 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="..">Introduction</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../modes/">Mode of Operation</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../fs/">File System</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../stream/">Stream</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">TCP</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#tcp">TCP</a></li>
+                
+                    <li><a class="toctree-l4" href="#code-abstractions">Code Abstractions</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Céu-libuv v0.20 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>TCP</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="tcp">TCP<a class="headerlink" href="#tcp" title="Permanent link">&para;</a></h1>
+<p>Provides TCP operations.</p>
+<p>libuv reference: <a href="http://docs.libuv.org/en/v1.x/tcp.html">http://docs.libuv.org/en/v1.x/tcp.html</a></p>
+<!--
+## Input Events
+
+`TODO`
+
+## Data Abstractions
+
+`TODO`
+-->
+
+<h2 id="code-abstractions">Code Abstractions<a class="headerlink" href="#code-abstractions" title="Permanent link">&para;</a></h2>
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_tcp_open">UV_TCP_Open<a class="headerlink" href="#uv_tcp_open" title="Permanent link">&para;</a></h3>
+<p>Opens a <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a>
+<a href="#uv_stream">stream</a>.</p>
+<pre><code class="ceu">code/await UV_TCP_Open (var int? buffer_size) -&gt; (var UV_Stream stream) -&gt; int
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>buffer_size</code>:    size of the read &amp; write ring buffer (default: <code>1024</code>)</li>
+</ul>
+</li>
+<li>Public fields<ul>
+<li><code>stream</code>:         opened and uninitialized <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a> <a href="#uv_stream">stream</a></li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>int</code>: TCP error<ul>
+<li>returns only in case of error (always <code>&lt;0</code>)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Céu-libuv references:
+    <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_init"><code>ceu_uv_tcp_init</code></a>,
+    <a href="http://docs.libuv.org/en/v1.x/handle.html#c.uv_close"><code>ceu_uv_close</code></a>,
+    <a href="#uv_stream_error"><code>UV_STREAM_ERROR</code></a>.</p>
+<h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h4>
+<pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
+
+var&amp;? UV_TCP_Open tcp = spawn UV_TCP_Open(_);
+var int? err =
+    watching tcp do
+        &lt;...&gt;   // use the raw `tcp` stream
+    end;
+if err? then
+    _fprintf(_stderr, &quot;%s\n&quot;, _uv_strerror(err!));
+end
+
+escape 0;
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<p>Opens a <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a>
+<a href="#uv_stream">stream</a> and connects it.</p>
+<pre><code class="ceu">code/await UV_TCP_Connect (var _char&amp;&amp; ip, var int port, var int? buffer_size)
+                            -&gt; (var&amp; UV_Stream stream, event void ok)
+                                -&gt; int
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>ip</code>:          remote host</li>
+<li><code>port</code>:        remote port</li>
+<li><code>buffer_size</code>: size of the read &amp; write <a href="#uv_stream">stream</a> ring buffer (default: <code>1024</code>)</li>
+</ul>
+</li>
+<li>Public fields<ul>
+<li><code>stream</code>:      <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a> <a href="#uv_stream">stream</a></li>
+<li><code>ok</code>:          event signalled when <code>stream</code> connects and is ready for use</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>int</code>: TCP error<ul>
+<li>returns only in case of error (always <code>&lt;0</code>)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Céu-libuv references:
+    <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_connect"><code>ceu_uv_tcp_connect</code></a>,
+    <a href="#uv_stream_connnect"><code>UV_STREAM_CONNECT</code></a>.</p>
+<h4 id="example_1">Example<a class="headerlink" href="#example_1" title="Permanent link">&para;</a></h4>
+<pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
+
+var&amp;? UV_TCP_Connect c = spawn UV_TCP_Connect(&quot;127.0.0.1&quot;, 7000, _);
+watching c do
+    await c.ok;
+    &lt;...&gt;   // use the connected TCP `c.stream`
+end
+
+escape 0;
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_tcp_open_bind_listen">UV_TCP_Open_Bind_Listen<a class="headerlink" href="#uv_tcp_open_bind_listen" title="Permanent link">&para;</a></h3>
+<p>Opens a <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a>
+<a href="#uv_stream">stream</a>, binds it to an IP and port, and listens for incoming
+connections.</p>
+<pre><code class="ceu">code/await UV_TCP_Open_Bind_Listen (var _char&amp;&amp;? ip, var int port, var int? backlog, var int? buffer_size)
+                                    -&gt; (var&amp; UV_Stream stream, event&amp; void ok)
+                                        -&gt; int
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>ip</code>:          local host (default: <code>"0.0.0.0"</code>)</li>
+<li><code>port</code>:        local port</li>
+<li><code>backlog</code>:     number of connections the kernel might queue (default: <code>128</code>)</li>
+<li><code>buffer_size</code>: size of the read &amp; write <a href="#uv_stream">stream</a> ring buffer (default: <code>1024</code>)</li>
+</ul>
+</li>
+<li>Public fields<ul>
+<li><code>stream</code>:  <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a> <a href="#uv_stream">stream</a></li>
+<li><code>ok</code>:      event signalled on every new incoming connection</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>int</code>: TCP error<ul>
+<li>returns only in case of error (always <code>&lt;0</code>)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Céu-libuv references:
+    <a href="#uv_tcp_open"><code>UV_TCP_Open</code></a>,
+    <a href="./../stream/#uv_stream_listen"><code>UV_Stream_Listen</code></a>.</p>
+<h4 id="example_2">Example<a class="headerlink" href="#example_2" title="Permanent link">&para;</a></h4>
+<p>Listen on port <code>7000</code>:</p>
+<pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
+
+var&amp;? UV_TCP_Open_Bind_Listen tcp = spawn UV_TCP_Open_Bind_Listen(&quot;0.0.0.0&quot;, 7000, _,_);
+watching tcp do
+    every tcp.ok do
+        &lt;...&gt;   // handle incoming connections
+    end
+end
+
+escape 0;
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<p>Opens a <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a>
+<a href="#uv_stream">stream</a>, binds it to an IP and port, listens for incoming
+connections, and spawns a handler on every new connection.</p>
+<pre><code class="ceu">code/await UV_TCP_Server (var _char&amp;&amp;? ip, var int port,
+                          var int? backlog, var int? buffer_size,
+                          var&amp;? UV_TCP_Server_Data shared)
+                            -&gt; int
+
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>ip</code>:          local host (default: <code>"0.0.0.0"</code>)</li>
+<li><code>port</code>:        local port</li>
+<li><code>backlog</code>:     number of connections the kernel might queue (default: <code>128</code>)</li>
+<li><code>buffer_size</code>: size of the read &amp; write <a href="#uv_stream">stream</a> ring buffer (default: <code>1024</code>)</li>
+<li><code>shared</code>:      an optional payload to be shared with all handlers</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>int</code>: TCP error<ul>
+<li>returns only in case of error (always <code>&lt;0</code>)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>The handler is a user-defined <code>code/await</code> with the fixed identifier
+<code>UV_TCP_Server_Handler</code>, which must be declared in between the includes for
+<code>uv/tcp.ceu</code> and <code>uv/tcp-server.ceu</code>, as follows:</p>
+<pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
+code/await UV_TCP_Server_Handler (var&amp; UV_Stream stream, var&amp;? UV_TCP_Server_Data shared) -&gt; void do
+    &lt;...&gt;       // handles a new client connection
+end
+#include &quot;uv/tcp-server.ceu&quot;
+&lt;...&gt;
+</code></pre>
+
+<p>The handler receives a <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a>
+<a href="#uv_stream">stream</a> of the connected client.</p>
+<p>If the macro <code>UV_TCP_SERVER_HANDLER_MAX</code> is defined, the server uses a bounded
+pool of <code>UV_TCP_Server_Handler</code> of that size.</p>
+<p>Céu-libuv references:
+    <a href="#uv_tcp_open_bind_listen"><code>UV_TCP_Open_Bind_Listen</code></a>,
+    <a href="#uv_tcp_open"><code>UV_TCP_Open</code></a>.</p>
+<p>libuv references:
+    [<code>_uv_accept</code>].</p>
+<h4 id="example_3">Example:<a class="headerlink" href="#example_3" title="Permanent link">&para;</a></h4>
+<p>Executes a server on <code>0.0.0.0:7000</code> and handles each connection inside
+<code>UV_TCP_Server_Handler</code>:</p>
+<pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
+
+data UV_TCP_Server_Data;    // empty data
+
+code/await UV_TCP_Server_Handler (var&amp; UV_Stream stream, var&amp;? UV_TCP_Server_Data shared) -&gt; void do
+    &lt;...&gt;                   // handles a new client connection
+end
+
+#include &quot;uv/tcp-server.ceu&quot;
+
+await UV_TCP_Server(&quot;0.0.0.0&quot;, 7000, _,_,_);
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../license/" class="btn btn-neutral float-right" title="License">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../stream/" class="btn btn-neutral" title="Stream"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../stream/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../license/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>
