@@ -94,7 +94,7 @@ do
     _ceu_dbg_assert($$file.buffer >= n);
 
     if $file.buffer >= n then
-        escape 0;
+        escape _UV_ENOBUFS;
     end
     n = n - $file.buffer;
 
@@ -160,7 +160,7 @@ code/await UV_FS_Read_Line (var& UV_FS_File file, var&[] byte line, var usize? b
                                 -> ssize
 do
     if not by? then
-        by = 80;
+        by = 128;
     end
 
     var usize n_read = 0;
