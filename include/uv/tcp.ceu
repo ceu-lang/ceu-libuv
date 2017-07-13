@@ -72,12 +72,16 @@ do
     escape err2;
 end
 
-code/await UV_TCP_Open_Bind_Listen (var _char&& ip, var int port, var int? backlog, var int? buffer_size)
+code/await UV_TCP_Open_Bind_Listen (var _char&&? ip, var int port, var int? backlog, var int? buffer_size)
                                     -> (var& UV_Stream stream, event& void ok)
                                         -> int // err
 do
+    if not ip? then
+        ip = "0.0.0.0";
+    end
+
     var _sockaddr_in addr = _;
-    _uv_ip4_addr(&&ip[0], port, &&addr);
+    _uv_ip4_addr(&&ip![0], port, &&addr);
 
     var&? UV_TCP_Open tcp = spawn UV_TCP_Open(buffer_size);
     var int? err1 =

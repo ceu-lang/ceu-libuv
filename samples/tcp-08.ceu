@@ -10,7 +10,7 @@
 
 data UV_TCP_Server_Data;
 
-code/await UV_TCP_Server_Handler (var& UV_TCP_Server_Data d, var& UV_Stream stream) -> int
+code/await UV_TCP_Server_Handler (var& UV_Stream stream, var&? UV_TCP_Server_Data d) -> int
 do
     loop do
         await UV_Stream_Read_N(&stream, _);
@@ -50,10 +50,10 @@ _printf("I will terminate after 10s...\n");
 watching 10s do
     var UV_TCP_Server_Data d = _;
     par do
-        await UV_TCP_Server(&d, "0.0.0.0", PORT+0, BACKLOG, _);
+        await UV_TCP_Server("0.0.0.0", PORT+0, _, _, &d);
     with
         watching 5s do
-            await UV_TCP_Server(&d, "0.0.0.0", PORT+1, BACKLOG, _);
+            await UV_TCP_Server(_, PORT+1, BACKLOG, _, _);
         end
         _printf("[server %d] stop\n", PORT+1);
     with
