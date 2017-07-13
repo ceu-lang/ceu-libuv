@@ -26,6 +26,32 @@ Céu-libuv references:
     [`ceu_uv_listen`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_listen),
     [`UV_STREAM_LISTEN`](#uv_stream_listen).
 
+#### Example
+
+Opens a [TCP stream](../tcp/#uv_tcp_open), binds it to port `7000`, and then
+enters in listen mode.
+Each incoming connection triggers the event `ok`.
+
+```ceu
+#include "uv/tcp.ceu"
+
+var&? UV_TCP_Open tcp = spawn UV_TCP_Open(_);
+watching tcp do
+    var _sockaddr_in addr = _;
+    _uv_ip4_addr("0.0.0.0", 7000, &&addr);
+    _uv_tcp_bind(&&tcp.stream.handle as _uv_tcp_t&&, &&addr as _sockaddr&&, 0);
+
+    var&? UV_Stream_Listen listen = spawn UV_Stream_Listen(&tcp.stream,_);
+    watching listen do
+        every listen.ok do
+            <...>   // handle incoming connections
+        end
+    end
+end
+
+escape 0;
+```
+
 <!---------------------------------------------------------------------------->
 
 ### UV_Stream_Read_N
@@ -56,6 +82,27 @@ Céu-libuv references:
 libuv references:
     [`uv_read_stop`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_read_stop).
 
+#### Example
+
+Connects to `127.0.0.1:7000` and reads and writes in a loop:
+
+```ceu
+#include "uv/tcp.ceu"
+
+var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", 7000, _);
+watching c do
+    await c.ok;
+
+    loop do
+        await UV_Stream_Read_N(&c.stream,_);    // reads anything
+        _printf("%s\n", &&c.stream.buffer[0]);  // shows it in the screen
+        await UV_Stream_Write_N(&c.stream,_);   // writes it back
+    end
+end
+
+escape 0;
+```
+
 <!---------------------------------------------------------------------------->
 
 ### UV_Stream_Read_Line
@@ -76,6 +123,30 @@ code/await UV_Stream_Read_Line (var& UV_Stream stream, var&[] byte line) -> ssiz
 
 Céu-libuv references:
     [`UV_Stream_Read_N`](uv_stream_read_n).
+
+#### Example
+
+Connects to `127.0.0.1:7000` and reads and writes in a loop:
+
+```ceu
+#include "uv/tcp.ceu"
+
+var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", 7000, _);
+watching c do
+    await c.ok;
+
+    loop do
+        var[] byte line;
+        await UV_Stream_Read_Line(&c.stream,&line);     // reads a line
+        _printf("%s\n", &&line[0]);                     // shows it in the screen
+        line = line .. "\n" .. c.stream.buffer;
+        c.stream.buffer = [] .. line;
+        await UV_Stream_Write_N(&c.stream,_);           // writes it back
+    end
+end
+
+escape 0;
+```
 
 <!---------------------------------------------------------------------------->
 
@@ -98,5 +169,26 @@ code/await UV_Stream_Write_N (var& UV_Stream stream, var usize? n) -> ssize
 Céu-libuv references:
     [`ceu_uv_write`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_write),
     [`UV_STREAM_WRITE`](#uv_stream_write).
+
+#### Example
+
+Connects to `127.0.0.1:7000` and reads and writes in a loop:
+
+```ceu
+#include "uv/tcp.ceu"
+
+var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", 7000, _);
+watching c do
+    await c.ok;
+
+    loop do
+        await UV_Stream_Read_N(&c.stream,_);    // reads anything
+        _printf("%s\n", &&c.stream.buffer[0]);  // shows it in the screen
+        await UV_Stream_Write_N(&c.stream,_);   // writes it back
+    end
+end
+
+escape 0;
+```
 
 <!---------------------------------------------------------------------------->
