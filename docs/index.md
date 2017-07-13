@@ -3,6 +3,7 @@
 
 # Manual
 
+- [v0.30](out/manual/v0.30/)
 - [v0.20](out/manual/v0.20/)
 
 # Tutorial
