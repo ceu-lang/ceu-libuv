@@ -5,22 +5,24 @@
 Opens a file.
 
 ```ceu
-code/await UV_FS_Open (var _char&& path, var int flags, var int mode)
-                        -> (var& UV_FS_File file)
+code/await UV_FS_Open (var _char&& path, var usize? buffer_size, var int? flags, var int? mode)
+                        -> (var UV_FS_File file)
                             -> int
+
 ```
 
 - Parameters
-    - `path`:  path to the file
-    - `flags`: access mode flags
-    - `mode`:  file permission mode
-- Initialization
-    - `file`: created [file handle](#uv_fs_file)
+    - `path`:           path to the file
+    - `buffer_size`:    size of the read & write ring buffer (default: `1024`)
+    - `flags`:          access mode flags (default: `_O_RDONLY`)
+    - `mode`:           file permission mode (default: `0`)
+- Public fields
+    - `file`:           [file handle](#uv_fs_file)
 - Return
     - `int`: open error
-        - returns only case of error (always `<0`)
+        - returns only in case of an error (always `<0`)
 
-The file is only ready for use after `UV_FS_Open` triggers `file.ok`.
+The file is only ready for use after [`file.ok`](#uv_fs_file) is triggered.
 
 Céu-libuv references:
     [`UV_FS`](#uv_fs).
@@ -30,8 +32,6 @@ libuv references:
     [`uv_fs_close`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_close),
     [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
 
-*Note: all allocated libuv resources are automatically released on termination.*
-
 #### Example
 
 Opens `file.txt` and prints *open ok* after the file is ready for use.
@@ -40,13 +40,11 @@ In case of failure, prints *open error* along with the error code:
 ```ceu
 #include "uv/fs.ceu"
 
-var& UV_FS_File file;
-
+var&? UV_FS_Open o = spawn UV_FS_Open("file.txt",_,_,_);
 var int? err =
-    watching UV_FS_Open("file.txt", _O_RDONLY, 0) -> (&file) do
-        await file.ok;
-        // file is ready for use
-        _printf("open ok\n");
+    watching o do
+        await o.file.ok;
+        _printf("open ok\n");   // file is ready for use
     end;
 if err? then
     _printf("open error: %d\n", err!);
@@ -57,23 +55,20 @@ escape 0;
 
 <!---------------------------------------------------------------------------->
 
-### UV_FS_Read
+### UV_FS_Read_N
 
-Reads bytes from a file.
+Reads a specified number of bytes in the [file handle](#uv_fs_file) to its buffer.
 
 ```ceu
-code/await UV_FS_Read (var& UV_FS_File file, vector&[] byte buf, var usize size, var usize offset)
-                        -> ssize
+code/await UV_FS_Read_N (var& UV_FS_File file, var usize n) -> ssize
 ```
 
 - Parameters
-    - `file`:   [file handle](#uv_fs_file) to read from
-    - `buf`:    destination buffer
-    - `size`:   number of bytes to read
-    - `offset`: starting file offset
+    - `file`:   [file handle](#uv_fs_file) to read
+    - `n`:      number of bytes to read
 - Return
-    - `ssize`: actual number of bytes read
-        - `>=0`: number of bytes
+    - `ssize`: number of bytes read from `file`
+        - `>=0`: number of bytes (less than or equal to `n`)
         - `<0`:  read error
 
 Céu-libuv references:
@@ -84,8 +79,6 @@ libuv references:
     [`uv_buf_init`](http://docs.libuv.org/en/v1.x/misc.html#c.uv_buf_init),
     [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
 
-*Note: all allocated libuv resources are automatically released on termination.*
-
 #### Example
 
 Prints the contents of `file.txt` in a loop that reads the file in chunks of 10
@@ -94,53 +87,50 @@ bytes:
 ```ceu
 #include "uv/fs.ceu"
 
-var& UV_FS_File file;
-
+var&? UV_FS_Open o = spawn UV_FS_Open("file.txt", 11, _,_);
 var int? err =
-    watching UV_FS_Open("file.txt", _O_RDONLY, 0) -> (&file) do
-        await file.ok;
+    watching o do
+        await o.file.ok;
 
-        var usize offset = 0;
         loop do
-            vector[11] byte buf;
-            var ssize n = await UV_FS_Read(&file,&buf,$$buf-1,offset);
+            var ssize n = await UV_FS_Read_N(&o.file, $$o.file.buffer-1);
             if n == 0 then
                 break;
             end
-            buf = buf .. [{'\0'}];
-            _printf("%s", &&buf[0]);
-            offset = offset + ($$buf-1);
+            o.file.buffer = o.file.buffer .. [{'\0'}];
+            _printf("%s", &&o.file.buffer[0]);
+            $o.file.buffer = 0;
         end
     end;
 _ceu_dbg_assert(not err?);
 
 escape 0;
+
 ```
 
 <!---------------------------------------------------------------------------->
 
-### UV_FS_ReadLine
+### UV_FS_Read_Line
 
-Reads a line from a file.
+Reads a line from a [file handle](#uv_fs_file).
 
 ```ceu
-code/await UV_FS_ReadLine (var& UV_FS_File file, vector&[] byte buf, var usize offset)
-                            -> ssize
+code/await UV_FS_Read_Line (var& UV_FS_File file, var&[] byte line, var usize? by) -> ssize
 ```
 
 - Parameters
-    - `file`:   [file handle](#uv_fs_file) to read from
-    - `buf`:    destination buffer (excludes the leading `\n`)
-    - `offset`: starting file offset
+    - `file`:   [file handle](#uv_fs_file) to read
+    - `line`:   alias to destination buffer (excludes the leading `\n`)
+    - `by`:     size of read chunks in bytes (default: `128`)
 - Return
-    - `ssize`: actual number of bytes read
-        - `>=0`: number of bytes (includes the leading `\n`)
+    - `ssize`: number of bytes read from `file`
+        - `>=0`: number of bytes (includes the leading `\n` and extra bytes)
         - `<0`:  read error
 
-`TODO: the file is currently read byte by byte.`
+The [file handle](#uv_fs_file) buffer advances to the byte after the `\n`.
 
 Céu-libuv references:
-    [`UV_FS_Read`](#uv_fs_read).
+    [`UV_FS_Read_N`](#uv_fs_read_n).
 
 #### Example
 
@@ -149,20 +139,17 @@ Prints the contents of `file.txt` in a loop that reads the file line by line:
 ```ceu
 #include "uv/fs.ceu"
 
-var& UV_FS_File file;
-
-watching UV_FS_Open("file.txt", _O_RDONLY, 0) -> (&file) do
-    await file.ok;
-
-    var usize off = 0;
+var&? UV_FS_Open o = spawn UV_FS_Open("file.txt",_,_,_);
+watching o do
+    await o.file.ok;
     loop do
-        vector[] byte line;
-        var ssize n = await UV_FS_ReadLine(&file,&line,off);
+        var[] byte line;
+        var ssize n = await UV_FS_Read_Line(&o.file,&line,_);
         if n <= 0 then
             break;
         end
-        _printf("line = %s [%d]\n", &&line[0], n as int);
-        off = off + (n as usize);
+        line = line .. [{'\0'}];
+        _printf("%s\n", &&line[0], n);
     end
 end
 
@@ -171,22 +158,19 @@ escape 0;
 
 <!---------------------------------------------------------------------------->
 
-### UV_FS_Write
+### UV_FS_Write_N
 
-Write bytes from a file.
+Writes a specified number of bytes in the [file handle](#uv_fs_file) from its buffer.
 
 ```ceu
-code/await UV_FS_Write (var& UV_FS_File file, vector&[] byte buf, var usize size, var usize offset)
-                        -> ssize
+code/await UV_FS_Write_N (var& UV_FS_File file, var usize? n) -> ssize
 ```
 
 - Parameters
-    - `file`:   [file handle](#uv_fs_file) to write to
-    - `buf`:    source buffer
-    - `size`:   number of bytes to write
-    - `offset`: starting file offset
+    - `file`:   [file handle](#uv_fs_file) to write
+    - `n`:      number of bytes to write (default: current size of the `file` buffer)
 - Return
-    - `ssize`: actual number of bytes written
+    - `ssize`: number of bytes written
         - `>=0`: number of bytes
         - `<0`:  write error
 
@@ -198,8 +182,6 @@ libuv references:
     [`uv_buf_init`](http://docs.libuv.org/en/v1.x/misc.html#c.uv_buf_init),
     [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
 
-*Note: all allocated libuv resources are automatically released on termination.*
-
 #### Example
 
 Writes the string *Hello World* to `hello.txt`:
@@ -210,19 +192,14 @@ Writes the string *Hello World* to `hello.txt`:
 var& UV_FS_File file;
 
 var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
-
-var int? err =
-    watching UV_FS_Open("hello.txt", _O_CREAT|_O_WRONLY, mode) -> (&file) do
-        await file.ok;
-        vector[] byte buf = [] .. "Hello World!\n";
-        var ssize n = await UV_FS_Write(&file,&buf,$buf,0);
-        if (n<0) or (n as usize)!=$buf then
-            _printf("write error\n");
-        end
-    end;
-if err? then
-    _printf("open error: %d\n", err!);
-end
+var&? UV_FS_Open o = spawn UV_FS_Open("hello.txt", _, _O_CREAT|_O_WRONLY, mode);
+watching o do
+    await o.file.ok;
+    o.file.buffer = [] .. "Hello World!\n";
+    var usize n1 = $o.file.buffer;
+    var ssize n2 = await UV_FS_Write_N(&o.file,$o.file.buffer);
+    _ceu_dbg_assert(n2>=0 and n2==n1);
+end;
 
 escape 0;
 ```
@@ -252,8 +229,6 @@ Céu-libuv references:
 
 libuv references:
     [`uv_fs_req_cleanup`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup).
-
-*Note: all allocated libuv resources are automatically released on termination.*
 
 #### Example
 
