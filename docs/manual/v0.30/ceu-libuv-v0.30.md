@@ -681,7 +681,7 @@ libuv reference: <http://docs.libuv.org/en/v1.x/tcp.html>
 #### UV_TCP_Open
 
 Opens a [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t)
-[stream](#uv_stream).
+[stream](../stream/#uv_stream).
 
 ```ceu
 code/await UV_TCP_Open (var int? buffer_size) -> (var UV_Stream stream) -> int
@@ -690,7 +690,7 @@ code/await UV_TCP_Open (var int? buffer_size) -> (var UV_Stream stream) -> int
 - Parameters
     - `buffer_size`:    size of the read & write ring buffer (default: `1024`)
 - Public fields
-    - `stream`:         opened and uninitialized [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t) [stream](#uv_stream)
+    - `stream`:         opened and uninitialized [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t) [stream](../stream/#uv_stream)
 - Return
     - `int`: TCP error
         - returns only in case of error (always `<0`)
@@ -698,7 +698,7 @@ code/await UV_TCP_Open (var int? buffer_size) -> (var UV_Stream stream) -> int
 Céu-libuv references:
     [`ceu_uv_tcp_init`](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_init),
     [`ceu_uv_close`](http://docs.libuv.org/en/v1.x/handle.html#c.uv_close),
-    [`UV_STREAM_ERROR`](#uv_stream_error).
+    [`UV_STREAM_ERROR`](../stream/#uv_stream_error).
 
 ##### Example
 
@@ -720,7 +720,7 @@ escape 0;
 <!---------------------------------------------------------------------------->
 
 Opens a [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t)
-[stream](#uv_stream) and connects it.
+[stream](../stream/#uv_stream) and connects it.
 
 ```ceu
 code/await UV_TCP_Connect (var _char&& ip, var int port, var int? buffer_size)
@@ -731,9 +731,9 @@ code/await UV_TCP_Connect (var _char&& ip, var int port, var int? buffer_size)
 - Parameters
     - `ip`:          remote host
     - `port`:        remote port
-    - `buffer_size`: size of the read & write [stream](#uv_stream) ring buffer (default: `1024`)
+    - `buffer_size`: size of the read & write [stream](../stream/#uv_stream) ring buffer (default: `1024`)
 - Public fields
-    - `stream`:      [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t) [stream](#uv_stream)
+    - `stream`:      [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t) [stream](../stream/#uv_stream)
     - `ok`:          event signalled when `stream` connects and is ready for use
 - Return
     - `int`: TCP error
@@ -741,7 +741,7 @@ code/await UV_TCP_Connect (var _char&& ip, var int port, var int? buffer_size)
 
 Céu-libuv references:
     [`ceu_uv_tcp_connect`](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_connect),
-    [`UV_STREAM_CONNECT`](#uv_stream_connnect).
+    [`UV_STREAM_CONNECT`](../stream/#uv_stream_connnect).
 
 ##### Example
 
@@ -762,7 +762,7 @@ escape 0;
 #### UV_TCP_Open_Bind_Listen
 
 Opens a [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t)
-[stream](#uv_stream), binds it to an IP and port, and listens for incoming
+[stream](../stream/#uv_stream), binds it to an IP and port, and listens for incoming
 connections.
 
 ```ceu
@@ -775,9 +775,9 @@ code/await UV_TCP_Open_Bind_Listen (var _char&&? ip, var int port, var int? back
     - `ip`:          local host (default: `"0.0.0.0"`)
     - `port`:        local port
     - `backlog`:     number of connections the kernel might queue (default: `128`)
-    - `buffer_size`: size of the read & write [stream](#uv_stream) ring buffer (default: `1024`)
+    - `buffer_size`: size of the read & write [stream](../stream/#uv_stream) ring buffer (default: `1024`)
 - Public fields
-    - `stream`:  [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t) [stream](#uv_stream)
+    - `stream`:  [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t) [stream](../stream/#uv_stream)
     - `ok`:      event signalled on every new incoming connection
 - Return
     - `int`: TCP error
@@ -785,7 +785,7 @@ code/await UV_TCP_Open_Bind_Listen (var _char&&? ip, var int port, var int? back
 
 Céu-libuv references:
     [`UV_TCP_Open`](#uv_tcp_open),
-    [`UV_Stream_Listen`](../stream/#uv_stream_listen).
+    [`UV_Stream_Listen`](../stream/../stream/#uv_stream_listen).
 
 ##### Example
 
@@ -807,7 +807,7 @@ escape 0;
 <!---------------------------------------------------------------------------->
 
 Opens a [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t)
-[stream](#uv_stream), binds it to an IP and port, listens for incoming
+[stream](../stream/#uv_stream), binds it to an IP and port, listens for incoming
 connections, and spawns a handler on every new connection.
 
 ```ceu
@@ -822,7 +822,7 @@ code/await UV_TCP_Server (var _char&&? ip, var int port,
     - `ip`:          local host (default: `"0.0.0.0"`)
     - `port`:        local port
     - `backlog`:     number of connections the kernel might queue (default: `128`)
-    - `buffer_size`: size of the read & write [stream](#uv_stream) ring buffer (default: `1024`)
+    - `buffer_size`: size of the read & write [stream](../stream/#uv_stream) ring buffer (default: `1024`)
     - `shared`:      an optional payload to be shared with all handlers
 - Return
     - `int`: TCP error
@@ -842,7 +842,7 @@ end
 ```
 
 The handler receives a [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t)
-[stream](#uv_stream) of the connected client.
+[stream](../stream/#uv_stream) of the connected client.
 
 If the macro `UV_TCP_SERVER_HANDLER_MAX` is defined, the server uses a bounded
 pool of `UV_TCP_Server_Handler` of that size.

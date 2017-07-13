@@ -155,7 +155,7 @@
 
 <h3 id="uv_tcp_open">UV_TCP_Open<a class="headerlink" href="#uv_tcp_open" title="Permanent link">&para;</a></h3>
 <p>Opens a <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a>
-<a href="#uv_stream">stream</a>.</p>
+<a href="./../stream/#uv_stream">stream</a>.</p>
 <pre><code class="ceu">code/await UV_TCP_Open (var int? buffer_size) -&gt; (var UV_Stream stream) -&gt; int
 </code></pre>
 
@@ -165,7 +165,7 @@
 </ul>
 </li>
 <li>Public fields<ul>
-<li><code>stream</code>:         opened and uninitialized <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a> <a href="#uv_stream">stream</a></li>
+<li><code>stream</code>:         opened and uninitialized <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a> <a href="./../stream/#uv_stream">stream</a></li>
 </ul>
 </li>
 <li>Return<ul>
@@ -179,7 +179,7 @@
 <p>Céu-libuv references:
     <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_init"><code>ceu_uv_tcp_init</code></a>,
     <a href="http://docs.libuv.org/en/v1.x/handle.html#c.uv_close"><code>ceu_uv_close</code></a>,
-    <a href="#uv_stream_error"><code>UV_STREAM_ERROR</code></a>.</p>
+    <a href="./../stream/#uv_stream_error"><code>UV_STREAM_ERROR</code></a>.</p>
 <h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h4>
 <pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
 
@@ -198,7 +198,7 @@ escape 0;
 <!---------------------------------------------------------------------------->
 
 <p>Opens a <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a>
-<a href="#uv_stream">stream</a> and connects it.</p>
+<a href="./../stream/#uv_stream">stream</a> and connects it.</p>
 <pre><code class="ceu">code/await UV_TCP_Connect (var _char&amp;&amp; ip, var int port, var int? buffer_size)
                             -&gt; (var&amp; UV_Stream stream, event void ok)
                                 -&gt; int
@@ -208,11 +208,11 @@ escape 0;
 <li>Parameters<ul>
 <li><code>ip</code>:          remote host</li>
 <li><code>port</code>:        remote port</li>
-<li><code>buffer_size</code>: size of the read &amp; write <a href="#uv_stream">stream</a> ring buffer (default: <code>1024</code>)</li>
+<li><code>buffer_size</code>: size of the read &amp; write <a href="./../stream/#uv_stream">stream</a> ring buffer (default: <code>1024</code>)</li>
 </ul>
 </li>
 <li>Public fields<ul>
-<li><code>stream</code>:      <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a> <a href="#uv_stream">stream</a></li>
+<li><code>stream</code>:      <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a> <a href="./../stream/#uv_stream">stream</a></li>
 <li><code>ok</code>:          event signalled when <code>stream</code> connects and is ready for use</li>
 </ul>
 </li>
@@ -226,7 +226,7 @@ escape 0;
 </ul>
 <p>Céu-libuv references:
     <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_connect"><code>ceu_uv_tcp_connect</code></a>,
-    <a href="#uv_stream_connnect"><code>UV_STREAM_CONNECT</code></a>.</p>
+    <a href="./../stream/#uv_stream_connnect"><code>UV_STREAM_CONNECT</code></a>.</p>
 <h4 id="example_1">Example<a class="headerlink" href="#example_1" title="Permanent link">&para;</a></h4>
 <pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
 
@@ -243,7 +243,7 @@ escape 0;
 
 <h3 id="uv_tcp_open_bind_listen">UV_TCP_Open_Bind_Listen<a class="headerlink" href="#uv_tcp_open_bind_listen" title="Permanent link">&para;</a></h3>
 <p>Opens a <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a>
-<a href="#uv_stream">stream</a>, binds it to an IP and port, and listens for incoming
+<a href="./../stream/#uv_stream">stream</a>, binds it to an IP and port, and listens for incoming
 connections.</p>
 <pre><code class="ceu">code/await UV_TCP_Open_Bind_Listen (var _char&amp;&amp;? ip, var int port, var int? backlog, var int? buffer_size)
                                     -&gt; (var&amp; UV_Stream stream, event&amp; void ok)
@@ -255,11 +255,11 @@ connections.</p>
 <li><code>ip</code>:          local host (default: <code>"0.0.0.0"</code>)</li>
 <li><code>port</code>:        local port</li>
 <li><code>backlog</code>:     number of connections the kernel might queue (default: <code>128</code>)</li>
-<li><code>buffer_size</code>: size of the read &amp; write <a href="#uv_stream">stream</a> ring buffer (default: <code>1024</code>)</li>
+<li><code>buffer_size</code>: size of the read &amp; write <a href="./../stream/#uv_stream">stream</a> ring buffer (default: <code>1024</code>)</li>
 </ul>
 </li>
 <li>Public fields<ul>
-<li><code>stream</code>:  <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a> <a href="#uv_stream">stream</a></li>
+<li><code>stream</code>:  <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a> <a href="./../stream/#uv_stream">stream</a></li>
 <li><code>ok</code>:      event signalled on every new incoming connection</li>
 </ul>
 </li>
@@ -273,7 +273,7 @@ connections.</p>
 </ul>
 <p>Céu-libuv references:
     <a href="#uv_tcp_open"><code>UV_TCP_Open</code></a>,
-    <a href="./../stream/#uv_stream_listen"><code>UV_Stream_Listen</code></a>.</p>
+    <a href="./../stream/../stream/#uv_stream_listen"><code>UV_Stream_Listen</code></a>.</p>
 <h4 id="example_2">Example<a class="headerlink" href="#example_2" title="Permanent link">&para;</a></h4>
 <p>Listen on port <code>7000</code>:</p>
 <pre><code class="ceu">#include &quot;uv/tcp.ceu&quot;
@@ -291,7 +291,7 @@ escape 0;
 <!---------------------------------------------------------------------------->
 
 <p>Opens a <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a>
-<a href="#uv_stream">stream</a>, binds it to an IP and port, listens for incoming
+<a href="./../stream/#uv_stream">stream</a>, binds it to an IP and port, listens for incoming
 connections, and spawns a handler on every new connection.</p>
 <pre><code class="ceu">code/await UV_TCP_Server (var _char&amp;&amp;? ip, var int port,
                           var int? backlog, var int? buffer_size,
@@ -305,7 +305,7 @@ connections, and spawns a handler on every new connection.</p>
 <li><code>ip</code>:          local host (default: <code>"0.0.0.0"</code>)</li>
 <li><code>port</code>:        local port</li>
 <li><code>backlog</code>:     number of connections the kernel might queue (default: <code>128</code>)</li>
-<li><code>buffer_size</code>: size of the read &amp; write <a href="#uv_stream">stream</a> ring buffer (default: <code>1024</code>)</li>
+<li><code>buffer_size</code>: size of the read &amp; write <a href="./../stream/#uv_stream">stream</a> ring buffer (default: <code>1024</code>)</li>
 <li><code>shared</code>:      an optional payload to be shared with all handlers</li>
 </ul>
 </li>
@@ -329,7 +329,7 @@ end
 </code></pre>
 
 <p>The handler receives a <a href="http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t">TCP</a>
-<a href="#uv_stream">stream</a> of the connected client.</p>
+<a href="./../stream/#uv_stream">stream</a> of the connected client.</p>
 <p>If the macro <code>UV_TCP_SERVER_HANDLER_MAX</code> is defined, the server uses a bounded
 pool of <code>UV_TCP_Server_Handler</code> of that size.</p>
 <p>Céu-libuv references:
