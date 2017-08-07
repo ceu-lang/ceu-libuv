@@ -1,0 +1,65 @@
+#if 0
+#@ Description: Big file echo.
+#@ Usage:
+#@  - cat samples/fs-01.txt | nc localhost 7000
+#@      - prints from 1 -> 10000
+#endif
+
+#include "uv/tcp.ceu"
+
+#define DEFAULT_PORT 7000
+#define BUFFER_MAX     10
+
+code/await Client (var& UV_Stream server) -> void
+do
+    var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
+    var int? err1 =
+        watching client do
+            var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
+            _ceu_dbg_assert(ret == 0);
+
+            // READ/WRITE LOOP
+
+            var[BUFFER_MAX] byte buf;
+
+            spawn do
+                var _uv_stream_t&& s;
+                var int            err2;
+                every (s,err2) in UV_STREAM_ERROR do
+                    _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err2));
+                end
+            end
+
+            loop do
+                var[] byte line;
+                var ssize n = await UV_Stream_Read_Line(&client.stream, &line);
+                _ceu_dbg_assert(n >= 0);
+                line = line .. [{'\n'},{'\0'}];
+                //_printf("%s", &&line[0]);
+
+                var[] byte tmp = []..client.stream.buffer;  // TODO[-]: full-duplex
+
+                // WRITE
+                $line = $line-1;
+                client.stream.buffer = []..line;
+                await UV_Stream_Write_N(&client.stream, _);
+                //$client.stream.buffer = 0;                // TODO[+]: full-duplex
+
+                client.stream.buffer = []..tmp;             // TODO[i]: full-duplex
+            end
+        end;
+
+    if err1? then
+        _fprintf(_stderr, "[client]: %s\n", _uv_strerror(err1!));
+    end
+end
+
+var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen("0.0.0.0",DEFAULT_PORT,_,_);
+watching server do
+    await server.ok;
+    await Client(&server.stream);
+end
+
+_printf("DONE!\n");
+
+escape 0;

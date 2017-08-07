@@ -12,21 +12,20 @@
 
 #include "uv/tcp.ceu"
 
-#define DEFAULT_PORT    7000
-#define DEFAULT_BACKLOG 128
-#define BUFFER_MAX      10
+#define DEFAULT_PORT 7000
+#define BUFFER_MAX     10
 
-code/await Client (var& _uv_tcp_t server) -> void
+code/await Client (var& UV_Stream server) -> void
 do
-    var& _uv_tcp_t client;
+    var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
     var int? err1 =
-        watching UV_TCP_Open() -> (&client) do
-            var int ret = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
+        watching client do
+            var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
             _ceu_dbg_assert(ret == 0);
 
             // READ/WRITE LOOP
 
-            vector[BUFFER_MAX] byte buf;
+            var[BUFFER_MAX] byte buf;
 
             spawn do
                 var _uv_stream_t&& s;
@@ -37,18 +36,13 @@ do
             end
 
             loop do
-                do
-                    event& usize ok_read;
-                    var int? err2 =
-                        watching UV_TCP_Read(&client,&buf) -> (&ok_read) do
-                            await ok_read;
-                        end;
-                    _ceu_dbg_assert(not err2?);
-                end
+                var ssize n = await UV_Stream_Read_N(&client.stream, _);
+                _ceu_dbg_assert(n >= 0);
+                client.stream.buffer = client.stream.buffer .. [{'\0'}];
 
                 // WRITE
-                buf = buf..[{'\0'}];
-                await UV_TCP_Write(&client, &buf);
+                await UV_Stream_Write_N(&client.stream, $client.stream.buffer-1);
+                $client.stream.buffer = 0;
             end
         end;
 
@@ -57,29 +51,19 @@ do
     end
 end
 
-code/await Server (var _char&& ip, var int port, var int backlog) -> void
+code/await Server (var _char&& ip, var int port, var int? backlog, var int? buffer_size) -> void
 do
-    var _sockaddr_in addr = _;
-    _uv_ip4_addr(&&ip[0], port, &&addr);
-
-    var& _uv_tcp_t server;
-    watching UV_TCP_Open() -> (&server)
-    do
-        _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
-
-        event& void ok_listen;
-        watching UV_TCP_Listen(&server,DEFAULT_BACKLOG) -> (&ok_listen)
-        do
-            pool[10] Client cs;
-            every ok_listen do
-                spawn Client(&server) in cs;
-            end
+    var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen(ip,port,backlog,buffer_size);
+    watching server do
+        pool[10] Client cs;
+        every server.ok do
+            spawn Client(&server.stream) in cs;
         end
     end
 end
 
-spawn Server("0.0.0.0", DEFAULT_PORT+0, DEFAULT_BACKLOG);
-spawn Server("0.0.0.0", DEFAULT_PORT+1, DEFAULT_BACKLOG);
+spawn Server("0.0.0.0", DEFAULT_PORT+0, _, _);
+spawn Server("0.0.0.0", DEFAULT_PORT+1, _, _);
 
 _printf("I will terminate after 10s...\n");
 await 10s;

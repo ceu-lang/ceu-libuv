@@ -72,7 +72,7 @@ loop i in [0 -> 2[ do
 
     // READ/WRITE LOOP
 
-    vector[BUFFER_MAX] byte buf;
+    var[BUFFER_MAX] byte buf;
     var ssize n_read = 0;
 
     spawn do
@@ -87,7 +87,11 @@ loop i in [0 -> 2[ do
         // READ
         do
             $buf = 0;
-            client._data = _PURIFY(&&buf);   // finalize below
+            var _tceu_uv_stream_data data_ = _;
+                                     data_.vector = _PURIFY(&&buf);
+                                     data_.n      = 0;
+            client._data = _PURIFY(&&data_); // finalize below
+
             var int ret;
             do
                 ret = _ceu_uv_read_start(&&client as _uv_stream_t&&);

@@ -3,21 +3,27 @@
 
 #include "uv/tcp.ceu"
 
-code/await UV_TCP_Server_Client (var& _uv_tcp_t server) -> void
+#ifndef UV_TCP_SERVER_HANDLER_MAX
+#define UV_TCP_SERVER_HANDLER_MAX
+#endif
+
+code/await UV_TCP_Server_Client (var& UV_Stream server, var int? buffer_size, var&? UV_TCP_Server_Data shared) -> void     // TODO: error
 do
-    var& _uv_tcp_t client;
+    var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
     var int? err =
-        watching UV_TCP_Open() -> (&client) do
-            var int ret = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
+        watching client do
+            var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
             _ceu_dbg_assert(ret == 0);
 
+/*
             var _sockaddr_in sock = _;
             var int len = sizeof(_sockaddr_in) as int;
-            var int ret = _uv_tcp_getsockname(&&client, (&&sock as _sockaddr&&), &&len);
+            var int ret = _uv_tcp_getsockname(&&client.tcp, (&&sock as _sockaddr&&), &&len);
             _ceu_dbg_assert(ret == 0);
             var int port = _ntohs(sock.sin_port);
+*/
 
-            await UV_TCP_Server_Handler(&client);
+            await UV_TCP_Server_Handler(&client.stream, &shared);                   // TODO: error
         end;
 
     if err? then
@@ -25,27 +31,20 @@ do
     end
 end
 
-code/await UV_TCP_Server (var _char&& ip, var int port, var int backlog)
-                            -> void
+code/await UV_TCP_Server (var _char&&? ip, var int port, var int? backlog,
+                          var int? buffer_size, var&? UV_TCP_Server_Data shared)
+                            -> int  // err
 do
-    var _sockaddr_in addr = _;
-    _uv_ip4_addr(&&ip[0], port, &&addr);
-
-    var& _uv_tcp_t server;
-    watching UV_TCP_Open() -> (&server)
-    do
-        _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
-
-        event& void ok_listen;
-        watching UV_TCP_Listen(&server,backlog) -> (&ok_listen)
-        do
+    var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen(ip,port,backlog,buffer_size);
+    var int? err =
+        watching server do
 // TODO: receive as argument?
-            pool[] UV_TCP_Server_Client cs;
-            every ok_listen do
-                spawn UV_TCP_Server_Client(&server) in cs;
+            pool[UV_TCP_SERVER_HANDLER_MAX] UV_TCP_Server_Client cs;
+            every server.ok do
+                spawn UV_TCP_Server_Client(&server.stream, buffer_size, &shared) in cs;
             end
-        end
-    end
+        end;
+    escape err!;
 end
 
 #endif

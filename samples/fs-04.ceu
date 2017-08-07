@@ -1,30 +1,29 @@
 #include "uv/fs.ceu"
 
-var& UV_FS_File file;
-
-watching UV_FS_Open("fs-03.txt", _O_RDONLY, 0) -> (&file)
-do
-    await file.ok;
-    if file.fd < 0 then
-        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(file.fd));
+var&? UV_FS_Open o = spawn UV_FS_Open("fs-03.txt", 11, _O_RDONLY, 0);
+watching o do
+    await o.file.ok;
+    if o.file.handle < 0 then
+        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.file.handle));
     end
-    _ceu_dbg_assert(file.fd >= 0);
+    _ceu_dbg_assert(o.file.handle >= 0);
 
     var _uv_stat_t stat = _;
-    await UV_FS_Fstat(&file, &stat);
+    await UV_FS_Fstat(&o.file, &stat);
     var usize size = stat.st_size;
-    _ceu_dbg_assert(size == 1025);
+    _ceu_dbg_assert(size == 540);
 
-    vector[10] byte buf;
-    var ssize n = await UV_FS_Read(&file,&buf,10,size-10);
+    o.file.offset = size - 10;
+    var ssize n = await UV_FS_Read_N(&o.file,10);
     if n < 0 then
         _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(n));
     end
     _printf("n = %ld\n", n);
     _ceu_dbg_assert(n == 10);
 
-    _printf(">>> %s\n", &&buf[0]);
-    _ceu_dbg_assert(_strcmp("pqrstuvwx\n",&&buf[0]) == 0);
+    o.file.buffer = o.file.buffer .. [{'\0'}];
+    _printf(">>> %s\n", &&o.file.buffer[0]);
+    _ceu_dbg_assert(_strcmp("rstuvwxyz\n",&&o.file.buffer[0]) == 0);
 end
 
 escape 0;

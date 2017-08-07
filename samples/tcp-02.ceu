@@ -14,20 +14,17 @@
 #include "uv/tcp.ceu"
 
 #define DEFAULT_PORT    7000
-#define DEFAULT_BACKLOG 128
 #define BUFFER_MAX      10
 
-code/await Client (var& _uv_tcp_t server) -> void
+code/await Client (var& UV_Stream server) -> void
 do
-    var& _uv_tcp_t client;
+    var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
     var int? err1 =
-        watching UV_TCP_Open() -> (&client) do
-            var int ret = _uv_accept(&&server as _uv_stream_t&&, (&&client) as _uv_stream_t&&);
+        watching client do
+            var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
             _ceu_dbg_assert(ret == 0);
 
             // READ/WRITE LOOP
-
-            vector[BUFFER_MAX] byte buf;
 
             spawn do
                 var _uv_stream_t&& s;
@@ -38,19 +35,10 @@ do
             end
 
             loop do
-                do
-                    event& usize ok_read;
-                    var int? err2 =
-                        watching UV_TCP_Read(&client,&buf) -> (&ok_read)
-                        do
-                            await ok_read;
-                        end;
-                    _ceu_dbg_assert(not err2?);
-                end
+                await UV_Stream_Read_N(&client.stream,_);
 
                 // WRITE
-                buf = buf..[{'\0'}];
-                await UV_TCP_Write(&client, &buf);
+                await UV_Stream_Write_N(&client.stream,_);
             end
         end;
 
@@ -61,20 +49,18 @@ end
 
 _printf("I will terminate after 10s...\n");
 
-var& _uv_tcp_t server;
-watching UV_TCP_Open() -> (&server)
-do
+var&? UV_TCP_Open server = spawn UV_TCP_Open(_);
+watching server do
     var _sockaddr_in addr = _;
     _uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
-    _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
+    _uv_tcp_bind(&&server.stream.handle as _uv_tcp_t&&, &&addr as _sockaddr&&, 0);
 
-    event& void ok_listen;
-    watching UV_TCP_Listen(&server,DEFAULT_BACKLOG) -> (&ok_listen)
-    do
+    var&? UV_Stream_Listen listen = spawn UV_Stream_Listen(&server.stream,_);
+    watching listen do
         pool[10] Client cs;
         watching 10s do
-            every ok_listen do
-                spawn Client(&server) in cs;
+            every listen.ok do
+                spawn Client(&server.stream) in cs;
             end
         end
     end

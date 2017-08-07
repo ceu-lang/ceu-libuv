@@ -1,31 +1,30 @@
 #include "uv/fs.ceu"
 
-vector[] byte path = [].."fs-03.txt";
-
-var& UV_FS_File file;
+var[] byte path = [].."fs-03.txt";
 
 var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
 
-watching UV_FS_Open(&&path[0], _O_CREAT|_O_WRONLY, mode) -> (&file)
-do
-    await file.ok;
-    if file.fd < 0 then
-        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(file.fd));
+var&? UV_FS_Open o = spawn UV_FS_Open(&&path[0], 128, _O_CREAT|_O_WRONLY, mode);
+watching o do
+    await o.file.ok;
+    if o.file.handle < 0 then
+        _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(o.file.handle));
     end
-    _ceu_dbg_assert(file.fd >= 0);
+    _ceu_dbg_assert(o.file.handle >= 0);
 
-    vector[1025] byte buf;
     var int i;
-    loop i in [0 -> 1024[ do
-        buf = buf..[{'a'}+i%25];
+    loop i in [1 -> 20] do
+        var int j;
+        loop j in [0 -> 26[ do
+            o.file.buffer = o.file.buffer..[{'a'}+j];
+        end
+        o.file.buffer = o.file.buffer..[{'\n'}];
+        var ssize n = await UV_FS_Write_N(&o.file, $o.file.buffer);
+        _ceu_dbg_assert(n == 27);
     end
-    buf = buf..[{'\n'}];
-
-    var ssize n = await UV_FS_Write(&file,&buf,$$buf,0);
-    _ceu_dbg_assert(n == 1025);
 
     [[
-        local src   = io.open(@path):read'*a'
+        local src   = io.open(@path..'.orig'):read'*a'
         local build = io.open(@path):read'*a'
         assert(src == build)
         print'DONE'

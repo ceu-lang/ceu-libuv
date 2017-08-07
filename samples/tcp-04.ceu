@@ -11,56 +11,51 @@
 #include "uv/tcp.ceu"
 
 #define DEFAULT_PORT    7000
-#define DEFAULT_BACKLOG 128
 #define BUFFER_MAX      10
 
-code/await Handler0 (var& _uv_tcp_t tcp) -> int
+code/await Handler0 (var& UV_Stream client) -> int
 do
     loop do
-        vector[] byte string;
-        do
-            event& usize ok_read;
-            watching UV_TCP_Read(&tcp, &string)
-                        -> (&ok_read)
-            do
-                await ok_read;
-            end
-        end
-        string = string..[{'\0'}];
-        _printf("[handler-0] %s\n", &&string[0]);
-        await UV_TCP_Write(&tcp, &string);
+        await UV_Stream_Read_N(&client,_);
+        client.buffer = client.buffer..[{'\0'}];
+        _printf("[handler-0] %s\n", &&client.buffer[0]);
+        await UV_Stream_Write_N(&client,_);
     end
 end
 
-code/await Handler1 (var& _uv_tcp_t tcp) -> int
+code/await Handler1 (var& UV_Stream client) -> int
 do
     loop do
-        vector[] byte string;
-        await UV_TCP_ReadLine(&tcp, &string);
-        string = string..[{'\0'}];
-        _printf("[handler-1] %s", &&string[0]);
-        await UV_TCP_Write(&tcp, &string);
+        var[] byte line;
+        await UV_Stream_Read_Line(&client, &line);
+        line = line..[{'\n'},{'\0'}];
+        var[] byte tmp = []..client.buffer;
+        _printf("[handler-1] %s", &&line[0]);
+        $line = $line-1;
+        client.buffer = []..line;
+        await UV_Stream_Write_N(&client,_);
+        client.buffer = []..tmp;
     end
 end
 
-code/await Client (var& _uv_tcp_t server) -> void
+code/await Client (var& UV_Stream server) -> void
 do
-    var& _uv_tcp_t client;
+    var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
     var int? err =
-        watching UV_TCP_Open() -> (&client) do
-            var int ret1 = _uv_accept(&&server as _uv_stream_t&&, &&client as _uv_stream_t&&);
+        watching client do
+            var int ret1 = _uv_accept(&&server.handle, &&client.stream.handle);
             _ceu_dbg_assert(ret1 == 0);
 
             var _sockaddr_in sock = _;
             var int len = sizeof(_sockaddr_in) as int;
-            var int ret2 = _uv_tcp_getsockname(&&client, (&&sock as _sockaddr&&), &&len);
+            var int ret2 = _uv_tcp_getsockname(&&client.stream.handle as _uv_tcp_t&&, (&&sock as _sockaddr&&), &&len);
             _ceu_dbg_assert(ret2 == 0);
             var int port = _ntohs(sock.sin_port);
 
             if port == DEFAULT_PORT then
-                await Handler0(&client);
+                await Handler0(&client.stream);
             else/if port == DEFAULT_PORT+1 then
-                await Handler1(&client);
+                await Handler1(&client.stream);
             else
                 _ceu_dbg_assert(0);
             end
@@ -71,29 +66,19 @@ do
     end
 end
 
-code/await Server (var _char&& ip, var int port, var int backlog) -> void
+code/await Server (var _char&& ip, var int port) -> void
 do
-    var _sockaddr_in addr = _;
-    _uv_ip4_addr(&&ip[0], port, &&addr);
-
-    var& _uv_tcp_t server;
-    watching UV_TCP_Open() -> (&server)
-    do
-        _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
-
-        event& void ok_listen;
-        watching UV_TCP_Listen(&server, DEFAULT_BACKLOG) -> (&ok_listen)
-        do
-            pool[10] Client cs;
-            every ok_listen do
-                spawn Client(&server) in cs;
-            end
+    var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen(ip,port,_,_);
+    watching server do
+        pool[10] Client cs;
+        every server.ok do
+            spawn Client(&server.stream) in cs;
         end
     end
 end
 
-spawn Server("0.0.0.0", DEFAULT_PORT+0, DEFAULT_BACKLOG);
-spawn Server("0.0.0.0", DEFAULT_PORT+1, DEFAULT_BACKLOG);
+spawn Server("0.0.0.0", DEFAULT_PORT+0);
+spawn Server("0.0.0.0", DEFAULT_PORT+1);
 
 _printf("I will terminate after 10s...\n");
 await 10s;

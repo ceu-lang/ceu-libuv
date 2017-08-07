@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <title>File System - Céu-libuv v0.20 - Reference Manual</title>
+  
+
+  <link rel="shortcut icon" href="../img/favicon.ico">
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "File System";
+    var mkdocs_page_input_path = "fs/index.md";
+    var mkdocs_page_url = "/fs/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script>
+  <script src="../js/theme.js"></script> 
+
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Céu-libuv v0.20 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="..">Introduction</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../modes/">Mode of Operation</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">File System</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#file-system">File System</a></li>
+                
+                    <li><a class="toctree-l4" href="#input-events">Input Events</a></li>
+                
+                    <li><a class="toctree-l4" href="#data-abstractions">Data Abstractions</a></li>
+                
+                    <li><a class="toctree-l4" href="#code-abstractions">Code Abstractions</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../stream/">Stream</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../tcp/">TCP</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Céu-libuv v0.20 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>File System</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="file-system">File System<a class="headerlink" href="#file-system" title="Permanent link">&para;</a></h1>
+<p>Provides file system operations.</p>
+<p>libuv reference: <a href="http://docs.libuv.org/en/v1.x/fs.html">http://docs.libuv.org/en/v1.x/fs.html</a></p>
+<h2 id="input-events">Input Events<a class="headerlink" href="#input-events" title="Permanent link">&para;</a></h2>
+<h3 id="uv_fs">UV_FS<a class="headerlink" href="#uv_fs" title="Permanent link">&para;</a></h3>
+<pre><code class="ceu">input _uv_fs_t&amp;&amp; UV_FS;
+</code></pre>
+
+<ul>
+<li>Occurrence:<ul>
+<li>Whenever a filesystem operation completes.</li>
+</ul>
+</li>
+<li>Payload:<ul>
+<li><code>_uv_fs_t&amp;&amp;</code>: pointer to the operation request</li>
+</ul>
+</li>
+</ul>
+<p>libuv reference: <a href="http://docs.libuv.org/en/v1.x/fs.html">http://docs.libuv.org/en/v1.x/fs.html</a></p>
+<h2 id="data-abstractions">Data Abstractions<a class="headerlink" href="#data-abstractions" title="Permanent link">&para;</a></h2>
+<h3 id="uv_fs_file">UV_FS_File<a class="headerlink" href="#uv_fs_file" title="Permanent link">&para;</a></h3>
+<pre><code class="ceu">data UV_FS_File with
+    event void ok;
+    var   int  fd;
+end
+</code></pre>
+
+<h2 id="code-abstractions">Code Abstractions<a class="headerlink" href="#code-abstractions" title="Permanent link">&para;</a></h2>
+<h3 id="uv_fs_open">UV_FS_Open<a class="headerlink" href="#uv_fs_open" title="Permanent link">&para;</a></h3>
+<p>Opens a file.</p>
+<pre><code class="ceu">code/await UV_FS_Open (var _char&amp;&amp; path, var int flags, var int mode)
+                        -&gt; (var&amp; UV_FS_File file)
+                            -&gt; int
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>path</code>:  path to the file</li>
+<li><code>flags</code>: access mode flags</li>
+<li><code>mode</code>:  file permission mode</li>
+</ul>
+</li>
+<li>Initialization<ul>
+<li><code>file</code>: created <a href="#uv_fs_file">file handle</a></li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>int</code>: open error<ul>
+<li>returns only case of error (always <code>&lt;0</code>)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>The file is only ready for use after <code>UV_FS_Open</code> triggers <code>file.ok</code>.</p>
+<p>Céu-libuv references:
+    <a href="#uv_fs"><code>UV_FS</code></a>.</p>
+<p>libuv references:
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_open"><code>ceu_uv_fs_open</code></a>,
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_close"><code>uv_fs_close</code></a>,
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h4>
+<p>Opens <code>file.txt</code> and prints <em>open ok</em> after the file is ready for use.
+In case of failure, prints <em>open error</em> along with the error code:</p>
+<pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
+
+var&amp; UV_FS_File file;
+
+var int? err =
+    watching UV_FS_Open(&quot;file.txt&quot;, _O_RDONLY, 0) -&gt; (&amp;file) do
+        await file.ok;
+        // file is ready for use
+        _printf(&quot;open ok\n&quot;);
+    end;
+if err? then
+    _printf(&quot;open error: %d\n&quot;, err!);
+end
+
+escape 0;
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_fs_read">UV_FS_Read<a class="headerlink" href="#uv_fs_read" title="Permanent link">&para;</a></h3>
+<p>Reads bytes from a file.</p>
+<pre><code class="ceu">code/await UV_FS_Read (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize size, var usize offset)
+                        -&gt; ssize
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>file</code>:   <a href="#uv_fs_file">file handle</a> to read from</li>
+<li><code>buf</code>:    destination buffer</li>
+<li><code>size</code>:   number of bytes to read</li>
+<li><code>offset</code>: starting file offset</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>ssize</code>: actual number of bytes read<ul>
+<li><code>&gt;=0</code>: number of bytes</li>
+<li><code>&lt;0</code>:  read error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Céu-libuv references:
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_read"><code>ceu_uv_fs_read</code></a>,
+    <a href="#uv_fs"><code>UV_FS</code></a>.</p>
+<p>libuv references:
+    <a href="http://docs.libuv.org/en/v1.x/misc.html#c.uv_buf_init"><code>uv_buf_init</code></a>,
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<h4 id="example_1">Example<a class="headerlink" href="#example_1" title="Permanent link">&para;</a></h4>
+<p>Prints the contents of <code>file.txt</code> in a loop that reads the file in chunks of 10
+bytes:</p>
+<pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
+
+var&amp; UV_FS_File file;
+
+var int? err =
+    watching UV_FS_Open(&quot;file.txt&quot;, _O_RDONLY, 0) -&gt; (&amp;file) do
+        await file.ok;
+
+        var usize offset = 0;
+        loop do
+            vector[11] byte buf;
+            var ssize n = await UV_FS_Read(&amp;file,&amp;buf,$$buf-1,offset);
+            if n == 0 then
+                break;
+            end
+            buf = buf .. [{'\0'}];
+            _printf(&quot;%s&quot;, &amp;&amp;buf[0]);
+            offset = offset + ($$buf-1);
+        end
+    end;
+_ceu_dbg_assert(not err?);
+
+escape 0;
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_fs_readline">UV_FS_ReadLine<a class="headerlink" href="#uv_fs_readline" title="Permanent link">&para;</a></h3>
+<p>Reads a line from a file.</p>
+<pre><code class="ceu">code/await UV_FS_ReadLine (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize offset)
+                            -&gt; ssize
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>file</code>:   <a href="#uv_fs_file">file handle</a> to read from</li>
+<li><code>buf</code>:    destination buffer (excludes the leading <code>\n</code>)</li>
+<li><code>offset</code>: starting file offset</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>ssize</code>: actual number of bytes read<ul>
+<li><code>&gt;=0</code>: number of bytes (includes the leading <code>\n</code>)</li>
+<li><code>&lt;0</code>:  read error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><code>TODO: the file is currently read byte by byte.</code></p>
+<p>Céu-libuv references:
+    <a href="#uv_fs_read"><code>UV_FS_Read</code></a>.</p>
+<h4 id="example_2">Example<a class="headerlink" href="#example_2" title="Permanent link">&para;</a></h4>
+<p>Prints the contents of <code>file.txt</code> in a loop that reads the file line by line:</p>
+<pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
+
+var&amp; UV_FS_File file;
+
+watching UV_FS_Open(&quot;file.txt&quot;, _O_RDONLY, 0) -&gt; (&amp;file) do
+    await file.ok;
+
+    var usize off = 0;
+    loop do
+        vector[] byte line;
+        var ssize n = await UV_FS_ReadLine(&amp;file,&amp;line,off);
+        if n &lt;= 0 then
+            break;
+        end
+        _printf(&quot;line = %s [%d]\n&quot;, &amp;&amp;line[0], n as int);
+        off = off + (n as usize);
+    end
+end
+
+escape 0;
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_fs_write">UV_FS_Write<a class="headerlink" href="#uv_fs_write" title="Permanent link">&para;</a></h3>
+<p>Write bytes from a file.</p>
+<pre><code class="ceu">code/await UV_FS_Write (var&amp; UV_FS_File file, vector&amp;[] byte buf, var usize size, var usize offset)
+                        -&gt; ssize
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>file</code>:   <a href="#uv_fs_file">file handle</a> to write to</li>
+<li><code>buf</code>:    source buffer</li>
+<li><code>size</code>:   number of bytes to write</li>
+<li><code>offset</code>: starting file offset</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>ssize</code>: actual number of bytes written<ul>
+<li><code>&gt;=0</code>: number of bytes</li>
+<li><code>&lt;0</code>:  write error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Céu-libuv references:
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_write"><code>ceu_uv_fs_write</code></a>,
+    <a href="#uv_fs"><code>UV_FS</code></a>.</p>
+<p>libuv references:
+    <a href="http://docs.libuv.org/en/v1.x/misc.html#c.uv_buf_init"><code>uv_buf_init</code></a>,
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<h4 id="example_3">Example<a class="headerlink" href="#example_3" title="Permanent link">&para;</a></h4>
+<p>Writes the string <em>Hello World</em> to <code>hello.txt</code>:</p>
+<pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
+
+var&amp; UV_FS_File file;
+
+var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
+
+var int? err =
+    watching UV_FS_Open(&quot;hello.txt&quot;, _O_CREAT|_O_WRONLY, mode) -&gt; (&amp;file) do
+        await file.ok;
+        vector[] byte buf = [] .. &quot;Hello World!\n&quot;;
+        var ssize n = await UV_FS_Write(&amp;file,&amp;buf,$buf,0);
+        if (n&lt;0) or (n as usize)!=$buf then
+            _printf(&quot;write error\n&quot;);
+        end
+    end;
+if err? then
+    _printf(&quot;open error: %d\n&quot;, err!);
+end
+
+escape 0;
+</code></pre>
+
+<!---------------------------------------------------------------------------->
+
+<h3 id="uv_fs_fstat">UV_FS_Fstat<a class="headerlink" href="#uv_fs_fstat" title="Permanent link">&para;</a></h3>
+<p>Reads information about a file.</p>
+<pre><code class="ceu">code/await UV_FS_Fstat (var&amp; UV_FS_File file, var&amp; _uv_stat_t stat)
+                        -&gt; int
+</code></pre>
+
+<ul>
+<li>Parameters<ul>
+<li><code>file</code>: <a href="#uv_fs_file">file handle</a> to write to</li>
+<li><code>stat</code>: destination buffer</li>
+</ul>
+</li>
+<li>Return<ul>
+<li><code>int</code>: operation status<ul>
+<li><code>0</code>: success</li>
+<li><code>&lt;0</code>: error</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Céu-libuv references:
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_fstat"><code>ceu_uv_fs_fstat</code></a>,
+    <a href="#uv_fs"><code>UV_FS</code></a>.</p>
+<p>libuv references:
+    <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_req_cleanup"><code>uv_fs_req_cleanup</code></a>.</p>
+<p><em>Note: all allocated libuv resources are automatically released on termination.</em></p>
+<h4 id="example_4">Example<a class="headerlink" href="#example_4" title="Permanent link">&para;</a></h4>
+<p>Prints the size of <code>file.txt</code> in bytes:</p>
+<pre><code class="ceu">#include &quot;uv/fs.ceu&quot;
+
+var&amp; UV_FS_File file;
+
+var int? err =
+    watching UV_FS_Open(&quot;file.txt&quot;, _O_RDONLY, 0) -&gt; (&amp;file)
+    do
+        await file.ok;
+
+        var _uv_stat_t stat = _;
+        await UV_FS_Fstat(&amp;file, &amp;stat);
+        _printf(&quot;size = %ld\n&quot;, stat.st_size);
+    end;
+
+if err? then
+    _printf(&quot;open error: %d\n&quot;, err!);
+end
+
+escape 0;
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../stream/" class="btn btn-neutral float-right" title="Stream">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../modes/" class="btn btn-neutral" title="Mode of Operation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../modes/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../stream/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>

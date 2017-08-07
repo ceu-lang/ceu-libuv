@@ -19,7 +19,7 @@ end
 var _uv_fs_t&& req1 = await UV_FS until req1==&&req_open;
 _ceu_dbg_assert(req_open.result >= 0);
 
-vector[1024] _char buf_ = _;
+var[1024] _char buf_ = _;
 var _uv_buf_t buf = _uv_buf_init(&&buf_[0], sizeof(buf_)-1);
 
 var int offset = 0;

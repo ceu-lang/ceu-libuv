@@ -9,6 +9,7 @@ native/plain
     _uv_handle_t,
     _uv_stream_t,
     _uv_write_t,
+    _tceu_uv_stream_data,
 ;
 
 native/pure
@@ -31,20 +32,35 @@ native
     _ceu_uv_read_start,
 ;
 
+native/pre do
+    typedef struct tceu_uv_stream_data {
+        tceu_vector* vector;
+        usize        n;         // n=0 means read any number of bytes and generates an input
+    } tceu_uv_stream_data;
+end
+
 input (_uv_stream_t&&, int)   UV_STREAM_ERROR;
 input (_uv_stream_t&&, int)   UV_STREAM_LISTEN;
 input (_uv_connect_t&&,int)   UV_STREAM_CONNECT;
 input (_uv_stream_t&&, ssize) UV_STREAM_READ;
 input (_uv_write_t&&,  int)   UV_STREAM_WRITE;
 
-code/await UV_Stream_Listen (var& _uv_stream_t stream, var int backlog)
-                                -> (event& void ok)
+// TODO: full-duplex: read/write handle
+
+data UV_Stream with
+    var&[] byte         buffer;
+    var&   _uv_stream_t handle;
+end
+
+code/await UV_Stream_Listen (var& UV_Stream stream, var int? backlog)
+                                -> (event void ok)
                                     -> int // err
 do
-    event void ok_;
-    ok = &ok_;
+    if not backlog? then
+        backlog = 128;
+    end
 
-    var int err1 = _ceu_uv_listen(&&stream, backlog);
+    var int err1 = _ceu_uv_listen(&&stream.handle, backlog!);
     if err1 != 0 then
         escape err1;
     end
@@ -52,92 +68,195 @@ do
     var _uv_stream_t&& s;
     var int err2;
     every (s,err2) in UV_STREAM_LISTEN do
-        if s == &&stream then
+        if s == &&stream.handle then
             _ceu_dbg_assert(err2 == 0);   // UV_STREAM_ERROR already aborted me
-            emit ok_;
+            emit ok;
         end
     end
 end
 
-code/await UV_Stream_Read (var& _uv_stream_t stream, vector&[] byte buf)
-                            -> (event& usize ok)
-                                -> int // err
+code/await UV_Stream_Read_N (var& UV_Stream stream, var usize? n) -> ssize
 do
-    event usize ok_;
-    ok = &ok_;
+    var usize? n_togo;
+    var int?   times;
+    var int?   free;
+    if n? then
+        _ceu_dbg_assert($$stream.buffer >= n!);
 
-    $buf = 0;
-    stream._data = _PURIFY(&&buf);
+        // "buffer" already contains the requested "n"
+        if $stream.buffer >= n! then
+            escape 0;
+        end
+        n = n! - $stream.buffer;
 
-    var int err;
-    do
-        err = _ceu_uv_read_start(&&stream);
-    finalize (stream) with
-        _uv_read_stop(&&stream);   // finalize after each UV_STREAM_READ
+        free = ($$stream.buffer - _ceu_vector_ptr(&&stream.buffer):ini) as int;
+        if free! >= n! then
+            times = 1;    // requires a single read
+            n_togo = n!;
+        else
+            times = 2;    // requires a second read
+            n_togo = free!;
+        end
+        (stream.handle._data as _tceu_uv_stream_data&&):n = n_togo!;
+    else
+        times = 1;
+        (stream.handle._data as _tceu_uv_stream_data&&):n = 0;
     end
-    if err != 0 then
-        escape err;
-    end
 
-    var _uv_stream_t&& s;
-    var ssize n_read;
-    every (s, n_read) in UV_STREAM_READ do
-        if s == &&stream then
-            _ceu_dbg_assert(n_read >= 0);   // UV_STREAM_ERROR has already aborted me
-            emit ok_(n_read as usize);
+    var ssize n_read  = 0;
+
+    var int i;
+    loop i in [1->times!] do
+        var int err;
+        do
+            err = _ceu_uv_read_start(&&stream.handle);
+        finalize (stream.handle) with
+            _uv_read_stop(&&stream.handle);   // finalize after each UV_STREAM_READ
+        end
+        if err != 0 then
+            if i == 1 then
+                escape err;
+            else
+                escape n_read;
+            end
+        end
+
+        var _uv_stream_t&& s;
+        var ssize ret;
+        (s, ret) = await UV_STREAM_READ until (s == &&stream.handle);
+        if ret <= 0 then
+            if i == 1 then
+                escape ret;
+            else
+                escape n_read;
+            end
+        end
+        if n? then
+            _ceu_dbg_assert(ret == n_togo!);
+        end
+        n_read = n_read + ret;
+
+        // second read
+        if times! == 2 then
+            n_togo = (n! - free!);
+            (stream.handle._data as _tceu_uv_stream_data&&):n = n_togo!;
         end
     end
+
+    escape n_read;
 end
 
-code/await UV_Stream_ReadLine (var& _uv_stream_t stream, vector&[] byte string)
-                                -> void
+code/await UV_Stream_Read_Line (var& UV_Stream stream, var&[] byte line)
+                                -> ssize
 do
-    event& usize ok;
-    watching UV_Stream_Read(&stream,&string) -> (&ok) do
-        loop do
-            await ok;
-            var byte n=0, c=0;
-            var int ret = _sscanf(&&string[0], "%*[^\n]%[\n]%c", &&n,&&c);
-            _ceu_dbg_assert(ret < 2);
-            if ret == 1 then
-                _ceu_dbg_assert(n == {'\n'});
-                escape;
+    var usize n_read = 0;
+
+    do/_
+        var usize i;
+        loop i in [1 -> $stream.buffer] do       // "[0 -> $stream.buf[" may underflow
+            var byte c = stream.buffer[0];
+            $stream.buffer = $stream.buffer - 1;
+            n_read = n_read + 1;
+            if c == {'\n'} then
+                escape n_read;
+            else
+                line = line .. [c];
             end
         end
     end
-    _ceu_dbg_assert(0);   // UV_STREAM_ERROR has already aborted me
+
+    loop do
+        var ssize n = await UV_Stream_Read_N(&stream,_);
+        if n < 0 then
+            escape n;
+        end
+
+        _ceu_dbg_assert($stream.buffer == n);
+        var usize i;
+        loop i in [0 -> $stream.buffer[ do
+            var byte c = stream.buffer[0];
+            $stream.buffer = $stream.buffer - 1;
+            n_read = n_read + 1;
+            if c == {'\n'} then
+//{ *@(&&stream.buffer[_ceu_vector_idx(&&stream.buffer, $stream.buffer)]) = '\0'; }
+//_printf(">3> |%s|\n", &&stream.buffer[0]);
+                escape n_read;
+            else
+                line = line .. [c];
+            end
+        end
+    end
 end
 
-code/await UV_Stream_Write (var& _uv_stream_t stream, vector&[] byte bytes)
-                                -> int // err
+code/await UV_Stream_Write_N (var& UV_Stream stream, var usize? n) -> ssize
 do
-    var usize starting  = 0;
-    var usize excluding = $bytes;
-    _ceu_dbg_assert($bytes >= excluding);
-    _ceu_dbg_assert(starting <= excluding);
-
-    var&? _uv_write_t req_write = &_malloc(sizeof(_uv_write_t))
-        finalize (req_write) with
-            // free on uv callback
-        end;
-    if not req_write? then
-        escape _UV_EAI_MEMORY;
+    if not n? then
+        n = $stream.buffer;
     end
 
-    var _uv_buf_t buf = _uv_buf_init(&&bytes[0], $bytes);
-                  buf.base = buf.base+starting;
-                  buf.len  = excluding-starting;
+    var int   times = _;
+    var usize n_togo = _;
+    var int filled = ($$stream.buffer - _ceu_vector_ptr(&&stream.buffer):ini) as int;
+    if filled >= n! then
+        times  = 1;   // requires a single write
+        n_togo = n!;
+    else
+        times  = 2;   // requires a second write
+        n_togo = filled;
+    end
 
-    _ceu_dbg_assert(_uv_is_writable(&&stream));
+    var _uv_buf_t buf = _uv_buf_init(&&stream.buffer[0], n_togo);
+    _ceu_dbg_assert(_uv_is_writable(&&stream.handle));
 
-    var int ret = _ceu_uv_write(&&req_write!, &&stream, &&buf);
-    _ceu_dbg_assert(ret >= 0);
-    var _uv_write_t&& w;
-    var int err;
-    (w, err) = await UV_STREAM_WRITE until w==&&req_write!;
-    _ceu_dbg_assert(err == 0);   // UV_STREAM_ERROR has already aborted me
+    var usize n_written = 0;
 
-    escape 0;
+    var int i;
+    loop i in [1->times] do
+        var&? _uv_write_t req = &_malloc(sizeof(_uv_write_t))
+            finalize (req) with
+                // free on uv callback
+            end;
+        if not req? then
+            if i == 1 then
+                escape _UV_EAI_MEMORY;
+            else
+                escape n_written;
+            end
+        end
+
+        var int ret = _ceu_uv_write(&&req!, &&stream.handle, &&buf);
+        if ret < 0 then
+            if i == 1 then
+                escape ret;
+            else
+                escape n_written;
+            end
+        end
+
+        var _uv_write_t&& w;
+        (w, ret) = await UV_STREAM_WRITE until w==&&req!;
+        if ret < 0 then
+            if i == 1 then
+                escape ret;
+            else
+                escape n_written;
+            end
+        end
+        // "ret" does not contain the number of bytes, let's trust on "n_togo"
+
+        //_ceu_dbg_assert(n! >= ret);
+        //_ceu_dbg_assert(n_togo == ret);
+        n_written = n_written + n_togo;
+        $stream.buffer = $stream.buffer - n_togo;
+
+        // second read
+        if times == 2 then
+            n_togo = n!-n_togo;
+            buf = _uv_buf_init(&&stream.buffer[0], n_togo);
+        end
+    end
+
+    escape n_written;
 end
 
 native/pos do
@@ -170,24 +289,32 @@ printf(">>> FREE\n");
         ceu_input(CEU_INPUT_UV_STREAM_LISTEN, &p);
     }
 
-    ##define CEU_UV_STREAM_READ_ALLOC_DYN_INIT 128
+    ##define CEU_UV_STREAM_READ_ALLOC_DYN_INIT 1024
 
     void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
-        ceu_dbg_assert(h->data != NULL);
-        tceu_vector* vec = (tceu_vector*) h->data;
+        tceu_uv_stream_data* data = (tceu_uv_stream_data*) h->data;
+        tceu_vector* vec = data->vector;
+        usize        n   = data->n;
+        ceu_dbg_assert(vec != NULL);
 
-        if (vec->is_dyn) {
-            ceu_vector_setmax(vec, CEU_UV_STREAM_READ_ALLOC_DYN_INIT, 0);
+        if (vec->is_dyn && !vec->is_freezed) {
+            ceu_vector_setmax(vec, (n==0 ? CEU_UV_STREAM_READ_ALLOC_DYN_INIT : n), 0);
         }
 
-        *buf = uv_buf_init((char*)vec->buf+vec->len, vec->max-vec->len);
+        *buf = uv_buf_init(ceu_vector_buf_get(vec,vec->len), (n==0 ? (vec->max-vec->ini) : n));
     }
 
     void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* _) {
         ceu_dbg_assert(n != 0); // TODO: if this happens, try to understand why
 
-        ceu_dbg_assert(s->data != NULL);
-        tceu_vector* vec = (tceu_vector*) s->data;
+        tceu_uv_stream_data* data = (tceu_uv_stream_data*) s->data;
+        ceu_dbg_assert(data != NULL);
+        ceu_dbg_assert(n<0 || data->n==0 || data->n>=n);
+        if (data->n != 0) {
+            data->n -= n;
+        }
+
+        tceu_vector* vec = data->vector;
         if (n > 0) {
             if (ceu_vector_setlen_could(vec,vec->len+n,1) == 0) {
                 n = UV_ENOBUFS;
@@ -201,7 +328,7 @@ printf(">>> FREE\n");
             ceu_input(CEU_INPUT_UV_STREAM_ERROR, &p);
         }
 
-        {
+        if (data->n == 0) {
             tceu_input_UV_STREAM_READ p = { s, n };
             ceu_input(CEU_INPUT_UV_STREAM_READ, &p);
         }
