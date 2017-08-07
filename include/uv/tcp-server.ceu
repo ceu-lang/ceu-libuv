@@ -7,7 +7,7 @@
 #define UV_TCP_SERVER_HANDLER_MAX
 #endif
 
-code/await UV_TCP_Server_Client (var& UV_Stream server, var int? buffer_size, var&? UV_TCP_Server_Data shared) -> void     // TODO: error
+code/await UV_TCP_Server_Client (var& UV_Stream server, var int? buffer_size, var&? UV_TCP_Server_Data shared) -> none     // TODO: error
 do
     var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
     var int? err =

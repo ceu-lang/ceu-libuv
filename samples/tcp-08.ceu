@@ -25,7 +25,7 @@ end
 #define PORT    7000
 #define BACKLOG 128
 
-code/await Client (var int port) -> void do
+code/await Client (var int port) -> none do
     var&? UV_TCP_Connect c = spawn UV_TCP_Connect("127.0.0.1", port, _);
     watching c do
         await c.ok;

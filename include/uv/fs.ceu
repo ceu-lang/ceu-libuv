@@ -7,7 +7,7 @@
 native/const
     _O_APPEND,
     _O_CREAT,
-    _O_RDONLY,
+    /* _O_RDONLY, */
     _O_TRUNC,
     _O_WRONLY,
     _S_IRUSR,
@@ -15,6 +15,7 @@ native/const
     _S_IRGRP,
     _S_IWGRP,
     _S_IROTH,
+    _UV_ENOBUFS,
 ;
 
 native/plain
@@ -41,7 +42,7 @@ data UV_FS_File with
     var&[] byte  buffer;
     var    usize offset =  0;
     var    int   handle = -1;
-    event  void  ok;
+    event  none  ok;
 end
 
 code/await UV_FS_Open (var _char&& path, var usize? buffer_size, var int? flags, var int? mode)
