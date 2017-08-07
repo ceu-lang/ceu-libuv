@@ -53,7 +53,7 @@ data UV_Stream with
 end
 
 code/await UV_Stream_Listen (var& UV_Stream stream, var int? backlog)
-                                -> (event void ok)
+                                -> (event& none ok)
                                     -> int // err
 do
     if not backlog? then
