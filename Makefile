@@ -1,4 +1,4 @@
-CEU_DIR  = /home/rodrigocosta/workspace/ceu
+CEU_DIR  = $(error set absolute path to "<ceu>" repository)
 CEU_SRC  ?= samples/tcp-01.ceu
 CEU_ARGS ?=
 
@@ -14,7 +14,7 @@ all:
 	         --cc-output=/tmp/$$(basename $(CEU_SRC) .ceu);
 	/tmp/$$(basename $(CEU_SRC) .ceu);
 
-LUA_FLAGS = `pkg-config lua5.3 --libs --cflags`
+LUA_FLAGS = -llua5.3
 
 samples:
 	for i in samples/async-*.ceu \
