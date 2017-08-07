@@ -73,7 +73,7 @@ do
 end
 
 code/await UV_TCP_Open_Bind_Listen (var _char&&? ip, var int port, var int? backlog, var int? buffer_size)
-                                    -> (var& UV_Stream stream, event& void ok)
+                                    -> (var& UV_Stream stream, event& none ok)
                                         -> int // err
 do
     if not ip? then
@@ -100,7 +100,7 @@ do
 end
 
 code/await UV_TCP_Connect (var _char&& ip, var int port, var int? buffer_size)
-                            -> (var& UV_Stream stream, event void ok)
+                            -> (var& UV_Stream stream, event none ok)
                                 -> int  // err
 do
     var _sockaddr_in dest = _;
