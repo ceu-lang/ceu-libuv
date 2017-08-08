@@ -8,8 +8,8 @@ var int? err =
     watching o do
         await o.file.ok;
         o.file.buffer = [] .. "Hello World!\n";
-        var usize n1 = $o.file.buffer;
-        var ssize n2 = await UV_FS_Write_N(&o.file,$o.file.buffer);
+        var usize n1 = $o.file.buffer-1;
+        var ssize n2 = await UV_FS_Write_N(&o.file,n1);
         if (n2<0) or n2!=n1 then
             _printf("write error\n");
             _ceu_dbg_assert(0);
@@ -18,5 +18,7 @@ var int? err =
 if err? then
     _printf("open error: %d\n", err!);
 end
+
+_printf("DONE\n");
 
 escape 0;

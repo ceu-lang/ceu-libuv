@@ -1,5 +1,6 @@
 #include "uv/fs.ceu"
 
+_printf("(should generate error -2)\n");
 var&? UV_FS_Open o = spawn UV_FS_Open("/non/existent/path", _,_,_);
 var int? err =
     watching o do
