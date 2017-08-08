@@ -38,7 +38,7 @@ do
     end
 end
 
-code/await Client (var& UV_Stream server) -> void
+code/await Client (var& UV_Stream server) -> none
 do
     var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
     var int? err =
@@ -66,7 +66,7 @@ do
     end
 end
 
-code/await Server (var _char&& ip, var int port) -> void
+code/await Server (var _char&& ip, var int port) -> none
 do
     var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen(ip,port,_,_);
     watching server do

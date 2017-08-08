@@ -15,7 +15,7 @@
 #define DEFAULT_PORT 7000
 #define BUFFER_MAX     10
 
-code/await Client (var& UV_Stream server) -> void
+code/await Client (var& UV_Stream server) -> none
 do
     var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
     var int? err1 =
@@ -51,7 +51,7 @@ do
     end
 end
 
-code/await Server (var _char&& ip, var int port, var int? backlog, var int? buffer_size) -> void
+code/await Server (var _char&& ip, var int port, var int? backlog, var int? buffer_size) -> none
 do
     var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen(ip,port,backlog,buffer_size);
     watching server do
