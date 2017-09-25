@@ -4,7 +4,7 @@
 
 ### UV_Stream_Listen
 
-Starts listening for incoming connections in a [stream handle](#uv_stream).
+Starts listening for incoming connections in a [stream](#uv_stream).
 
 ```ceu
 code/await UV_Stream_Listen (var& UV_Stream stream, var int? backlog)
@@ -13,7 +13,7 @@ code/await UV_Stream_Listen (var& UV_Stream stream, var int? backlog)
 ```
 
 - Parameters
-    - `stream`:  [stream handle](#uv_stream) to listen
+    - `stream`:  [stream](#uv_stream) to listen
     - `backlog`: number of connections the kernel might queue (default: `128`)
 - Public fields
     - `ok`: event signalled on every new incoming connection
@@ -56,22 +56,22 @@ escape 0;
 
 ### UV_Stream_Read_N
 
-Reads a specified number of bytes in the [stream handle](#uv_stream) to its buffer.
+Reads a specified number of bytes from the [stream](#uv_stream) to its buffer.
 
 ```ceu
 code/await UV_Stream_Read_N (var& UV_Stream stream, var usize? n) -> ssize
 ```
 
 - Parameters
-    - `stream`: [stream handle](#uv_stream) to read
+    - `stream`: [stream](#uv_stream) to read
     - `n`:      number of bytes to read (default: whatever arrives in the stream)
 - Return
     - `ssize`: number of bytes read from `stream`
         - `>=0`: number of bytes (not related to `n`)
         - `<0`:  read error
 
-After returning, if no errors occur, the [stream handle](#uv_stream) buffer
-will contain at least `n` bytes.
+After returning, if no errors occur, the [stream](#uv_stream) buffer will
+contain at least `n` bytes.
 If the buffer already contains `n` bytes in the beginning, no read occurs and
 `0` is returned.
 
@@ -107,14 +107,14 @@ escape 0;
 
 ### UV_Stream_Read_Line
 
-Reads a line from a [stream handle](#uv_stream).
+Reads a line from a [stream](#uv_stream).
 
 ```ceu
 code/await UV_Stream_Read_Line (var& UV_Stream stream, var&[] byte line) -> ssize
 ```
 
 - Parameters
-    - `stream`: [stream handle](#uv_stream) to read
+    - `stream`: [stream](#uv_stream) to read
     - `line`:   alias to destination buffer (excludes the leading `\n`)
 - Return
     - `ssize`: number of bytes read from `stream`
@@ -152,19 +152,23 @@ escape 0;
 
 ### UV_Stream_Write_N
 
-Writes a specified number of bytes in the [stream handle](#uv_stream) from its buffer.
+
+Writes a specified number of bytes to the [stream](#uv_stream) from its
+buffer.
 
 ```ceu
 code/await UV_Stream_Write_N (var& UV_Stream stream, var usize? n) -> ssize
 ```
 
 - Parameters
-    - `stream`: [stream handle](#uv_stream) to write
+    - `stream`: [stream](#uv_stream) to write
     - `n`:      number of bytes to write (default: current size of the `stream` buffer)
 - Return
     - `ssize`: number of bytes written
         - `>=0`: number of bytes
         - `<0`:  write error
+
+The written bytes are removed from the stream buffer.
 
 Céu-libuv references:
     [`ceu_uv_write`](http://docs.libuv.org/en/v1.x/stream.html#c.uv_write),

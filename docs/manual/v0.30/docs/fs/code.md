@@ -17,7 +17,7 @@ code/await UV_FS_Open (var _char&& path, var usize? buffer_size, var int? flags,
     - `flags`:          access mode flags (default: `_O_RDONLY`)
     - `mode`:           file permission mode (default: `0`)
 - Public fields
-    - `file`:           [file handle](#uv_fs_file)
+    - `file`:           [file](#uv_fs_file)
 - Return
     - `int`: open error
         - returns only in case of an error (always `<0`)
@@ -57,14 +57,14 @@ escape 0;
 
 ### UV_FS_Read_N
 
-Reads a specified number of bytes in the [file handle](#uv_fs_file) to its buffer.
+Reads a specified number of bytes from the [file](#uv_fs_file) to its buffer.
 
 ```ceu
 code/await UV_FS_Read_N (var& UV_FS_File file, var usize n) -> ssize
 ```
 
 - Parameters
-    - `file`:   [file handle](#uv_fs_file) to read
+    - `file`:   [file](#uv_fs_file) to read
     - `n`:      number of bytes to read
 - Return
     - `ssize`: number of bytes read from `file`
@@ -112,14 +112,14 @@ escape 0;
 
 ### UV_FS_Read_Line
 
-Reads a line from a [file handle](#uv_fs_file).
+Reads a line from a [file](#uv_fs_file).
 
 ```ceu
 code/await UV_FS_Read_Line (var& UV_FS_File file, var&[] byte line, var usize? by) -> ssize
 ```
 
 - Parameters
-    - `file`:   [file handle](#uv_fs_file) to read
+    - `file`:   [file](#uv_fs_file) to read
     - `line`:   alias to destination buffer (excludes the leading `\n`)
     - `by`:     size of read chunks in bytes (default: `128`)
 - Return
@@ -127,7 +127,7 @@ code/await UV_FS_Read_Line (var& UV_FS_File file, var&[] byte line, var usize? b
         - `>=0`: number of bytes (includes the leading `\n` and extra bytes)
         - `<0`:  read error
 
-The [file handle](#uv_fs_file) buffer advances to the byte after the `\n`.
+The [file](#uv_fs_file) buffer advances to the byte after the `\n`.
 
 Céu-libuv references:
     [`UV_FS_Read_N`](#uv_fs_read_n).
@@ -160,19 +160,21 @@ escape 0;
 
 ### UV_FS_Write_N
 
-Writes a specified number of bytes in the [file handle](#uv_fs_file) from its buffer.
+Writes a specified number of bytes to the [file](#uv_fs_file) from its buffer.
 
 ```ceu
 code/await UV_FS_Write_N (var& UV_FS_File file, var usize? n) -> ssize
 ```
 
 - Parameters
-    - `file`:   [file handle](#uv_fs_file) to write
+    - `file`:   [file](#uv_fs_file) to write
     - `n`:      number of bytes to write (default: current size of the `file` buffer)
 - Return
     - `ssize`: number of bytes written
         - `>=0`: number of bytes
         - `<0`:  write error
+
+The written bytes are removed from the file buffer.
 
 Céu-libuv references:
     [`ceu_uv_fs_write`](http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_write),
@@ -216,7 +218,7 @@ code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat)
 ```
 
 - Parameters
-    - `file`: [file handle](#uv_fs_file) to write to
+    - `file`: [file](#uv_fs_file) to read
     - `stat`: destination buffer
 - Return
     - `int`: operation status

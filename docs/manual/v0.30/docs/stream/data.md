@@ -2,7 +2,7 @@
 
 ### UV_Stream
 
-A stream handle.
+A stream abstraction.
 
 ```ceu
 data UV_Stream with

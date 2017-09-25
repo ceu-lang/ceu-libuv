@@ -142,7 +142,7 @@ end
 #define PUT_NETWORK_U32(bytes,off,host)                                 \
     do                                                                  \
         var u32 network = _htonl(host);                                 \
-        _ceu_vector_buf_set(&&(bytes), off, &&network, sizeof(u32));    \
+        _ceu_vector_buf_set(&&(bytes), off, (&&network as byte&&), sizeof(u32));    \
     end
 
 #endif

@@ -162,7 +162,7 @@
 <p>libuv reference: <a href="http://docs.libuv.org/en/v1.x/fs.html">http://docs.libuv.org/en/v1.x/fs.html</a></p>
 <h2 id="data-abstractions">Data Abstractions<a class="headerlink" href="#data-abstractions" title="Permanent link">&para;</a></h2>
 <h3 id="uv_fs_file">UV_FS_File<a class="headerlink" href="#uv_fs_file" title="Permanent link">&para;</a></h3>
-<p>A file handle.</p>
+<p>A file abstraction.</p>
 <pre><code class="ceu">data UV_FS_File with
     var&amp;[] byte  buffer;
     var    usize offset =  0;
@@ -198,7 +198,7 @@ end
 </ul>
 </li>
 <li>Public fields<ul>
-<li><code>file</code>:           <a href="#uv_fs_file">file handle</a></li>
+<li><code>file</code>:           <a href="#uv_fs_file">file</a></li>
 </ul>
 </li>
 <li>Return<ul>
@@ -237,13 +237,13 @@ escape 0;
 <!---------------------------------------------------------------------------->
 
 <h3 id="uv_fs_read_n">UV_FS_Read_N<a class="headerlink" href="#uv_fs_read_n" title="Permanent link">&para;</a></h3>
-<p>Reads a specified number of bytes in the <a href="#uv_fs_file">file handle</a> to its buffer.</p>
+<p>Reads a specified number of bytes from the <a href="#uv_fs_file">file</a> to its buffer.</p>
 <pre><code class="ceu">code/await UV_FS_Read_N (var&amp; UV_FS_File file, var usize n) -&gt; ssize
 </code></pre>
 
 <ul>
 <li>Parameters<ul>
-<li><code>file</code>:   <a href="#uv_fs_file">file handle</a> to read</li>
+<li><code>file</code>:   <a href="#uv_fs_file">file</a> to read</li>
 <li><code>n</code>:      number of bytes to read</li>
 </ul>
 </li>
@@ -291,13 +291,13 @@ escape 0;
 <!---------------------------------------------------------------------------->
 
 <h3 id="uv_fs_read_line">UV_FS_Read_Line<a class="headerlink" href="#uv_fs_read_line" title="Permanent link">&para;</a></h3>
-<p>Reads a line from a <a href="#uv_fs_file">file handle</a>.</p>
+<p>Reads a line from a <a href="#uv_fs_file">file</a>.</p>
 <pre><code class="ceu">code/await UV_FS_Read_Line (var&amp; UV_FS_File file, var&amp;[] byte line, var usize? by) -&gt; ssize
 </code></pre>
 
 <ul>
 <li>Parameters<ul>
-<li><code>file</code>:   <a href="#uv_fs_file">file handle</a> to read</li>
+<li><code>file</code>:   <a href="#uv_fs_file">file</a> to read</li>
 <li><code>line</code>:   alias to destination buffer (excludes the leading <code>\n</code>)</li>
 <li><code>by</code>:     size of read chunks in bytes (default: <code>128</code>)</li>
 </ul>
@@ -311,7 +311,7 @@ escape 0;
 </ul>
 </li>
 </ul>
-<p>The <a href="#uv_fs_file">file handle</a> buffer advances to the byte after the <code>\n</code>.</p>
+<p>The <a href="#uv_fs_file">file</a> buffer advances to the byte after the <code>\n</code>.</p>
 <p>Céu-libuv references:
     <a href="#uv_fs_read_n"><code>UV_FS_Read_N</code></a>.</p>
 <h4 id="example_2">Example<a class="headerlink" href="#example_2" title="Permanent link">&para;</a></h4>
@@ -338,13 +338,13 @@ escape 0;
 <!---------------------------------------------------------------------------->
 
 <h3 id="uv_fs_write_n">UV_FS_Write_N<a class="headerlink" href="#uv_fs_write_n" title="Permanent link">&para;</a></h3>
-<p>Writes a specified number of bytes in the <a href="#uv_fs_file">file handle</a> from its buffer.</p>
+<p>Writes a specified number of bytes to the <a href="#uv_fs_file">file</a> from its buffer.</p>
 <pre><code class="ceu">code/await UV_FS_Write_N (var&amp; UV_FS_File file, var usize? n) -&gt; ssize
 </code></pre>
 
 <ul>
 <li>Parameters<ul>
-<li><code>file</code>:   <a href="#uv_fs_file">file handle</a> to write</li>
+<li><code>file</code>:   <a href="#uv_fs_file">file</a> to write</li>
 <li><code>n</code>:      number of bytes to write (default: current size of the <code>file</code> buffer)</li>
 </ul>
 </li>
@@ -357,6 +357,7 @@ escape 0;
 </ul>
 </li>
 </ul>
+<p>The written bytes are removed from the file buffer.</p>
 <p>Céu-libuv references:
     <a href="http://docs.libuv.org/en/v1.x/fs.html#c.uv_fs_write"><code>ceu_uv_fs_write</code></a>,
     <a href="#uv_fs"><code>UV_FS</code></a>.</p>
@@ -392,7 +393,7 @@ escape 0;
 
 <ul>
 <li>Parameters<ul>
-<li><code>file</code>: <a href="#uv_fs_file">file handle</a> to write to</li>
+<li><code>file</code>: <a href="#uv_fs_file">file</a> to read</li>
 <li><code>stat</code>: destination buffer</li>
 </ul>
 </li>

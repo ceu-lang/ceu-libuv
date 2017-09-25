@@ -240,7 +240,7 @@
 <p>libuv reference: <a href="http://docs.libuv.org/en/v1.x/errors.html">http://docs.libuv.org/en/v1.x/errors.html</a></p>
 <h2 id="data-abstractions">Data Abstractions<a class="headerlink" href="#data-abstractions" title="Permanent link">&para;</a></h2>
 <h3 id="uv_stream">UV_Stream<a class="headerlink" href="#uv_stream" title="Permanent link">&para;</a></h3>
-<p>A stream handle.</p>
+<p>A stream abstraction.</p>
 <pre><code class="ceu">data UV_Stream with
     var&amp;[] byte         buffer;
     var&amp;   _uv_stream_t handle;
@@ -258,7 +258,7 @@ end
 <!---------------------------------------------------------------------------->
 
 <h3 id="uv_stream_listen_1">UV_Stream_Listen<a class="headerlink" href="#uv_stream_listen_1" title="Permanent link">&para;</a></h3>
-<p>Starts listening for incoming connections in a <a href="#uv_stream">stream handle</a>.</p>
+<p>Starts listening for incoming connections in a <a href="#uv_stream">stream</a>.</p>
 <pre><code class="ceu">code/await UV_Stream_Listen (var&amp; UV_Stream stream, var int? backlog)
                                 -&gt; (event void ok)
                                     -&gt; int
@@ -266,7 +266,7 @@ end
 
 <ul>
 <li>Parameters<ul>
-<li><code>stream</code>:  <a href="#uv_stream">stream handle</a> to listen</li>
+<li><code>stream</code>:  <a href="#uv_stream">stream</a> to listen</li>
 <li><code>backlog</code>: number of connections the kernel might queue (default: <code>128</code>)</li>
 </ul>
 </li>
@@ -312,13 +312,13 @@ escape 0;
 <!---------------------------------------------------------------------------->
 
 <h3 id="uv_stream_read_n">UV_Stream_Read_N<a class="headerlink" href="#uv_stream_read_n" title="Permanent link">&para;</a></h3>
-<p>Reads a specified number of bytes in the <a href="#uv_stream">stream handle</a> to its buffer.</p>
+<p>Reads a specified number of bytes from the <a href="#uv_stream">stream</a> to its buffer.</p>
 <pre><code class="ceu">code/await UV_Stream_Read_N (var&amp; UV_Stream stream, var usize? n) -&gt; ssize
 </code></pre>
 
 <ul>
 <li>Parameters<ul>
-<li><code>stream</code>: <a href="#uv_stream">stream handle</a> to read</li>
+<li><code>stream</code>: <a href="#uv_stream">stream</a> to read</li>
 <li><code>n</code>:      number of bytes to read (default: whatever arrives in the stream)</li>
 </ul>
 </li>
@@ -331,8 +331,8 @@ escape 0;
 </ul>
 </li>
 </ul>
-<p>After returning, if no errors occur, the <a href="#uv_stream">stream handle</a> buffer
-will contain at least <code>n</code> bytes.
+<p>After returning, if no errors occur, the <a href="#uv_stream">stream</a> buffer will
+contain at least <code>n</code> bytes.
 If the buffer already contains <code>n</code> bytes in the beginning, no read occurs and
 <code>0</code> is returned.</p>
 <p>Céu-libuv references:
@@ -361,13 +361,13 @@ escape 0;
 <!---------------------------------------------------------------------------->
 
 <h3 id="uv_stream_read_line">UV_Stream_Read_Line<a class="headerlink" href="#uv_stream_read_line" title="Permanent link">&para;</a></h3>
-<p>Reads a line from a <a href="#uv_stream">stream handle</a>.</p>
+<p>Reads a line from a <a href="#uv_stream">stream</a>.</p>
 <pre><code class="ceu">code/await UV_Stream_Read_Line (var&amp; UV_Stream stream, var&amp;[] byte line) -&gt; ssize
 </code></pre>
 
 <ul>
 <li>Parameters<ul>
-<li><code>stream</code>: <a href="#uv_stream">stream handle</a> to read</li>
+<li><code>stream</code>: <a href="#uv_stream">stream</a> to read</li>
 <li><code>line</code>:   alias to destination buffer (excludes the leading <code>\n</code>)</li>
 </ul>
 </li>
@@ -406,13 +406,14 @@ escape 0;
 <!---------------------------------------------------------------------------->
 
 <h3 id="uv_stream_write_n">UV_Stream_Write_N<a class="headerlink" href="#uv_stream_write_n" title="Permanent link">&para;</a></h3>
-<p>Writes a specified number of bytes in the <a href="#uv_stream">stream handle</a> from its buffer.</p>
+<p>Writes a specified number of bytes to the <a href="#uv_stream">stream</a> from its
+buffer.</p>
 <pre><code class="ceu">code/await UV_Stream_Write_N (var&amp; UV_Stream stream, var usize? n) -&gt; ssize
 </code></pre>
 
 <ul>
 <li>Parameters<ul>
-<li><code>stream</code>: <a href="#uv_stream">stream handle</a> to write</li>
+<li><code>stream</code>: <a href="#uv_stream">stream</a> to write</li>
 <li><code>n</code>:      number of bytes to write (default: current size of the <code>stream</code> buffer)</li>
 </ul>
 </li>
@@ -425,6 +426,7 @@ escape 0;
 </ul>
 </li>
 </ul>
+<p>The written bytes are removed from the stream buffer.</p>
 <p>Céu-libuv references:
     <a href="http://docs.libuv.org/en/v1.x/stream.html#c.uv_write"><code>ceu_uv_write</code></a>,
     <a href="#uv_stream_write"><code>UV_STREAM_WRITE</code></a>.</p>

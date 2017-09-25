@@ -43,6 +43,8 @@ escape 0;
 
 <!---------------------------------------------------------------------------->
 
+### UV_TCP_Connect
+
 Opens a [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t)
 [stream](../stream/#uv_stream) and connects it.
 
@@ -129,6 +131,8 @@ escape 0;
 ```
 
 <!---------------------------------------------------------------------------->
+
+### UV_TCP_Server
 
 Opens a [TCP](http://docs.libuv.org/en/v1.x/tcp.html#c.uv_tcp_t)
 [stream](../stream/#uv_stream), binds it to an IP and port, listens for incoming

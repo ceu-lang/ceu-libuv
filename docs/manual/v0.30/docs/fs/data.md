@@ -2,7 +2,7 @@
 
 ### UV_FS_File
 
-A file handle.
+A file abstraction.
 
 ```ceu
 data UV_FS_File with
