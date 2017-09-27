@@ -305,7 +305,8 @@ printf(">>> FREE\n");
     }
 
     void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* _) {
-        ceu_dbg_assert(n != 0); // TODO: if this happens, try to understand why
+        //ceu_dbg_assert(n != 0); // TODO: if this happens, try to understand why
+        // ok, it happend, the underlying syscall may fail with EGAIN/EWOULDBLOCK
 
         tceu_uv_stream_data* data = (tceu_uv_stream_data*) s->data;
         ceu_dbg_assert(data != NULL);
