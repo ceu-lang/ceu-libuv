@@ -153,7 +153,7 @@ do
 
     do/_
         var usize i;
-        loop i in [1 -> $stream.buffer] do       // "[0 -> $stream.buf[" may underflow
+        loop i in [1 -> $stream.buffer] do       // "[0 -> $stream.buffer[" may underflow
             var byte c = stream.buffer[0];
             $stream.buffer = $stream.buffer - 1;
             n_read = n_read + 1;
@@ -173,7 +173,7 @@ do
 
         _ceu_dbg_assert($stream.buffer == n);
         var usize i;
-        loop i in [0 -> $stream.buffer[ do
+        loop i in [1 -> $stream.buffer] do       // "[0 -> $stream.buffer[" may underflow
             var byte c = stream.buffer[0];
             $stream.buffer = $stream.buffer - 1;
             n_read = n_read + 1;
