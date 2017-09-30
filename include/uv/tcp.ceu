@@ -34,7 +34,8 @@ end
 
 // TODO: receive two sizes (r/w), receive a bool to join r/w in one
 
-code/await UV_TCP_Open (var int? buffer_size) -> (var UV_Stream stream) -> int // err
+code/await UV_TCP_Open (var int? buffer_size) -> (var UV_Stream stream) -> NEVER
+    throws Exception.Uv
 do
     if not buffer_size? then
         buffer_size = 1024;
@@ -45,7 +46,8 @@ do
             // free after "uv_close" below
         end;
     if not tcp_? then
-        escape _UV_EAI_MEMORY;
+        var Exception.Uv e = val Exception.Uv(_uv_strerror(_UV_EAI_MEMORY),_UV_EAI_MEMORY);
+        throw e;
     end
 
     var[buffer_size!*] byte buffer;
@@ -63,18 +65,21 @@ do
         _ceu_uv_close(&&tcp_! as _uv_handle_t&&);
     end
     if err1 != 0 then
-        escape err1;
+        var Exception.Uv e = val Exception.Uv(_uv_strerror(err1),err1);
+        throw e;
     end
 
     var _uv_stream_t&& s;
     var int err2;
     (s,err2) = await UV_STREAM_ERROR until (s==(&&tcp_! as _uv_stream_t&&));
-    escape err2;
+    var Exception.Uv e = val Exception.Uv(_uv_strerror(err2),err2);
+    throw e;
 end
 
 code/await UV_TCP_Open_Bind_Listen (var _char&&? ip, var int port, var int? backlog, var int? buffer_size)
                                     -> (var& UV_Stream stream, event& none ok)
-                                        -> int // err
+                                        -> NEVER
+    throws Exception.Uv
 do
     if not ip? then
         ip = "0.0.0.0";
@@ -83,51 +88,41 @@ do
     var _sockaddr_in addr = _;
     _uv_ip4_addr(&&ip![0], port, &&addr);
 
-    var&? UV_TCP_Open tcp = spawn UV_TCP_Open(buffer_size);
-    var int? err1 =
-        watching tcp do
-            stream = &tcp.stream;
-            _uv_tcp_bind(&&stream.handle as _uv_tcp_t&&, &&addr as _sockaddr&&, 0);
-            var&? UV_Stream_Listen l = spawn UV_Stream_Listen(&stream,backlog);
-            var int? err2 =
-                watching l do
-                    ok = &l.ok;
-                    await FOREVER;
-                end;
-            escape err2!;
-        end;
-    escape err1!;
+    var& UV_TCP_Open tcp = spawn UV_TCP_Open(buffer_size);
+    stream = &tcp.stream;
+    _uv_tcp_bind(&&stream.handle as _uv_tcp_t&&, &&addr as _sockaddr&&, 0);
+    var& UV_Stream_Listen l = spawn UV_Stream_Listen(&stream,backlog);
+    ok = &l.ok;
+    await FOREVER;
 end
 
 code/await UV_TCP_Connect (var _char&& ip, var int port, var int? buffer_size)
                             -> (var& UV_Stream stream, event none ok)
-                                -> int  // err
+                                -> NEVER
+    throws Exception.Uv
 do
     var _sockaddr_in dest = _;
     _uv_ip4_addr(ip, port, &&dest);
 
-    var&? UV_TCP_Open tcp = spawn UV_TCP_Open(buffer_size);
-    var int? err1 =
-        watching tcp do
-            stream = &tcp.stream;
-            var&? _uv_connect_t connect = &_malloc(sizeof(_uv_connect_t))
-                finalize (connect) with
-                    // free on uv callback
-                end
+    var& UV_TCP_Open tcp = spawn UV_TCP_Open(buffer_size);
+    stream = &tcp.stream;
+    var&? _uv_connect_t connect = &_malloc(sizeof(_uv_connect_t))
+        finalize (connect) with
+            // free on uv callback
+        end
 
-            _ceu_uv_tcp_connect(&&connect!, &&stream.handle as _uv_tcp_t&&, (&&dest as _sockaddr&&));
+    _ceu_uv_tcp_connect(&&connect!, &&stream.handle as _uv_tcp_t&&, (&&dest as _sockaddr&&));
 
-            var _uv_connect_t&& c;
-            var int err2;
-            (c,err2) = await UV_STREAM_CONNECT until c==&&connect!;
-            if err2 != 0 then
-                escape err2;
-            end
+    var _uv_connect_t&& c;
+    var int err2;
+    (c,err2) = await UV_STREAM_CONNECT until c==&&connect!;
+    if err2 != 0 then
+        var Exception.Uv e = val Exception.Uv(_uv_strerror(err2),err2);
+        throw e;
+    end
 
-            emit ok;
-            await FOREVER;
-        end;
-    escape err1!;    // can only reach here with "err" set
+    emit ok;
+    await FOREVER;
 end
 
 #endif

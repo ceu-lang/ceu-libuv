@@ -17,41 +17,26 @@
 
 code/await Client (var& UV_Stream server) -> none
 do
-    var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
-    var int? err1 =
-        watching client do
-            var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
-            _ceu_dbg_assert(ret == 0);
+    var Exception.Uv? e;
+    catch e do
+        var& UV_TCP_Open client = spawn UV_TCP_Open(BUFFER_MAX);
+        var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
+        _ceu_dbg_assert(ret == 0);
 
-            // READ/WRITE LOOP
+        loop do
+            var ssize n = await UV_Stream_Read_N(&client.stream, _);
+            _ceu_dbg_assert(n >= 0);
+            client.stream.buffer = client.stream.buffer .. [{'\0'}];
 
-            var[BUFFER_MAX] byte buf;
-
-            spawn do
-                var _uv_stream_t&& s;
-                var int            err2;
-                every (s,err2) in UV_STREAM_ERROR do
-                    _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err2));
-                end
-            end
-
-            loop do
-                var ssize n = await UV_Stream_Read_N(&client.stream, _);
-                _ceu_dbg_assert(n >= 0);
-                client.stream.buffer = client.stream.buffer .. [{'\0'}];
-
-                // WRITE
-                await UV_Stream_Write_N(&client.stream, $client.stream.buffer-1);
-                $client.stream.buffer = 0;
-            end
-        end;
-
-    if err1? then
-        _fprintf(_stderr, "[client]: %s\n", _uv_strerror(err1!));
+            await UV_Stream_Write_N(&client.stream, $client.stream.buffer-1);
+            $client.stream.buffer = 0;
+        end
     end
+    _fprintf(_stderr, "[client]: %s\n", e!.message);
 end
 
 code/await Server (var _char&& ip, var int port, var int? backlog, var int? buffer_size) -> none
+    throws Exception.Uv
 do
     var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen(ip,port,backlog,buffer_size);
     watching server do

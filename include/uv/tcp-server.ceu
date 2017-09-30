@@ -7,44 +7,35 @@
 #define UV_TCP_SERVER_HANDLER_MAX
 #endif
 
-code/await UV_TCP_Server_Client (var& UV_Stream server, var int? buffer_size, var&? UV_TCP_Server_Data shared) -> none     // TODO: error
+code/await UV_TCP_Server_Client (var& UV_Stream server, var int? buffer_size, var&? UV_TCP_Server_Data shared) -> none
+    throws Exception.Uv
 do
-    var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
-    var int? err =
-        watching client do
-            var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
-            _ceu_dbg_assert(ret == 0);
+    var& UV_TCP_Open client = spawn UV_TCP_Open(_);
+    var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
+    _ceu_dbg_assert(ret == 0);
 
 /*
-            var _sockaddr_in sock = _;
-            var int len = sizeof(_sockaddr_in) as int;
-            var int ret = _uv_tcp_getsockname(&&client.tcp, (&&sock as _sockaddr&&), &&len);
-            _ceu_dbg_assert(ret == 0);
-            var int port = _ntohs(sock.sin_port);
+    var _sockaddr_in sock = _;
+    var int len = sizeof(_sockaddr_in) as int;
+    var int ret = _uv_tcp_getsockname(&&client.tcp, (&&sock as _sockaddr&&), &&len);
+    _ceu_dbg_assert(ret == 0);
+    var int port = _ntohs(sock.sin_port);
 */
 
-            await UV_TCP_Server_Handler(&client.stream, &shared);                   // TODO: error
-        end;
-
-    if err? then
-        _fprintf(_stderr, "[client]: %s\n", _uv_strerror(err!));
-    end
+    await UV_TCP_Server_Handler(&client.stream, &shared);
 end
 
 code/await UV_TCP_Server (var _char&&? ip, var int port, var int? backlog,
                           var int? buffer_size, var&? UV_TCP_Server_Data shared)
-                            -> int  // err
+                            -> NEVER
+    throws Exception.Uv
 do
-    var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen(ip,port,backlog,buffer_size);
-    var int? err =
-        watching server do
+    var& UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen(ip,port,backlog,buffer_size);
 // TODO: receive as argument?
-            pool[UV_TCP_SERVER_HANDLER_MAX] UV_TCP_Server_Client cs;
-            every server.ok do
-                spawn UV_TCP_Server_Client(&server.stream, buffer_size, &shared) in cs;
-            end
-        end;
-    escape err!;
+    pool[UV_TCP_SERVER_HANDLER_MAX] UV_TCP_Server_Client cs;
+    every server.ok do
+        spawn UV_TCP_Server_Client(&server.stream, buffer_size, &shared) in cs;
+    end
 end
 
 #endif

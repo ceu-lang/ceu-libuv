@@ -14,6 +14,7 @@
 #define BUFFER_MAX      10
 
 code/await Handler0 (var& UV_Stream client) -> int
+    throws Exception.Uv
 do
     loop do
         await UV_Stream_Read_N(&client,_);
@@ -24,6 +25,7 @@ do
 end
 
 code/await Handler1 (var& UV_Stream client) -> int
+    throws Exception.Uv
 do
     loop do
         var[] byte line;
@@ -40,40 +42,36 @@ end
 
 code/await Client (var& UV_Stream server) -> none
 do
-    var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
-    var int? err =
-        watching client do
-            var int ret1 = _uv_accept(&&server.handle, &&client.stream.handle);
-            _ceu_dbg_assert(ret1 == 0);
+    var Exception.Uv? e;
+    catch e do
+        var& UV_TCP_Open client = spawn UV_TCP_Open(_);
+        var int ret1 = _uv_accept(&&server.handle, &&client.stream.handle);
+        _ceu_dbg_assert(ret1 == 0);
 
-            var _sockaddr_in sock = _;
-            var int len = sizeof(_sockaddr_in) as int;
-            var int ret2 = _uv_tcp_getsockname(&&client.stream.handle as _uv_tcp_t&&, (&&sock as _sockaddr&&), &&len);
-            _ceu_dbg_assert(ret2 == 0);
-            var int port = _ntohs(sock.sin_port);
+        var _sockaddr_in sock = _;
+        var int len = sizeof(_sockaddr_in) as int;
+        var int ret2 = _uv_tcp_getsockname(&&client.stream.handle as _uv_tcp_t&&, (&&sock as _sockaddr&&), &&len);
+        _ceu_dbg_assert(ret2 == 0);
+        var int port = _ntohs(sock.sin_port);
 
-            if port == DEFAULT_PORT then
-                await Handler0(&client.stream);
-            else/if port == DEFAULT_PORT+1 then
-                await Handler1(&client.stream);
-            else
-                _ceu_dbg_assert(0);
-            end
-        end;
-
-    if err? then
-        _fprintf(_stderr, "[client]: %s\n", _uv_strerror(err!));
+        if port == DEFAULT_PORT then
+            await Handler0(&client.stream);
+        else/if port == DEFAULT_PORT+1 then
+            await Handler1(&client.stream);
+        else
+            _ceu_dbg_assert(0);
+        end
     end
+    _fprintf(_stderr, "[client]: %s\n", e!.message);
 end
 
 code/await Server (var _char&& ip, var int port) -> none
+    throws Exception.Uv
 do
-    var&? UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen(ip,port,_,_);
-    watching server do
-        pool[10] Client cs;
-        every server.ok do
-            spawn Client(&server.stream) in cs;
-        end
+    var& UV_TCP_Open_Bind_Listen server = spawn UV_TCP_Open_Bind_Listen(ip,port,_,_);
+    pool[10] Client cs;
+    every server.ok do
+        spawn Client(&server.stream) in cs;
     end
 end
 

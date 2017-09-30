@@ -54,7 +54,8 @@ end
 
 code/await UV_Stream_Listen (var& UV_Stream stream, var int? backlog)
                                 -> (event none ok)
-                                    -> int // err
+                                    -> NEVER
+    throws Exception.Uv
 do
     if not backlog? then
         backlog = 128;
@@ -62,7 +63,8 @@ do
 
     var int err1 = _ceu_uv_listen(&&stream.handle, backlog!);
     if err1 != 0 then
-        escape err1;
+        var Exception.Uv e = val Exception.Uv(_uv_strerror(err1),err1);
+        throw e;
     end
 
     var _uv_stream_t&& s;
@@ -75,7 +77,8 @@ do
     end
 end
 
-code/await UV_Stream_Read_N (var& UV_Stream stream, var usize? n) -> ssize
+code/await UV_Stream_Read_N (var& UV_Stream stream, var usize? n) -> usize
+    throws Exception.Uv
 do
     var usize? n_togo;
     var int?   times;
@@ -103,7 +106,7 @@ do
         (stream.handle._data as _tceu_uv_stream_data&&):n = 0;
     end
 
-    var ssize n_read  = 0;
+    var usize n_read  = 0;
 
     var int i;
     loop i in [1->times!] do
@@ -114,27 +117,21 @@ do
             _uv_read_stop(&&stream.handle);   // finalize after each UV_STREAM_READ
         end
         if err != 0 then
-            if i == 1 then
-                escape err;
-            else
-                escape n_read;
-            end
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(err),err);
+            throw e;
         end
 
         var _uv_stream_t&& s;
         var ssize ret;
         (s, ret) = await UV_STREAM_READ until (s == &&stream.handle);
         if ret <= 0 then
-            if i == 1 then
-                escape ret;
-            else
-                escape n_read;
-            end
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret as int);
+            throw e;
         end
         if n? then
             _ceu_dbg_assert(ret == n_togo!);
         end
-        n_read = n_read + ret;
+        n_read = n_read + (ret as usize);
 
         // second read
         if times! == 2 then
@@ -147,7 +144,8 @@ do
 end
 
 code/await UV_Stream_Read_Line (var& UV_Stream stream, var&[] byte line)
-                                -> ssize
+                                -> usize
+    throws Exception.Uv
 do
     var usize n_read = 0;
 
@@ -166,10 +164,7 @@ do
     end
 
     loop do
-        var ssize n = await UV_Stream_Read_N(&stream,_);
-        if n < 0 then
-            escape n;
-        end
+        var usize n = await UV_Stream_Read_N(&stream,_);
 
         _ceu_dbg_assert($stream.buffer == n);
         var usize i;
@@ -188,7 +183,8 @@ do
     end
 end
 
-code/await UV_Stream_Write_N (var& UV_Stream stream, var usize? n) -> ssize
+code/await UV_Stream_Write_N (var& UV_Stream stream, var usize? n) -> usize
+    throws Exception.Uv
 do
     if not n? then
         n = $stream.buffer;
@@ -217,30 +213,21 @@ do
                 // free on uv callback
             end;
         if not req? then
-            if i == 1 then
-                escape _UV_EAI_MEMORY;
-            else
-                escape n_written;
-            end
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(_UV_EAI_MEMORY),_UV_EAI_MEMORY);
+            throw e;
         end
 
         var int ret = _ceu_uv_write(&&req!, &&stream.handle, &&buf);
         if ret < 0 then
-            if i == 1 then
-                escape ret;
-            else
-                escape n_written;
-            end
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret);
+            throw e;
         end
 
         var _uv_write_t&& w;
         (w, ret) = await UV_STREAM_WRITE until w==&&req!;
         if ret < 0 then
-            if i == 1 then
-                escape ret;
-            else
-                escape n_written;
-            end
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret);
+            throw e;
         end
         // "ret" does not contain the number of bytes, let's trust on "n_togo"
 

@@ -5,7 +5,7 @@
 #@ Usage:
 #@  - connect "telnet" clients to port 7000
 #@  - write long string
-#@      - ERROR!
+#@      - ERROR! (no because the underlying buffer holds it)
 #@ Features:
 #@  - code Client
 #@  - uses UV_Open/Listen/Read/Write
@@ -18,51 +18,32 @@
 
 code/await Client (var& UV_Stream server) -> none
 do
-    var&? UV_TCP_Open client = spawn UV_TCP_Open(_);
-    var int? err1 =
-        watching client do
-            var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
-            _ceu_dbg_assert(ret == 0);
+    var Exception.Uv? e;
+    catch e do
+        var& UV_TCP_Open client = spawn UV_TCP_Open(BUFFER_MAX);
+        var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
+        _ceu_dbg_assert(ret == 0);
 
-            // READ/WRITE LOOP
-
-            spawn do
-                var _uv_stream_t&& s;
-                var int            err2;
-                every (s,err2) in UV_STREAM_ERROR do
-                    _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err2));
-                end
-            end
-
-            loop do
-                await UV_Stream_Read_N(&client.stream,_);
-
-                // WRITE
-                await UV_Stream_Write_N(&client.stream,_);
-            end
-        end;
-
-    if err1? then
-        _fprintf(_stderr, "[client]: %s\n", _uv_strerror(err1!));
+        loop do
+            await UV_Stream_Read_N(&client.stream,_);
+            await UV_Stream_Write_N(&client.stream,_);
+        end
     end
+    _fprintf(_stderr, "[error]: %s\n", e!.message);
 end
 
 _printf("I will terminate after 10s...\n");
 
-var&? UV_TCP_Open server = spawn UV_TCP_Open(_);
-watching server do
-    var _sockaddr_in addr = _;
-    _uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
-    _uv_tcp_bind(&&server.stream.handle as _uv_tcp_t&&, &&addr as _sockaddr&&, 0);
+var& UV_TCP_Open server = spawn UV_TCP_Open(BUFFER_MAX);
+var _sockaddr_in addr = _;
+_uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
+_uv_tcp_bind(&&server.stream.handle as _uv_tcp_t&&, &&addr as _sockaddr&&, 0);
 
-    var&? UV_Stream_Listen listen = spawn UV_Stream_Listen(&server.stream,_);
-    watching listen do
-        pool[10] Client cs;
-        watching 10s do
-            every listen.ok do
-                spawn Client(&server.stream) in cs;
-            end
-        end
+var& UV_Stream_Listen listen = spawn UV_Stream_Listen(&server.stream,_);
+pool[10] Client cs;
+watching 10s do
+    every listen.ok do
+        spawn Client(&server.stream) in cs;
     end
 end
 
