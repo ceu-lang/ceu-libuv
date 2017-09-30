@@ -47,7 +47,8 @@ end
 
 code/await UV_FS_Open (var _char&& path, var usize? buffer_size, var int? flags, var int? mode)
                         -> (var UV_FS_File file)
-                            -> int
+                            -> NEVER
+    throws Exception.Uv
 do
     if not buffer_size? then
         buffer_size = 1024;
@@ -76,21 +77,23 @@ do
     _ceu_dbg_assert(ret == 0);  // libuv seems to always return 0
 #else
     if ret < 0 then
-        escape ret;
+        throw/escape ret;
     end
 #endif
 
     var _uv_fs_t&& req = await UV_FS until req==&&req_open;
     file.handle = req_open.result;
     if file.handle < 0 then
-        escape file.handle;
+        var Exception.Uv e = val Exception.Uv(_uv_strerror(file.handle),file.handle);
+        throw e;
     end
     emit file.ok;
 
     await FOREVER;
 end
 
-code/await UV_FS_Read_N (var& UV_FS_File file, var usize n) -> ssize
+code/await UV_FS_Read_N (var& UV_FS_File file, var usize n) -> usize
+    throws Exception.Uv
 do
     if n == 0 then
         escape 0;
@@ -128,17 +131,17 @@ do
             _uv_fs_req_cleanup(&&req);
         end
         if ret < 0 then
-            if i == 1 then
-                escape ret;
-            else
-                escape n_read;
-            end
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(file.handle),file.handle);
+            throw e;
         end
 
         var _uv_fs_t&& req_ = await UV_FS until req_==&&req;
-        if req.result <= 0 then
+        if req.result < 0 then
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(req.result),req.result);
+            throw e;
+        else/if req.result == 0 then
             if n == 1 then
-                escape req.result;
+                escape 0;
             else
                 escape n_read;
             end
@@ -161,7 +164,8 @@ do
 end
 
 code/await UV_FS_Read_Line (var& UV_FS_File file, var&[] byte line, var usize? by)
-                                -> ssize
+                                -> usize
+    throws Exception.Uv
 do
     if not by? then
         by = 128;
@@ -192,14 +196,13 @@ do
         end;
 
         if n == 0 then
-            escape {UV_ENOBUFS};
+            var Exception.Uv e = val Exception.Uv(_uv_strerror({UV_ENOBUFS}),{UV_ENOBUFS});
+            throw e;
         end
 
-        var ssize n_ = await UV_FS_Read_N(&file, n);   // may read less than "n" bytes
-        if n_ < 0 then
-            escape n;
-        else/if n_ == 0 then
-            escape {UV_EOF};
+        var usize n_ = await UV_FS_Read_N(&file, n);   // may read less than "n" bytes
+        if n_ == 0 then
+            escape 0;
         end
         n = n_ as usize;
 
@@ -219,6 +222,7 @@ do
 end
 
 code/await UV_FS_Write_N (var& UV_FS_File file, var usize? n) -> ssize
+    throws Exception.Uv
 do
     if not n? then
         n = $file.buffer;
@@ -250,20 +254,14 @@ do
             _uv_fs_req_cleanup(&&req);
         end
         if ret < 0 then
-            if i == 1 then
-                escape ret;
-            else
-                escape n_written;
-            end
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret as int);
+            throw e;
         end
 
         var _uv_fs_t&& req_ = await UV_FS until req_==&&req;
         if req.result < 0 then
-            if i == 1 then
-                escape req.result;
-            else
-                escape n_written;
-            end
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(req.result),req.result);
+            throw e;
         end
 
         _ceu_dbg_assert(n! >= req.result);
@@ -282,7 +280,8 @@ do
     escape n_written;
 end
 
-code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat) -> int
+code/await UV_FS_Fstat (var& UV_FS_File file, var& _uv_stat_t stat) -> none
+    throws Exception.Uv
 do
     var _uv_fs_t req_fstat = _;
     do finalize with
@@ -297,13 +296,12 @@ do
     end
 
     if ret < 0 then
-        escape ret;
+        var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret);
+        throw e;
     end
     var _uv_fs_t&& req = await UV_FS until req==&&req_fstat;
 
     stat = *(req_fstat.ptr as _uv_stat_t&&);
-
-    escape 0;
 end
 
 native/pos do

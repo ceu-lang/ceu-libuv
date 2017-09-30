@@ -1,6 +1,10 @@
 #ifndef _UV_CEU
 #define _UV_CEU
 
+data Exception.Uv with
+    var int number;
+end
+
 native/const
     _UV_EAI_MEMORY,
     _EACCES,
