@@ -1,29 +1,20 @@
 #include "uv/fs.ceu"
 
-var[] byte path = [].."fs-03.txt";
-
-var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
-
-var& UV_FS_Open o = spawn UV_FS_Open(&&path[0], 128, _O_CREAT|_O_WRONLY, mode);
+var& UV_FS_Open o = spawn UV_FS_Open("fs-01.txt", 1024, _O_RDONLY, 0);
 await o.file.ok;
 _ceu_dbg_assert(o.file.handle >= 0);
 
-var int i;
-loop i in [1 -> 20] do
-    var int j;
-    loop j in [0 -> 26[ do
-        o.file.buffer = o.file.buffer..[{'a'}+j];
+loop do
+    var ssize n = await UV_FS_Read_N(&o.file, $$o.file.buffer/2-1);
+    _ceu_dbg_assert(n >= 0);
+    if n == 0 then
+        break;
     end
-    o.file.buffer = o.file.buffer..[{'\n'}];
-    var ssize n = await UV_FS_Write_N(&o.file, $o.file.buffer);
-    _ceu_dbg_assert(n == 27);
+    o.file.buffer = o.file.buffer .. [{'\0'}];
+    _printf("%s", &&o.file.buffer[0]);
+    $o.file.buffer = 0;
 end
 
-[[
-    local src   = io.open(@path..'.orig'):read'*a'
-    local build = io.open(@path):read'*a'
-    assert(src == build)
-    print'DONE'
-]];
+_printf(">>> %d\n", err? as int);
 
 escape 0;

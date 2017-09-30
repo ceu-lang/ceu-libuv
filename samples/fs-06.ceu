@@ -1,24 +1,24 @@
 #include "uv/fs.ceu"
 
-var& UV_FS_Open o = spawn UV_FS_Open("fs-01.txt", 64, _O_RDONLY, 0);
+var& UV_FS_Open o = spawn UV_FS_Open("fs-03.txt", 11, _O_RDONLY, 0);
 await o.file.ok;
 _ceu_dbg_assert(o.file.handle >= 0);
 
 var _uv_stat_t stat = _;
 await UV_FS_Fstat(&o.file, &stat);
 var usize size = stat.st_size;
+_ceu_dbg_assert(size == 540);
 
-var int i;
-loop i do
-    var[] byte line;
-    var ssize n = await UV_FS_Read_Line(&o.file,&line,_);
-    if n <= 0 then
-        break;
-    end
-    line = line .. [{'\0'}];
-    _printf("line = %s [%ld]\n", &&line[0], n);
+o.file.offset = size - 10;
+var ssize n = await UV_FS_Read_N(&o.file,10);
+if n < 0 then
+    _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(n));
 end
-_ceu_dbg_assert(i == 10000);
-_ceu_dbg_assert(not err?);
+_printf("n = %ld\n", n);
+_ceu_dbg_assert(n == 10);
+
+o.file.buffer = o.file.buffer .. [{'\0'}];
+_printf(">>> %s\n", &&o.file.buffer[0]);
+_ceu_dbg_assert(_strcmp("rstuvwxyz\n",&&o.file.buffer[0]) == 0);
 
 escape 0;

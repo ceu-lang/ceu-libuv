@@ -45,10 +45,9 @@ data UV_FS_File with
     event  none  ok;
 end
 
-code/await UV_FS_Open (var _char&& path, var usize? buffer_size, var int? flags, var int? mode)
+code/await UV_FS_Open_Try (var _char&& path, var usize? buffer_size, var int? flags, var int? mode)
                         -> (var UV_FS_File file)
-                            -> NEVER
-    throws Exception.Uv
+                            -> int
 do
     if not buffer_size? then
         buffer_size = 1024;
@@ -77,19 +76,33 @@ do
     _ceu_dbg_assert(ret == 0);  // libuv seems to always return 0
 #else
     if ret < 0 then
-        throw/escape ret;
+        escape ret;
     end
 #endif
 
     var _uv_fs_t&& req = await UV_FS until req==&&req_open;
     file.handle = req_open.result;
     if file.handle < 0 then
-        var Exception.Uv e = val Exception.Uv(_uv_strerror(file.handle),file.handle);
-        throw e;
+        escape file.handle;
     end
     emit file.ok;
 
     await FOREVER;
+end
+
+code/await UV_FS_Open (var _char&& path, var usize? buffer_size, var int? flags, var int? mode)
+                        -> (var& UV_FS_File file)
+                            -> NEVER
+    throws Exception.Uv
+do
+    var&? UV_FS_Open_Try o = spawn UV_FS_Open_Try(path,buffer_size,flags,mode);
+    var int? err =
+        watching o do
+            file = &o.file;
+            await o.file.ok;
+        end;
+    var Exception.Uv e = val Exception.Uv(_uv_strerror(err!),err!);
+    throw e;
 end
 
 code/await UV_FS_Read_N (var& UV_FS_File file, var usize n) -> usize
