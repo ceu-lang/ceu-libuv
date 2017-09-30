@@ -1,49 +1,18 @@
 #include "uv/fs.ceu"
 
-var int     w_flags = _O_CREAT|_O_WRONLY;
-var _mode_t w_mode  = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
-    
-var&? UV_FS_Open w = spawn UV_FS_Open("/tmp/output.txt",_,w_flags,w_mode);
+var& UV_FS_File file;
 
-var int? w_err =
-    watching w do
-        var&? UV_FS_Open r = spawn UV_FS_Open("/tmp/hello.txt",_,_,_);
-        var int? r_err =
-            watching r do
-                par/and do
-                    await w.file.ok;
-                with
-                    await r.file.ok;
-                end
-
-                loop do
-                    // read
-                    var ssize n = await UV_FS_Read_Line(&r.file,&w.file.buffer,_);
-                    if n <= 0 then
-                        break;
-                    end
-                    w.file.buffer = w.file.buffer .. [{'\n'}];
-
-                    // write
-                    var usize n1 = $w.file.buffer;
-                    var ssize n2 = await UV_FS_Write_N(&w.file,_);
-                    _ceu_dbg_assert(n2>=0 and n2==n1);
-                end
-            end;
-        if r_err? then
-            _printf("read open error: %d\n", r_err!);
-        end
-    end;
-if w_err? then
-    _printf("write open error: %d\n", w_err!);
+var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
+var& UV_FS_Open o = spawn UV_FS_Open("/tmp/hello.txt", _, _O_CREAT|_O_WRONLY, mode);
+await o.file.ok;
+o.file.buffer = [] .. "Hello World!\n";
+var usize n1 = $o.file.buffer-1;
+var ssize n2 = await UV_FS_Write_N(&o.file,n1);
+if (n2<0) or n2!=n1 then
+    _printf("write error\n");
+    _ceu_dbg_assert(0);
 end
 
-[[
-    local dst = io.open('/tmp/output.txt'):read'*a'
-    local src = io.open('/tmp/hello.txt'):read'*a'
-    assert(src == dst)
-    print'DONE'
-]];
+_printf("DONE\n");
 
 escape 0;
-

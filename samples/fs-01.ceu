@@ -1,50 +1,16 @@
-#if 0
-ceu --pre --pre-args="-I/data/ceu/ceu/include -I/data/ceu/ceu-libuv/include -I." --pre-input="fs-01.ceu" --ceu --env --env-header=/data/ceu/ceu/env/header.h --env-main=/data/ceu/ceu/env/main.c --env-output=/tmp/x.c --cc --cc-args="-luv -llua5.3 -g" --cc-output=/tmp/x.exe
-#endif
-
-#include "c.ceu"
-#include "uv/uv.ceu"
 #include "uv/fs.ceu"
 
-var _uv_fs_t req_open  = _;
-var _uv_fs_t req_close = _;
+_printf("(should generate error -2)\n");
 
-do
-    _ceu_uv_fs_open(&&req_open, "fs-01.txt", _O_RDONLY, 0);
-finalize (req_open) with
-    _uv_fs_req_cleanup(&&req_open);
-    _ceu_uv_fs_close(&&req_close, req_open.result);
+var Exception.Uv? e;
+catch e do
+    var& UV_FS_Open o = spawn UV_FS_Open("/non/existent/path", _,_,_);
+    await o.file.ok;
+    _printf("open ok\n");
+    _ceu_dbg_assert(0);
 end
-
-var _uv_fs_t&& req1 = await UV_FS until req1==&&req_open;
-_ceu_dbg_assert(req_open.result >= 0);
-
-var[1024] _char buf_ = _;
-var _uv_buf_t buf = _uv_buf_init(&&buf_[0], sizeof(buf_)-1);
-
-var int offset = 0;
-var _uv_fs_t req_read = _;
-    do finalize with
-        _uv_fs_req_cleanup(&&req_read);
-    end
-
-loop do
-    do
-        _ceu_uv_fs_read(&&req_read, req_open.result, &&buf, 1, offset);
-    finalize (req_read,buf) with
-        _uv_fs_req_cleanup(&&req_read);
-    end
-
-    var _uv_fs_t&& req2 = await UV_FS until req2==&&req_read;
-    _ceu_dbg_assert(req_read.result >= 0);
-    if req_read.result == 0 then
-        break;
-    end
-    buf.len = req_read.result;
-    buf.base[buf.len] = {'\0'};
-    _printf("%s", buf.base);
-
-    offset = offset + req_read.result;
+if e? then
+    _printf("open error: %d\n", e!.number);
 end
 
 escape 0;

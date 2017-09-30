@@ -1,19 +1,36 @@
 #include "uv/fs.ceu"
 
-var&? UV_FS_Open o = spawn UV_FS_Open("fs-01.txt",_,_,_);
-var int? err =
-    watching o do
-        await o.file.ok;
-
-        var _uv_stat_t stat = _;
-        await UV_FS_Fstat(&o.file, &stat);
-        _printf("size = %ld\n", stat.st_size);
-        _ceu_dbg_assert(stat.st_size == 48894);
-    end;
-
-if err? then
-    _printf("open error: %d\n", err!);
-    _ceu_dbg_assert(0);
+var int     w_flags = _O_CREAT|_O_WRONLY;
+var _mode_t w_mode  = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
+    
+var& UV_FS_Open w = spawn UV_FS_Open("/tmp/output.txt",_,w_flags,w_mode);
+var& UV_FS_Open r = spawn UV_FS_Open("/tmp/hello.txt",_,_,_);
+par/and do
+    await w.file.ok;
+with
+    await r.file.ok;
 end
 
+loop do
+    // read
+    var ssize n = await UV_FS_Read_Line(&r.file,&w.file.buffer,_);
+    if n <= 0 then
+        break;
+    end
+    w.file.buffer = w.file.buffer .. [{'\n'}];
+
+    // write
+    var usize n1 = $w.file.buffer;
+    var ssize n2 = await UV_FS_Write_N(&w.file,_);
+    _ceu_dbg_assert(n2>=0 and n2==n1);
+end
+
+[[
+    local dst = io.open('/tmp/output.txt'):read'*a'
+    local src = io.open('/tmp/hello.txt'):read'*a'
+    assert(src == dst)
+    print'DONE'
+]];
+
 escape 0;
+

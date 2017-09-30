@@ -1,24 +1,16 @@
 #include "uv/fs.ceu"
 
-var& UV_FS_File file;
+var& UV_FS_Open o = spawn UV_FS_Open("fs-01.txt", 11,_,_);
+await o.file.ok;
 
-var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
-var&? UV_FS_Open o = spawn UV_FS_Open("/tmp/hello.txt", _, _O_CREAT|_O_WRONLY, mode);
-var int? err =
-    watching o do
-        await o.file.ok;
-        o.file.buffer = [] .. "Hello World!\n";
-        var usize n1 = $o.file.buffer-1;
-        var ssize n2 = await UV_FS_Write_N(&o.file,n1);
-        if (n2<0) or n2!=n1 then
-            _printf("write error\n");
-            _ceu_dbg_assert(0);
-        end
-    end;
-if err? then
-    _printf("open error: %d\n", err!);
+loop do
+    var ssize n = await UV_FS_Read_N(&o.file,$$o.file.buffer-1);
+    if n == 0 then
+        break;
+    end
+    o.file.buffer = o.file.buffer .. [{'\0'}];
+    _printf("%s", &&o.file.buffer[0]);
+    $o.file.buffer = 0;
 end
-
-_printf("DONE\n");
 
 escape 0;

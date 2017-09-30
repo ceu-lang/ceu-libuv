@@ -1,0 +1,11 @@
+#include "uv/fs.ceu"
+
+var& UV_FS_Open o = spawn UV_FS_Open("fs-01.txt",_,_,_);
+await o.file.ok;
+
+var _uv_stat_t stat = _;
+await UV_FS_Fstat(&o.file, &stat);
+_printf("size = %ld\n", stat.st_size);
+_ceu_dbg_assert(stat.st_size == 48894);
+
+escape 0;

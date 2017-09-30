@@ -1,15 +1,10 @@
 #include "uv/fs.ceu"
 
-_printf("(should generate error -2)\n");
-var&? UV_FS_Open o = spawn UV_FS_Open("/non/existent/path", _,_,_);
-var int? err =
-    watching o do
-        await o.file.ok;
-        // file is ready for use
-        _printf("open ok\n");
-    end;
-if err? then
-    _printf("open error: %d\n", err!);
-end
+_printf("(should generate uncaught exception)\n");
+
+var& UV_FS_Open o = spawn UV_FS_Open("/non/existent/path", _,_,_);
+await o.file.ok;
+_printf("open ok\n");
+_ceu_dbg_assert(0);
 
 escape 0;
