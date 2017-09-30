@@ -4,7 +4,7 @@ var& UV_FS_Open o = spawn UV_FS_Open("fs-01.txt", 11,_,_);
 await o.file.ok;
 
 loop do
-    var ssize n = await UV_FS_Read_N(&o.file,$$o.file.buffer-1);
+    var usize n = await UV_FS_Read_N(&o.file,$$o.file.buffer-1);
     if n == 0 then
         break;
     end

@@ -13,15 +13,15 @@ end
 
 loop do
     // read
-    var ssize n = await UV_FS_Read_Line(&r.file,&w.file.buffer,_);
-    if n <= 0 then
+    var usize n = await UV_FS_Read_Line(&r.file,&w.file.buffer,_);
+    if n == 0 then
         break;
     end
     w.file.buffer = w.file.buffer .. [{'\n'}];
 
     // write
     var usize n1 = $w.file.buffer;
-    var ssize n2 = await UV_FS_Write_N(&w.file,_);
+    var usize n2 = await UV_FS_Write_N(&w.file,_);
     _ceu_dbg_assert(n2>=0 and n2==n1);
 end
 

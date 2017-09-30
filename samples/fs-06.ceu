@@ -10,10 +10,7 @@ var usize size = stat.st_size;
 _ceu_dbg_assert(size == 540);
 
 o.file.offset = size - 10;
-var ssize n = await UV_FS_Read_N(&o.file,10);
-if n < 0 then
-    _fprintf(_stderr, "uv-error: %s\n", _uv_strerror(n));
-end
+var usize n = await UV_FS_Read_N(&o.file,10);
 _printf("n = %ld\n", n);
 _ceu_dbg_assert(n == 10);
 

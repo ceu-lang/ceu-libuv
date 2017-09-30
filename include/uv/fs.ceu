@@ -99,7 +99,7 @@ do
     var int? err =
         watching o do
             file = &o.file;
-            await o.file.ok;
+            await FOREVER;
         end;
     var Exception.Uv e = val Exception.Uv(_uv_strerror(err!),err!);
     throw e;
@@ -144,7 +144,7 @@ do
             _uv_fs_req_cleanup(&&req);
         end
         if ret < 0 then
-            var Exception.Uv e = val Exception.Uv(_uv_strerror(file.handle),file.handle);
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret as int);
             throw e;
         end
 
@@ -234,7 +234,7 @@ do
     end
 end
 
-code/await UV_FS_Write_N (var& UV_FS_File file, var usize? n) -> ssize
+code/await UV_FS_Write_N (var& UV_FS_File file, var usize? n) -> usize
     throws Exception.Uv
 do
     if not n? then
