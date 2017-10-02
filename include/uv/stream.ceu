@@ -63,7 +63,7 @@ do
 
     var int err1 = _ceu_uv_listen(&&stream.handle, backlog!);
     if err1 != 0 then
-        var Exception.Uv e = val Exception.Uv(_uv_strerror(err1),err1);
+        var Exception.Uv e = val Exception.Uv(_uv_strerror(err1) as _char&&, err1);
         throw e;
     end
 
@@ -71,7 +71,7 @@ do
     var int err2;
     every (s,err2) in UV_STREAM_LISTEN do
         if s == &&stream.handle then
-            _ceu_dbg_assert(err2 == 0);   // UV_STREAM_ERROR already aborted me
+            _ceu_sys_assert(err2 == 0, "bug found");   // UV_STREAM_ERROR already aborted me
             emit ok;
         end
     end
@@ -84,7 +84,7 @@ do
     var int?   times;
     var int?   free;
     if n? then
-        _ceu_dbg_assert($$stream.buffer >= n!);
+        _ceu_sys_assert($$stream.buffer >= n!, "bug found");
 
         // "buffer" already contains the requested "n"
         if $stream.buffer >= n! then
@@ -117,7 +117,7 @@ do
             _uv_read_stop(&&stream.handle);   // finalize after each UV_STREAM_READ
         end
         if err != 0 then
-            var Exception.Uv e = val Exception.Uv(_uv_strerror(err),err);
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(err) as _char&&, err);
             throw e;
         end
 
@@ -125,11 +125,11 @@ do
         var ssize ret;
         (s, ret) = await UV_STREAM_READ until (s == &&stream.handle);
         if ret <= 0 then
-            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret as int);
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret) as _char&&, ret as int);
             throw e;
         end
         if n? then
-            _ceu_dbg_assert(ret == n_togo!);
+            _ceu_sys_assert(ret == n_togo!, "bug found");
         end
         n_read = n_read + (ret as usize);
 
@@ -166,7 +166,7 @@ do
     loop do
         var usize n = await UV_Stream_Read_N(&stream,_);
 
-        _ceu_dbg_assert($stream.buffer == n);
+        _ceu_sys_assert($stream.buffer == n, "bug found");
         var usize i;
         loop i in [1 -> $stream.buffer] do       // "[0 -> $stream.buffer[" may underflow
             var byte c = stream.buffer[0];
@@ -202,7 +202,7 @@ do
     end
 
     var _uv_buf_t buf = _uv_buf_init(&&stream.buffer[0], n_togo);
-    _ceu_dbg_assert(_uv_is_writable(&&stream.handle));
+    _ceu_sys_assert(_uv_is_writable(&&stream.handle), "bug found");
 
     var usize n_written = 0;
 
@@ -213,26 +213,26 @@ do
                 // free on uv callback
             end;
         if not req? then
-            var Exception.Uv e = val Exception.Uv(_uv_strerror(_UV_EAI_MEMORY),_UV_EAI_MEMORY);
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(_UV_EAI_MEMORY) as _char&&, _UV_EAI_MEMORY);
             throw e;
         end
 
         var int ret = _ceu_uv_write(&&req!, &&stream.handle, &&buf);
         if ret < 0 then
-            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret);
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret) as _char&&, ret);
             throw e;
         end
 
         var _uv_write_t&& w;
         (w, ret) = await UV_STREAM_WRITE until w==&&req!;
         if ret < 0 then
-            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret);
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret) as _char&&, ret);
             throw e;
         end
         // "ret" does not contain the number of bytes, let's trust on "n_togo"
 
-        //_ceu_dbg_assert(n! >= ret);
-        //_ceu_dbg_assert(n_togo == ret);
+        //_ceu_sys_assert(n! >= ret, "bug found");
+        //_ceu_sys_assert(n_togo == ret, "bug found");
         n_written = n_written + n_togo;
         $stream.buffer = $stream.buffer - n_togo;
 
@@ -271,7 +271,7 @@ printf(">>> FREE\n");
     }
 
     void ceu_uv_listen_cb (uv_stream_t* s, int err) {
-        ceu_dbg_assert(err >= 0);
+        ceu_sys_assert(err >= 0, "bug found");
         tceu_input_UV_STREAM_LISTEN p = { s, err };
         ceu_input(CEU_INPUT_UV_STREAM_LISTEN, &p);
     }
@@ -282,32 +282,33 @@ printf(">>> FREE\n");
         tceu_uv_stream_data* data = (tceu_uv_stream_data*) h->data;
         tceu_vector* vec = data->vector;
         usize        n   = data->n;
-        ceu_dbg_assert(vec != NULL);
+        ceu_sys_assert(vec != NULL, "bug found");
 
         if (vec->is_dyn && !vec->is_freezed) {
-            ceu_vector_setmax(vec, (n==0 ? CEU_UV_STREAM_READ_ALLOC_DYN_INIT : n), 0);
+            ceu_vector_setmax_ex(vec, (n==0 ? CEU_UV_STREAM_READ_ALLOC_DYN_INIT : n), 0,
+                                 ((tceu_trace){NULL,NULL,0}));  /* TODO: error message */
         }
 
         *buf = uv_buf_init(ceu_vector_buf_get(vec,vec->len), (n==0 ? (vec->max-vec->ini) : n));
     }
 
     void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* _) {
-        //ceu_dbg_assert(n != 0); // TODO: if this happens, try to understand why
+        //ceu_sys_assert(n != 0); // TODO: if this happens, try to understand why
         // ok, it happend, the underlying syscall may fail with EGAIN/EWOULDBLOCK
 
         tceu_uv_stream_data* data = (tceu_uv_stream_data*) s->data;
-        ceu_dbg_assert(data != NULL);
-        ceu_dbg_assert(n<0 || data->n==0 || data->n>=n);
+        ceu_sys_assert(data != NULL, "bug found");
+        ceu_sys_assert(n<0 || data->n==0 || data->n>=n, "bug found");
         if (data->n != 0) {
             data->n -= n;
         }
 
         tceu_vector* vec = data->vector;
         if (n > 0) {
-            if (ceu_vector_setlen_could(vec,vec->len+n,1) == 0) {
+            if (ceu_vector_setlen_could_ex(vec,vec->len+n,1,((tceu_trace){NULL,NULL,0})) == 0) {
                 n = UV_ENOBUFS;
             } else {
-                ceu_vector_setlen(vec,vec->len+n,1);
+                ceu_vector_setlen_ex(vec,vec->len+n,1,((tceu_trace){NULL,NULL,0}));
             }
         }
 
@@ -325,7 +326,7 @@ printf(">>> FREE\n");
     void ceu_uv_write_cb (uv_write_t* req, int err) {
         if (err < 0) {
             // if the "assert" fails, see if the error makes sense and extend it
-            ceu_dbg_assert(err == UV__EOF);
+            ceu_sys_assert(err == UV__EOF, "bug found");
             tceu_input_UV_STREAM_ERROR p = { req->handle, err };
             ceu_input(CEU_INPUT_UV_STREAM_ERROR, &p);
         }

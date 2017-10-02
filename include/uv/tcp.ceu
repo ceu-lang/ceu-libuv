@@ -46,7 +46,7 @@ do
             // free after "uv_close" below
         end;
     if not tcp_? then
-        var Exception.Uv e = val Exception.Uv(_uv_strerror(_UV_EAI_MEMORY),_UV_EAI_MEMORY);
+        var Exception.Uv e = val Exception.Uv(_uv_strerror(_UV_EAI_MEMORY) as _char&&, _UV_EAI_MEMORY);
         throw e;
     end
 
@@ -65,14 +65,14 @@ do
         _ceu_uv_close(&&tcp_! as _uv_handle_t&&);
     end
     if err1 != 0 then
-        var Exception.Uv e = val Exception.Uv(_uv_strerror(err1),err1);
+        var Exception.Uv e = val Exception.Uv(_uv_strerror(err1) as _char&& ,err1);
         throw e;
     end
 
     var _uv_stream_t&& s;
     var int err2;
     (s,err2) = await UV_STREAM_ERROR until (s==(&&tcp_! as _uv_stream_t&&));
-    var Exception.Uv e = val Exception.Uv(_uv_strerror(err2),err2);
+    var Exception.Uv e = val Exception.Uv(_uv_strerror(err2) as _char&&, err2);
     throw e;
 end
 
@@ -117,7 +117,7 @@ do
     var int err2;
     (c,err2) = await UV_STREAM_CONNECT until c==&&connect!;
     if err2 != 0 then
-        var Exception.Uv e = val Exception.Uv(_uv_strerror(err2),err2);
+        var Exception.Uv e = val Exception.Uv(_uv_strerror(err2) as _char&&, err2);
         throw e;
     end
 

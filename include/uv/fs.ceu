@@ -73,7 +73,7 @@ do
         _uv_fs_req_cleanup(&&req_open);
     end
 #if 1
-    _ceu_dbg_assert(ret == 0);  // libuv seems to always return 0
+    _ceu_sys_assert(ret == 0, "bug found");  // libuv seems to always return 0
 #else
     if ret < 0 then
         escape ret;
@@ -101,7 +101,7 @@ do
             file = &o.file;
             await FOREVER;
         end;
-    var Exception.Uv e = val Exception.Uv(_uv_strerror(err!),err!);
+    var Exception.Uv e = val Exception.Uv(_uv_strerror(err!) as _char&&,err!);
     throw e;
 end
 
@@ -111,7 +111,7 @@ do
     if n == 0 then
         escape 0;
     end
-    _ceu_dbg_assert($$file.buffer >= n);
+    _ceu_sys_assert($$file.buffer >= n, "bug found");
 
     if $file.buffer >= n then
         escape 0;
@@ -144,13 +144,13 @@ do
             _uv_fs_req_cleanup(&&req);
         end
         if ret < 0 then
-            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret as int);
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret) as _char&&, ret as int);
             throw e;
         end
 
         var _uv_fs_t&& req_ = await UV_FS until req_==&&req;
         if req.result < 0 then
-            var Exception.Uv e = val Exception.Uv(_uv_strerror(req.result),req.result);
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(req.result) as _char&&, req.result);
             throw e;
         else/if req.result == 0 then
             if n == 1 then
@@ -160,8 +160,8 @@ do
             end
         end
 
-        _ceu_dbg_assert(n >= req.result);
-        //_ceu_dbg_assert(n_togo == req.result);
+        _ceu_sys_assert(n >= req.result, "bug found");
+        //_ceu_sys_assert(n_togo == req.result, "bug found");
         file.offset = file.offset + req.result;
         n_read  = n_read  + req.result;
         _ceu_vector_setlen(&&file.buffer, $file.buffer+req.result, 1);
@@ -209,7 +209,7 @@ do
         end;
 
         if n == 0 then
-            var Exception.Uv e = val Exception.Uv(_uv_strerror({UV_ENOBUFS}),{UV_ENOBUFS});
+            var Exception.Uv e = val Exception.Uv(_uv_strerror({UV_ENOBUFS}) as _char&&, {UV_ENOBUFS});
             throw e;
         end
 
@@ -219,7 +219,7 @@ do
         end
         n = n_ as usize;
 
-        _ceu_dbg_assert($file.buffer == n);
+        _ceu_sys_assert($file.buffer == n, "bug found");
         var usize i;
         loop i in [0 -> $file.buffer[ do
             var byte c = file.buffer[0];
@@ -267,18 +267,18 @@ do
             _uv_fs_req_cleanup(&&req);
         end
         if ret < 0 then
-            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret as int);
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(ret) as _char&&, ret as int);
             throw e;
         end
 
         var _uv_fs_t&& req_ = await UV_FS until req_==&&req;
         if req.result < 0 then
-            var Exception.Uv e = val Exception.Uv(_uv_strerror(req.result),req.result);
+            var Exception.Uv e = val Exception.Uv(_uv_strerror(req.result) as _char&&, req.result);
             throw e;
         end
 
-        _ceu_dbg_assert(n! >= req.result);
-        _ceu_dbg_assert(n_togo == req.result);
+        _ceu_sys_assert(n! >= req.result, "bug found");
+        _ceu_sys_assert(n_togo == req.result, "bug found");
         file.offset  = file.offset  + req.result;
         n_written = n_written + req.result;
         $file.buffer = $file.buffer - req.result;
@@ -309,7 +309,7 @@ do
     end
 
     if ret < 0 then
-        var Exception.Uv e = val Exception.Uv(_uv_strerror(ret),ret);
+        var Exception.Uv e = val Exception.Uv(_uv_strerror(ret) as _char&&, ret);
         throw e;
     end
     var _uv_fs_t&& req = await UV_FS until req==&&req_fstat;
