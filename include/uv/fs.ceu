@@ -69,7 +69,9 @@ do
     do
         ret = _ceu_uv_fs_open(&&req_open, _PURIFY(&&path[0]), flags!, mode!);
     finalize (req_open) with
-        _ceu_uv_fs_close_(&&req_close, req_open.result);
+        if req_open.result >= 0 then
+            _ceu_uv_fs_close_(&&req_close, req_open.result);
+        end
         _uv_fs_req_cleanup(&&req_open);
     end
 #if 1
