@@ -113,7 +113,11 @@ do
     if n == 0 then
         escape 0;
     end
-    _ceu_sys_assert($$file.buffer >= n, "bug found");
+
+    if $$file.buffer < n then
+        var Exception.Uv e = val Exception.Uv({uv_strerror(UV_ENOBUFS)} as _char&&, {UV_ENOBUFS});
+        throw e;
+    end
 
     if $file.buffer >= n then
         escape 0;

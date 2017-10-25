@@ -35,9 +35,11 @@ end
 native/pos do
     ##define ID(x) x
 
-    uv_loop_t  ceu_uv_loop;
-    uv_async_t ceu_uv_async;
-    uv_timer_t ceu_uv_timer;
+    uv_loop_t    ceu_uv_loop;
+    uv_check_t   ceu_uv_check;
+    uv_prepare_t ceu_uv_prepare;
+    uv_async_t   ceu_uv_async;
+    uv_timer_t   ceu_uv_timer;
 
     u64 ceu_uv_timer_old;
 
@@ -53,6 +55,14 @@ native/pos do
         uv_async_send(&ceu_uv_async);
     }
 
+    void ceu_uv_check_cb (uv_check_t* check) {
+        CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+    }
+
+    void ceu_uv_prepare_cb (uv_prepare_t* prepare) {
+        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    }
+
     tceu_callback_ret ceu_callback_uv (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line)
     {
         tceu_callback_ret ret = { .is_handled=1 };
@@ -64,6 +74,10 @@ native/pos do
                 uv_async_init(&ceu_uv_loop, &ceu_uv_async, NULL);
                 uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
                 ceu_uv_timer_old = uv_now(&ceu_uv_loop);
+                uv_check_init(&ceu_uv_loop, &ceu_uv_check);
+                uv_check_start(&ceu_uv_check, &ceu_uv_check_cb);
+                uv_prepare_init(&ceu_uv_loop, &ceu_uv_prepare);
+                uv_prepare_start(&ceu_uv_prepare, &ceu_uv_prepare_cb);
                 break;
 
             case CEU_CALLBACK_STEP:
@@ -143,10 +157,25 @@ end
 
 #define GET_HOST_U32(bytes,off) _ntohl(*(&&((_ID(&&bytes[0]))[off]) as u32&&))
 
-#define PUT_NETWORK_U32(bytes,off,host)                                 \
-    do                                                                  \
-        var u32 network = _htonl(host);                                 \
+#define GET_BE32TOH(bytes,off) {be32toh(*((u32*) ((@(&&bytes[0]) + off))))}
+#define GET_BE64TOH(bytes,off) {be64toh(*((u64*) ((@(&&bytes[0]) + off))))}
+
+#define PUT_NETWORK_U32(bytes,off,host)                                             \
+    do                                                                              \
+        var u32 network = _htonl(host);                                             \
         _ceu_vector_buf_set(&&(bytes), off, (&&network as byte&&), sizeof(u32));    \
+    end
+
+#define PUT_HTOBE32(bytes,off,host)                                         \
+    do                                                                      \
+        var u32 be = {htobe32(@(host))};                                    \
+        _ceu_vector_buf_set(&&(bytes), off, (&&be as byte&&), sizeof(u32)); \
+    end
+
+#define PUT_HTOBE64(bytes,off,host)                                         \
+    do                                                                      \
+        var u64 be = {htobe64(@(host))};                                    \
+        _ceu_vector_buf_set(&&(bytes), off, (&&be as byte&&), sizeof(u64)); \
     end
 
 #endif

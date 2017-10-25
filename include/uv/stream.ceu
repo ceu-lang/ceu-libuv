@@ -84,7 +84,10 @@ do
     var int?   times;
     var int?   free;
     if n? then
-        _ceu_sys_assert($$stream.buffer >= n!, "bug found");
+        if $$stream.buffer < n! then
+            var Exception.Uv e = val Exception.Uv({uv_strerror(UV_ENOBUFS)} as _char&&, {UV_ENOBUFS});
+            throw e;
+        end
 
         // "buffer" already contains the requested "n"
         if $stream.buffer >= n! then
@@ -124,7 +127,7 @@ do
         var _uv_stream_t&& s;
         var ssize ret;
         (s, ret) = await UV_STREAM_READ until (s == &&stream.handle);
-        if ret <= 0 then
+        if ret < 0 then
             var Exception.Uv e = val Exception.Uv(_uv_strerror(ret) as _char&&, ret as int);
             throw e;
         end
@@ -315,9 +318,7 @@ printf(">>> FREE\n");
         if (n < 0) {
             tceu_input_UV_STREAM_ERROR p = { s, n };
             ceu_input(CEU_INPUT_UV_STREAM_ERROR, &p);
-        }
-
-        if (data->n == 0) {
+        } else if (data->n == 0) {
             tceu_input_UV_STREAM_READ p = { s, n };
             ceu_input(CEU_INPUT_UV_STREAM_READ, &p);
         }
@@ -326,7 +327,8 @@ printf(">>> FREE\n");
     void ceu_uv_write_cb (uv_write_t* req, int err) {
         if (err < 0) {
             // if the "assert" fails, see if the error makes sense and extend it
-            ceu_sys_assert(err == UV__EOF, "bug found");
+            //  ok, it happened, "broken pipe" on closed connection
+            //ceu_sys_assert(err == UV__EOF, "bug found");
             tceu_input_UV_STREAM_ERROR p = { req->handle, err };
             ceu_input(CEU_INPUT_UV_STREAM_ERROR, &p);
         }

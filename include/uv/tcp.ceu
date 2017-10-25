@@ -11,6 +11,7 @@ native/nohold
     _ceu_uv_tcp_connect,    // TODO: diconnect?
     _uv_ip4_name,
     _uv_tcp_bind,           // TODO: unbind?
+    _uv_tcp_keepalive,
     _uv_tcp_getsockname,
 ;
 
@@ -111,6 +112,7 @@ do
             // free on uv callback
         end
 
+    //_uv_tcp_keepalive(&&stream.handle as _uv_tcp_t&&, 1, 60);
     _ceu_uv_tcp_connect(&&connect!, &&stream.handle as _uv_tcp_t&&, (&&dest as _sockaddr&&));
 
     var _uv_connect_t&& c;
