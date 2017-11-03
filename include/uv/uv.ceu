@@ -157,6 +157,7 @@ end
 
 #define GET_HOST_U32(bytes,off) _ntohl(*(&&((_ID(&&bytes[0]))[off]) as u32&&))
 
+#define GET_BE16TOH(bytes,off) {be16toh(*((u16*) ((@(&&bytes[0]) + off))))}
 #define GET_BE32TOH(bytes,off) {be32toh(*((u32*) ((@(&&bytes[0]) + off))))}
 #define GET_BE64TOH(bytes,off) {be64toh(*((u64*) ((@(&&bytes[0]) + off))))}
 
@@ -164,6 +165,12 @@ end
     do                                                                              \
         var u32 network = _htonl(host);                                             \
         _ceu_vector_buf_set(&&(bytes), off, (&&network as byte&&), sizeof(u32));    \
+    end
+
+#define PUT_HTOBE16(bytes,off,host)                                         \
+    do                                                                      \
+        var u16 be = {htobe16(@(host))};                                    \
+        _ceu_vector_buf_set(&&(bytes), off, (&&be as byte&&), sizeof(u16)); \
     end
 
 #define PUT_HTOBE32(bytes,off,host)                                         \
