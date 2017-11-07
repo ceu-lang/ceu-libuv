@@ -35,7 +35,8 @@ native
 native/pre do
     typedef struct tceu_uv_stream_data {
         tceu_vector* vector;
-        usize        n;         // n=0 means read any number of bytes and generates an input
+        usize        n_req;     // n=0 means read any number of bytes and generates an input
+        usize        n_togo;
     } tceu_uv_stream_data;
 end
 
@@ -71,7 +72,7 @@ do
     var int err2;
     every (s,err2) in UV_STREAM_LISTEN do
         if s == &&stream.handle then
-            _ceu_sys_assert(err2 == 0, "bug found");   // UV_STREAM_ERROR already aborted me
+            _ceu_assert(err2 == 0, "bug found");   // UV_STREAM_ERROR already aborted me
             emit ok;
         end
     end
@@ -85,8 +86,13 @@ do
     var int?   free;
     if n? then
         if $$stream.buffer < n! then
-            var Exception.Uv e = val Exception.Uv({uv_strerror(UV_ENOBUFS)} as _char&&, {UV_ENOBUFS});
-            throw e;
+            if {(@stream.buffer).is_dyn} as bool then
+                {ceu_vector_setmax(&@stream.buffer, @n!, 0);}
+            end
+            if $$stream.buffer < n! then
+                var Exception.Uv e = val Exception.Uv({uv_strerror(UV_ENOBUFS)} as _char&&, {UV_ENOBUFS});
+                throw e;
+            end
         end
 
         // "buffer" already contains the requested "n"
@@ -103,13 +109,14 @@ do
             times = 2;    // requires a second read
             n_togo = free!;
         end
-        (stream.handle._data as _tceu_uv_stream_data&&):n = n_togo!;
+        (stream.handle._data as _tceu_uv_stream_data&&):n_req  = n_togo!;
+        (stream.handle._data as _tceu_uv_stream_data&&):n_togo = n_togo!;
     else
         times = 1;
-        (stream.handle._data as _tceu_uv_stream_data&&):n = 0;
+        (stream.handle._data as _tceu_uv_stream_data&&):n_req = 0;
     end
 
-    var usize n_read  = 0;
+    var usize n_read = 0;
 
     var int i;
     loop i in [1->times!] do
@@ -139,7 +146,8 @@ do
         // second read
         if times! == 2 then
             n_togo = (n! - free!);
-            (stream.handle._data as _tceu_uv_stream_data&&):n = n_togo!;
+            (stream.handle._data as _tceu_uv_stream_data&&):n_req  = n_togo!;
+            (stream.handle._data as _tceu_uv_stream_data&&):n_togo = n_togo!;
         end
     end
 
@@ -169,7 +177,7 @@ do
     loop do
         var usize n = await UV_Stream_Read_N(&stream,_);
 
-        _ceu_sys_assert($stream.buffer == n, "bug found");
+        _ceu_assert($stream.buffer == n, "bug found");
         var usize i;
         loop i in [1 -> $stream.buffer] do       // "[0 -> $stream.buffer[" may underflow
             var byte c = stream.buffer[0];
@@ -205,7 +213,7 @@ do
     end
 
     var _uv_buf_t buf = _uv_buf_init(&&stream.buffer[0], n_togo);
-    _ceu_sys_assert(_uv_is_writable(&&stream.handle), "bug found");
+    _ceu_assert(_uv_is_writable(&&stream.handle), "bug found");
 
     var usize n_written = 0;
 
@@ -234,8 +242,8 @@ do
         end
         // "ret" does not contain the number of bytes, let's trust on "n_togo"
 
-        //_ceu_sys_assert(n! >= ret, "bug found");
-        //_ceu_sys_assert(n_togo == ret, "bug found");
+        //_ceu_assert(n! >= ret, "bug found");
+        //_ceu_assert(n_togo == ret, "bug found");
         n_written = n_written + n_togo;
         $stream.buffer = $stream.buffer - n_togo;
 
@@ -274,7 +282,7 @@ printf(">>> FREE\n");
     }
 
     void ceu_uv_listen_cb (uv_stream_t* s, int err) {
-        ceu_sys_assert(err >= 0, "bug found");
+        ceu_sys_assert(err >= 0, "bug found (UV: listen)");
         tceu_input_UV_STREAM_LISTEN p = { s, err };
         ceu_input(CEU_INPUT_UV_STREAM_LISTEN, &p);
     }
@@ -283,16 +291,16 @@ printf(">>> FREE\n");
 
     void ceu_uv_read_alloc (uv_handle_t* h, size_t size, uv_buf_t* buf) {
         tceu_uv_stream_data* data = (tceu_uv_stream_data*) h->data;
-        tceu_vector* vec = data->vector;
-        usize        n   = data->n;
+        tceu_vector* vec   = data->vector;
+        usize        n_req = data->n_req;
         ceu_sys_assert(vec != NULL, "bug found");
 
-        if (vec->is_dyn && !vec->is_freezed) {
-            ceu_vector_setmax_ex(vec, (n==0 ? CEU_UV_STREAM_READ_ALLOC_DYN_INIT : n), 0,
+        if (vec->max==0 || n_req>vec->max && vec->is_dyn && !vec->is_freezed) {
+            ceu_vector_setmax_ex(vec, (n_req==0 ? CEU_UV_STREAM_READ_ALLOC_DYN_INIT : n_req), 0,
                                  ((tceu_trace){NULL,NULL,0}));  /* TODO: error message */
         }
 
-        *buf = uv_buf_init(ceu_vector_buf_get(vec,vec->len), (n==0 ? (vec->max-vec->ini) : n));
+        *buf = uv_buf_init(ceu_vector_buf_get(vec,vec->len), (n_req==0 ? (vec->max-vec->ini) : n_req));
     }
 
     void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* _) {
@@ -300,15 +308,16 @@ printf(">>> FREE\n");
         // ok, it happend, the underlying syscall may fail with EGAIN/EWOULDBLOCK
 
         tceu_uv_stream_data* data = (tceu_uv_stream_data*) s->data;
-        ceu_sys_assert(data != NULL, "bug found");
-        ceu_sys_assert(n<0 || data->n==0 || data->n>=n, "bug found");
-        if (data->n != 0) {
-            data->n -= n;
+        ceu_sys_assert(data != NULL, "bug found (UV: read)");
+        ceu_sys_assert(n<0 || data->n_req==0 || data->n_togo>=n, "bug found (UV: read)");
+        if (data->n_req != 0) {
+            data->n_togo -= n;
         }
 
         tceu_vector* vec = data->vector;
         if (n > 0) {
             if (ceu_vector_setlen_could_ex(vec,vec->len+n,1,((tceu_trace){NULL,NULL,0})) == 0) {
+                ceu_sys_assert(data != NULL, "should never happen"); // if it does and makes sense, just comment this line and let n=ENOBUFS
                 n = UV_ENOBUFS;
             } else {
                 ceu_vector_setlen_ex(vec,vec->len+n,1,((tceu_trace){NULL,NULL,0}));
@@ -318,8 +327,8 @@ printf(">>> FREE\n");
         if (n < 0) {
             tceu_input_UV_STREAM_ERROR p = { s, n };
             ceu_input(CEU_INPUT_UV_STREAM_ERROR, &p);
-        } else if (data->n == 0) {
-            tceu_input_UV_STREAM_READ p = { s, n };
+        } else if (data->n_togo == 0) {
+            tceu_input_UV_STREAM_READ p = { s, data->n_req };
             ceu_input(CEU_INPUT_UV_STREAM_READ, &p);
         }
     }

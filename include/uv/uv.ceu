@@ -51,7 +51,7 @@ native/pos do
     }
 
     void ceu_uv_timer_cb (uv_timer_t* timer) {
-        ceu_sys_assert(timer == &ceu_uv_timer, "bug found");
+        ceu_sys_assert(timer == &ceu_uv_timer, "bug found (UV: timer)");
         uv_async_send(&ceu_uv_async);
     }
 
@@ -122,9 +122,6 @@ end
 
 #if 0
 
-native @pure
-        _GET_HOST_U32(),
-
 native @nohold
         _uv_inet_ntop(),
         _uv_tcp_getpeername(),
@@ -155,11 +152,23 @@ native/pre do
     }
 end
 
-#define GET_HOST_U32(bytes,off) _ntohl(*(&&((_ID(&&bytes[0]))[off]) as u32&&))
+#define GET_BE16TOH(bytes,off) do                       \
+    var[2] byte ceu_uv_vec;                             \
+    _ceu_vector_copy(&&ceu_uv_vec,0, &&bytes,off, 2);   \
+    escape {be16toh(*((u16*) @(&&ceu_uv_vec[0])))};     \
+end
 
-#define GET_BE16TOH(bytes,off) {be16toh(*((u16*) ((@(&&bytes[0]) + off))))}
-#define GET_BE32TOH(bytes,off) {be32toh(*((u32*) ((@(&&bytes[0]) + off))))}
-#define GET_BE64TOH(bytes,off) {be64toh(*((u64*) ((@(&&bytes[0]) + off))))}
+#define GET_BE32TOH(bytes,off) do                       \
+    var[4] byte ceu_uv_vec;                             \
+    _ceu_vector_copy(&&ceu_uv_vec,0, &&bytes,off, 4);   \
+    escape {be32toh(*((u32*) @(&&ceu_uv_vec[0])))};     \
+end
+
+#define GET_BE64TOH(bytes,off) do                       \
+    var[8] byte ceu_uv_vec;                             \
+    _ceu_vector_copy(&&ceu_uv_vec,0, &&bytes,off, 8);   \
+    escape {be64toh(*((u64*) @(&&ceu_uv_vec[0])))};     \
+end
 
 #define PUT_NETWORK_U32(bytes,off,host)                                             \
     do                                                                              \

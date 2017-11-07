@@ -13,7 +13,7 @@ do
     catch e do
         var& UV_TCP_Open client = spawn UV_TCP_Open(_);
         var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
-        _ceu_sys_assert(ret == 0, "bug found");
+        _ceu_assert(ret == 0, "bug found");
 
     /*
         var _sockaddr_in sock = _;

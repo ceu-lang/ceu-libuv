@@ -63,7 +63,6 @@ do
 
     var _tceu_uv_stream_data data_ = _;
                              data_.vector = _PURIFY(&&stream.buffer);
-                             data_.n      = 0;
     stream.handle._data = &&data_;
 
     var int err1;
