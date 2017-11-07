@@ -36,8 +36,8 @@ loop i in [0 -> 10[ do
     client.stream.buffer = [] .. "Alo mundo!\n";
     await UV_Stream_Write_N(&client.stream,_);
     await UV_Stream_Read_N(&client.stream,_);
-    client.stream.buffer = client.stream.buffer..[{'\0'}];
-    _printf("%s", &&client.stream.buffer[0]);
+    var[] byte str = []..client.stream.buffer..[{'\0'}];
+    _printf("%s", &&str[0]);
 end
 
 _printf("DONE!\n");
