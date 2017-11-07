@@ -14,7 +14,7 @@
 #include "uv/tcp.ceu"
 
 #define DEFAULT_PORT    7000
-#define BUFFER_MAX      10
+#define BUFFER_MAX      _ //10
 
 code/await Client (var& UV_Stream server) -> none
 do
@@ -22,7 +22,7 @@ do
     catch e do
         var& UV_TCP_Open client = spawn UV_TCP_Open(BUFFER_MAX);
         var int ret = _uv_accept(&&server.handle, &&client.stream.handle);
-        _ceu_dbg_assert(ret == 0);
+        _ceu_assert(ret == 0, "bug found");
 
         loop do
             await UV_Stream_Read_N(&client.stream,_);

@@ -38,9 +38,12 @@ end
 code/await UV_TCP_Open (var int? buffer_size) -> (var UV_Stream stream) -> NEVER
     throws Exception.Uv
 do
+    _ceu_assert(not buffer_size?, "temporarily unsupported");
+#if 0
     if not buffer_size? then
         buffer_size = 1024;
     end
+#endif
 
     var&? _uv_tcp_t tcp_ = &_malloc(sizeof(_uv_tcp_t))
         finalize (tcp_) with
@@ -51,7 +54,11 @@ do
         throw e;
     end
 
+#if 0
     var[buffer_size!*] byte buffer;
+#else
+    var[*] byte buffer;
+#endif
     stream = val UV_Stream(&buffer, &tcp_! as _uv_stream_t&&);
 
     var _tceu_uv_stream_data data_ = _;
