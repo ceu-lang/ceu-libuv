@@ -46,12 +46,12 @@ do
     catch e do
         var& UV_TCP_Open client = spawn UV_TCP_Open(_);
         var int ret1 = _uv_accept(&&server.handle, &&client.stream.handle);
-        _ceu_dbg_assert(ret1 == 0);
+        _ceu_assert(ret1 == 0, "bug found");
 
         var _sockaddr_in sock = _;
         var int len = sizeof(_sockaddr_in) as int;
         var int ret2 = _uv_tcp_getsockname(&&client.stream.handle as _uv_tcp_t&&, (&&sock as _sockaddr&&), &&len);
-        _ceu_dbg_assert(ret2 == 0);
+        _ceu_assert(ret2 == 0, "bug found");
         var int port = _ntohs(sock.sin_port);
 
         if port == DEFAULT_PORT then
@@ -59,7 +59,7 @@ do
         else/if port == DEFAULT_PORT+1 then
             await Handler1(&client.stream);
         else
-            _ceu_dbg_assert(0);
+            _ceu_assert(0, "bug found");
         end
     end
     _fprintf(_stderr, "[client]: %s\n", e!.message);

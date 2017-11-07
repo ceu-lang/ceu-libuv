@@ -17,7 +17,7 @@ finalize (req_open) with
 end
 
 var _uv_fs_t&& req1 = await UV_FS until req1==&&req_open;
-_ceu_dbg_assert(req_open.result >= 0);
+_ceu_assert(req_open.result >= 0, "bug found");
 
 var[1024] _char buf_ = _;
 var _uv_buf_t buf = _uv_buf_init(&&buf_[0], sizeof(buf_)-1);
@@ -36,7 +36,7 @@ loop do
     end
 
     var _uv_fs_t&& req2 = await UV_FS until req2==&&req_read;
-    _ceu_dbg_assert(req_read.result >= 0);
+    _ceu_assert(req_read.result >= 0, "bug found");
     if req_read.result == 0 then
         break;
     end

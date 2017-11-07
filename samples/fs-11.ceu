@@ -6,6 +6,6 @@ await o.file.ok;
 var _uv_stat_t stat = _;
 await UV_FS_Fstat(&o.file, &stat);
 _printf("size = %ld\n", stat.st_size);
-_ceu_dbg_assert(stat.st_size == 48894);
+_ceu_assert(stat.st_size == 48894, "bug found");
 
 escape 0;

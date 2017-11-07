@@ -2,7 +2,7 @@
 
 var& UV_FS_Open o = spawn UV_FS_Open("fs-01.txt", 64, _O_RDONLY, 0);
 await o.file.ok;
-_ceu_dbg_assert(o.file.handle >= 0);
+_ceu_assert(o.file.handle >= 0, "bug found");
 
 var _uv_stat_t stat = _;
 await UV_FS_Fstat(&o.file, &stat);
@@ -18,6 +18,6 @@ loop i do
     line = line .. [{'\0'}];
     _printf("line = %s [%ld]\n", &&line[0], n);
 end
-_ceu_dbg_assert(i == 10000);
+_ceu_assert(i == 10000, "bug found");
 
 escape 0;

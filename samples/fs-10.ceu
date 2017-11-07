@@ -22,7 +22,7 @@ loop do
     // write
     var usize n1 = $w.file.buffer;
     var usize n2 = await UV_FS_Write_N(&w.file,_);
-    _ceu_dbg_assert(n2>=0 and n2==n1);
+    _ceu_assert(n2>=0 and n2==n1, "bug found");
 end
 
 [[

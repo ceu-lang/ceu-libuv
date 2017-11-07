@@ -28,7 +28,7 @@ _ceu_uv_tcp_connect(&&connect!, &&client.stream.handle as _uv_tcp_t&&, (&&dest a
 var _uv_connect_t&& c;
 var int status;
 (c,status) = await UV_STREAM_CONNECT until c==&&connect!;
-_ceu_dbg_assert(status == 0);
+_ceu_assert(status == 0, "bug found");
 
 var int i;
 loop i in [0 -> 10[ do

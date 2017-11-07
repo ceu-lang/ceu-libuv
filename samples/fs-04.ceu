@@ -2,7 +2,7 @@
 
 var& UV_FS_Open o = spawn UV_FS_Open("fs-01.txt", 1024, _O_RDONLY, 0);
 await o.file.ok;
-_ceu_dbg_assert(o.file.handle >= 0);
+_ceu_assert(o.file.handle >= 0, "bug found");
 
 loop do
     var usize n = await UV_FS_Read_N(&o.file, $$o.file.buffer/2-1);

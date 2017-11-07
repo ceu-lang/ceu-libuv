@@ -2,20 +2,20 @@
 
 var& UV_FS_Open o = spawn UV_FS_Open("fs-03.txt", 11, _O_RDONLY, 0);
 await o.file.ok;
-_ceu_dbg_assert(o.file.handle >= 0);
+_ceu_assert(o.file.handle >= 0, "bug found");
 
 var _uv_stat_t stat = _;
 await UV_FS_Fstat(&o.file, &stat);
 var usize size = stat.st_size;
-_ceu_dbg_assert(size == 540);
+_ceu_assert(size == 540, "bug found");
 
 o.file.offset = size - 10;
 var usize n = await UV_FS_Read_N(&o.file,10);
 _printf("n = %ld\n", n);
-_ceu_dbg_assert(n == 10);
+_ceu_assert(n == 10, "bug found");
 
 o.file.buffer = o.file.buffer .. [{'\0'}];
 _printf(">>> %s\n", &&o.file.buffer[0]);
-_ceu_dbg_assert(_strcmp("rstuvwxyz\n",&&o.file.buffer[0]) == 0);
+_ceu_assert(_strcmp("rstuvwxyz\n",&&o.file.buffer[0]) == 0, "bug found");
 
 escape 0;

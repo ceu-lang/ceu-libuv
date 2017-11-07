@@ -10,7 +10,7 @@ var usize n1 = $o.file.buffer-1;
 var usize n2 = await UV_FS_Write_N(&o.file,n1);
 if n2!=n1 then
     _printf("write error\n");
-    _ceu_dbg_assert(0);
+    _ceu_assert(0, "bug found");
 end
 
 _printf("DONE\n");

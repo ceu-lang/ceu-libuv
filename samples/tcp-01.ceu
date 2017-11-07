@@ -38,13 +38,15 @@ _uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &&addr);
 _uv_tcp_bind(&&server, &&addr as _sockaddr&&, 0);
 do
     var int ret = _ceu_uv_listen(&&server as _uv_stream_t&&, DEFAULT_BACKLOG);
-    _ceu_dbg_assert(ret == 0);
+    _ceu_assert(ret == 0, "bug found");
 end
 
 _printf("I will terminate after two connections...\n");
 
 var int i;
 loop i in [0 -> 2[ do
+    _printf(">>> %d\n", i);
+
     // ACCEPT
     var&? _uv_tcp_t client_ = &_malloc(sizeof(_uv_tcp_t))
         finalize (client_) with
@@ -66,7 +68,7 @@ loop i in [0 -> 2[ do
             var _uv_stream_t&& s;
             var int status;
             (s,status) = await UV_STREAM_LISTEN until s==(&&server as _uv_stream_t&&);
-            _ceu_dbg_assert(status >= 0);
+            _ceu_assert(status >= 0, "bug found");
         end
     end
 
@@ -75,60 +77,63 @@ loop i in [0 -> 2[ do
     var[BUFFER_MAX] byte buf;
     var ssize n_read = 0;
 
-    spawn do
+    par/or do
         var _uv_stream_t&& s;
         var int            err;
         every (s,err) in UV_STREAM_ERROR do
             _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err));
-        end
-    end
-
-    loop do
-        // READ
-        do
-            $buf = 0;
-            var _tceu_uv_stream_data data_ = _;
-                                     data_.vector = _PURIFY(&&buf);
-                                     data_.n      = 0;
-            client._data = _PURIFY(&&data_); // finalize below
-
-            var int ret;
-            do
-                ret = _ceu_uv_read_start(&&client as _uv_stream_t&&);
-            finalize (client) with
-                // finalize after each UV_STREAM_READ
-                _uv_read_stop(&&client as _uv_stream_t&&);
+            if err == {UV_EOF} then
+                break;
             end
-            //_printf("error: %s\n", _uv_strerror(ret));
-            _ceu_dbg_assert(ret == 0);
-
-            var _uv_stream_t&& s;
-            (s,n_read) = await UV_STREAM_READ until s==(&&client as _uv_stream_t&&);
-            //_ceu_dbg_assert((_byte&&)buf_r:base == ((_byte&&)&&buf));
-            //_ceu_dbg_assert(buf_r:len == $$buf);
         end
-        //_ceu_dbg_assert(n_read >= 0);  // connection closed?
-        if n_read < 0 then
-            _fprintf(_stderr, "[read]: %s\n", _uv_strerror(n_read));
-            break;
-        else/if n_read == 0 then
-            _ceu_dbg_assert(0);
+    with
+        loop do
+            // READ
+            do
+                $buf = 0;
+                var _tceu_uv_stream_data data_ = _;
+                                         data_.vector = _PURIFY(&&buf);
+                                         data_.n      = 0;
+                client._data = _PURIFY(&&data_); // finalize below
+
+                var int ret;
+                do
+                    ret = _ceu_uv_read_start(&&client as _uv_stream_t&&);
+                finalize (client) with
+                    // finalize after each UV_STREAM_READ
+                    _uv_read_stop(&&client as _uv_stream_t&&);
+                end
+                //_printf("error: %s\n", _uv_strerror(ret));
+                _ceu_assert(ret == 0, "bug found");
+
+                var _uv_stream_t&& s;
+                (s,n_read) = await UV_STREAM_READ until s==(&&client as _uv_stream_t&&);
+                //_ceu_assert((_byte&&)buf_r:base == ((_byte&&)&&buf), "bug found");
+                //_ceu_assert(buf_r:len == $$buf, "bug found");
+            end
+            //_ceu_assert(n_read >= 0);  // connection closed?
+            if n_read < 0 then
+                _fprintf(_stderr, "[read]: %s\n", _uv_strerror(n_read));
+                break;
+            else/if n_read == 0 then
+                _ceu_assert(0, "bug found");
+            end
+
+            // not reading anymore
+
+            // WRITE
+            buf = buf..[{'\0'}];
+            var&? _uv_write_t req_write = &_malloc(sizeof(_uv_write_t))
+                finalize (req_write) with
+                    // free on uv callback
+                end;
+            var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], n_read);
+            _ceu_uv_write(&&req_write!, &&client as _uv_stream_t&&, &&buf_);
+            var _uv_write_t&& w;
+            var int status;
+            (w, status) = await UV_STREAM_WRITE until w==&&req_write!;
+            _ceu_assert(status == 0, "bug found");
         end
-
-        // not reading anymore
-
-        // WRITE
-        buf = buf..[{'\0'}];
-        var&? _uv_write_t req_write = &_malloc(sizeof(_uv_write_t))
-            finalize (req_write) with
-                // free on uv callback
-            end;
-        var _uv_buf_t buf_ = _uv_buf_init(&&buf[0], n_read);
-        _ceu_uv_write(&&req_write!, &&client as _uv_stream_t&&, &&buf_);
-        var _uv_write_t&& w;
-        var int status;
-        (w, status) = await UV_STREAM_WRITE until w==&&req_write!;
-        _ceu_dbg_assert(status == 0);
     end
 end
 

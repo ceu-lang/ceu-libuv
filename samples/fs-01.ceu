@@ -7,7 +7,7 @@ catch e do
     var& UV_FS_Open o = spawn UV_FS_Open("/non/existent/path", _,_,_);
     await o.file.ok;
     _printf("open ok\n");
-    _ceu_dbg_assert(0);
+    _ceu_assert(0, "bug found");
 end
 if e? then
     _printf("open error: %d\n", e!.number);
