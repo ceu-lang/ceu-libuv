@@ -7,7 +7,6 @@
 #include "uv/tcp.ceu"
 
 #define DEFAULT_PORT 7000
-#define BUFFER_MAX     _ //10
 
 code/await Client (var& UV_Stream server) -> none
     throws Exception.Uv
@@ -18,33 +17,25 @@ do
 
     // READ/WRITE LOOP
 
-    var[BUFFER_MAX] byte buf;
+    watching UV_STREAM_ERROR do
+        loop do
+            var usize n = await UV_Stream_Read_N(&client.stream, _);//$$client.stream.buffer-1);
+            _ceu_assert(n >= 0, "bug found");
+            //client.stream.buffer = client.stream.buffer .. [{'\0'}];
+    //_printf("====\n");
+    //_printf(">>> %s [%ld]\n", &&client.stream.buffer[0], $client.stream.buffer);
+    //_printf("%s", &&client.stream.buffer[0]);
+    //_printf("\t");
+    //var usize i;
+    //loop i in [0 -> $client.stream.buffer[ do
+    //_printf(".%c.", client.stream.buffer[i]);
+    //end
+    //_printf("\n");
 
-    spawn do
-        var _uv_stream_t&& s;
-        var int            err2;
-        every (s,err2) in UV_STREAM_ERROR do
-            _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err2));
+            // WRITE
+            await UV_Stream_Write_N(&client.stream, _);
+            $client.stream.buffer = 0;
         end
-    end
-
-    loop do
-        var usize n = await UV_Stream_Read_N(&client.stream, _);//$$client.stream.buffer-1);
-        _ceu_assert(n >= 0, "bug found");
-        //client.stream.buffer = client.stream.buffer .. [{'\0'}];
-//_printf("====\n");
-//_printf(">>> %s [%ld]\n", &&client.stream.buffer[0], $client.stream.buffer);
-//_printf("%s", &&client.stream.buffer[0]);
-//_printf("\t");
-//var usize i;
-//loop i in [0 -> $client.stream.buffer[ do
-//_printf(".%c.", client.stream.buffer[i]);
-//end
-//_printf("\n");
-
-        // WRITE
-        await UV_Stream_Write_N(&client.stream, _);
-        $client.stream.buffer = 0;
     end
 end
 

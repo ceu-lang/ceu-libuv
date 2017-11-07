@@ -8,7 +8,6 @@
 #include "uv/tcp.ceu"
 
 #define DEFAULT_PORT 7000
-#define BUFFER_MAX     _ //10
 
 code/await Client (var& UV_Stream server) -> none
     throws Exception.Uv
@@ -19,31 +18,23 @@ do
 
     // READ/WRITE LOOP
 
-    var[BUFFER_MAX] byte buf;
+    watching UV_STREAM_ERROR do
+        loop do
+            var[] byte line;
+            var usize n = await UV_Stream_Read_Line(&client.stream, &line);
+            line = line .. [{'\n'},{'\0'}];
+            //_printf("%s", &&line[0]);
 
-    spawn do
-        var _uv_stream_t&& s;
-        var int            err2;
-        every (s,err2) in UV_STREAM_ERROR do
-            _fprintf(_stderr, "[error]: %s\n", _uv_strerror(err2));
+            var[] byte tmp = []..client.stream.buffer;  // TODO[-]: full-duplex
+
+            // WRITE
+            $line = $line-1;
+            client.stream.buffer = []..line;
+            await UV_Stream_Write_N(&client.stream, _);
+            //$client.stream.buffer = 0;                // TODO[+]: full-duplex
+
+            client.stream.buffer = []..tmp;             // TODO[i]: full-duplex
         end
-    end
-
-    loop do
-        var[] byte line;
-        var usize n = await UV_Stream_Read_Line(&client.stream, &line);
-        line = line .. [{'\n'},{'\0'}];
-        //_printf("%s", &&line[0]);
-
-        var[] byte tmp = []..client.stream.buffer;  // TODO[-]: full-duplex
-
-        // WRITE
-        $line = $line-1;
-        client.stream.buffer = []..line;
-        await UV_Stream_Write_N(&client.stream, _);
-        //$client.stream.buffer = 0;                // TODO[+]: full-duplex
-
-        client.stream.buffer = []..tmp;             // TODO[i]: full-duplex
     end
 end
 
