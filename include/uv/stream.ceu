@@ -113,7 +113,8 @@ do
         (stream.handle._data as _tceu_uv_stream_data&&):n_togo = n_togo!;
     else
         times = 1;
-        (stream.handle._data as _tceu_uv_stream_data&&):n_req = 0;
+        (stream.handle._data as _tceu_uv_stream_data&&):n_req  = 0;
+        (stream.handle._data as _tceu_uv_stream_data&&):n_togo = 0;
     end
 
     var usize n_read = 0;
@@ -308,11 +309,9 @@ printf(">>> FREE\n");
         // ok, it happend, the underlying syscall may fail with EGAIN/EWOULDBLOCK
 
         tceu_uv_stream_data* data = (tceu_uv_stream_data*) s->data;
-        ceu_sys_assert(data != NULL, "bug found (UV: read)");
-        ceu_sys_assert(n<0 || data->n_req==0 || data->n_togo>=n, "bug found (UV: read)");
-        if (data->n_req != 0) {
-            data->n_togo -= n;
-        }
+        ceu_sys_assert(data != NULL, "bug found (UV: read 1)");
+        //printf(">>> %ld %ld %ld\n", n, data->n_req, data->n_togo);
+        //ceu_sys_assert(n<0 || data->n_req==0 || data->n_togo>=n, "bug found (UV: read 2)"); // it is probably ok to fail the last case (let's see when it happens) -- ok, it happened and made sense
 
         tceu_vector* vec = data->vector;
         if (n > 0) {
@@ -327,8 +326,9 @@ printf(">>> FREE\n");
         if (n < 0) {
             tceu_input_UV_STREAM_ERROR p = { s, n };
             ceu_input(CEU_INPUT_UV_STREAM_ERROR, &p);
-        } else if (data->n_togo == 0) {
-            tceu_input_UV_STREAM_READ p = { s, data->n_req };
+        } else if (n >= data->n_togo) {
+            tceu_input_UV_STREAM_READ p = { s, ((data->n_req==0) ? n : data->n_req+(n-data->n_togo)) };
+            data->n_togo -= n;
             ceu_input(CEU_INPUT_UV_STREAM_READ, &p);
         }
     }

@@ -93,7 +93,8 @@ loop i in [0 -> 2[ do
                 $buf = 0;
                 var _tceu_uv_stream_data data_ = _;
                                          data_.vector = _PURIFY(&&buf);
-                                         data_.n      = 0;
+                                         data_.n_req  = 0;
+                                         data_.n_togo  = 0;
                 client._data = _PURIFY(&&data_); // finalize below
 
                 var int ret;
