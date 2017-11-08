@@ -39,9 +39,9 @@ code/await UV_TCP_Open (var int? buffer_size) -> (var UV_Stream stream) -> NEVER
     throws Exception.Uv
 do
     _ceu_assert(not buffer_size?, "temporarily unsupported");
-#if 0
+#if 1   // FIXED
     if not buffer_size? then
-        buffer_size = 1024;
+        buffer_size = 65536;
     end
 #endif
 
@@ -54,7 +54,7 @@ do
         throw e;
     end
 
-#if 0
+#if 1   // FIXED
     var[buffer_size!*] byte buffer;
 #else
     var[*] byte buffer;
