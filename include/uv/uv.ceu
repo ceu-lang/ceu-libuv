@@ -39,6 +39,8 @@ native/pos do
     uv_check_t   ceu_uv_check;
     uv_prepare_t ceu_uv_prepare;
     uv_async_t   ceu_uv_async;
+
+##ifndef CEU_UV_WCLOCK_DISABLE
     uv_timer_t   ceu_uv_timer;
 
     u64 ceu_uv_timer_old;
@@ -54,6 +56,7 @@ native/pos do
         ceu_sys_assert(timer == &ceu_uv_timer, "bug found (UV: timer)");
         uv_async_send(&ceu_uv_async);
     }
+##endif
 
     void ceu_uv_check_cb (uv_check_t* check) {
         CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
@@ -72,12 +75,16 @@ native/pos do
                 signal(SIGPIPE, SIG_IGN); // TODO: fails on "uv_write" would crash otherwise
                 uv_loop_init(&ceu_uv_loop);
                 uv_async_init(&ceu_uv_loop, &ceu_uv_async, NULL);
-                uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
-                ceu_uv_timer_old = uv_now(&ceu_uv_loop);
                 uv_check_init(&ceu_uv_loop, &ceu_uv_check);
                 uv_check_start(&ceu_uv_check, &ceu_uv_check_cb);
                 uv_prepare_init(&ceu_uv_loop, &ceu_uv_prepare);
                 uv_prepare_start(&ceu_uv_prepare, &ceu_uv_prepare_cb);
+
+##ifndef CEU_UV_WCLOCK_DISABLE
+                uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
+                ceu_uv_timer_old = uv_now(&ceu_uv_loop);
+##endif
+
                 break;
 
             case CEU_CALLBACK_STEP:
@@ -94,7 +101,7 @@ native/pos do
                 break;
             }
 
-##ifndef DISABLE_UV_CLOCK
+##ifndef CEU_UV_WCLOCK_DISABLE
             case CEU_CALLBACK_WCLOCK_DT:
                 ret.value.num = ceu_uv_dt();
                 break;
