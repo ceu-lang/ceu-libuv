@@ -94,6 +94,7 @@ native/pos do
                 break;
             }
 
+##ifndef DISABLE_UV_CLOCK
             case CEU_CALLBACK_WCLOCK_DT:
                 ret.value.num = ceu_uv_dt();
                 break;
@@ -111,6 +112,7 @@ native/pos do
                 }
                 break;
             }
+##endif
 
             default:
                 ret.is_handled = 0;
