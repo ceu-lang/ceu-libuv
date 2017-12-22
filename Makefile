@@ -1,6 +1,7 @@
-CEU_DIR  = $(error set absolute path to "<ceu>" repository)
-CEU_SRC  ?= samples/tcp-01.ceu
+include Makefile.dirs
+
 CEU_ARGS ?=
+CEU_SRC  ?= samples/tcp-01.ceu
 
 all:
 	ceu --pre --pre-args="-I$(CEU_DIR)/include -I./include -I./samples/ $(CEU_ARGS)" \
