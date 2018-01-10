@@ -75,7 +75,7 @@ do
         _uv_fs_req_cleanup(&&req_open);
     end
 #if 1
-    _ceu_sys_assert(ret == 0, "bug found");  // libuv seems to always return 0
+    _ceu_assert(ret == 0, "bug found");  // libuv seems to always return 0
 #else
     if ret < 0 then
         escape ret;
@@ -166,8 +166,8 @@ do
             end
         end
 
-        _ceu_sys_assert(n >= req.result, "bug found");
-        //_ceu_sys_assert(n_togo == req.result, "bug found");
+        _ceu_assert(n >= req.result, "bug found");
+        //_ceu_assert(n_togo == req.result, "bug found");
         file.offset = file.offset + req.result;
         n_read  = n_read  + req.result;
         _ceu_vector_setlen(&&file.buffer, $file.buffer+req.result, 1);
@@ -225,7 +225,7 @@ do
         end
         n = n_ as usize;
 
-        _ceu_sys_assert($file.buffer == n, "bug found");
+        _ceu_assert($file.buffer == n, "bug found");
         var usize i;
         loop i in [0 -> $file.buffer[ do
             var byte c = file.buffer[0];
@@ -283,8 +283,8 @@ do
             throw e;
         end
 
-        _ceu_sys_assert(n! >= req.result, "bug found");
-        _ceu_sys_assert(n_togo == req.result, "bug found");
+        _ceu_assert(n! >= req.result, "bug found");
+        _ceu_assert(n_togo == req.result, "bug found");
         file.offset  = file.offset  + req.result;
         n_written = n_written + req.result;
         $file.buffer = $file.buffer - req.result;

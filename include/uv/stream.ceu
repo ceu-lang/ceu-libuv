@@ -140,7 +140,7 @@ do
             throw e;
         end
         if n? then
-            _ceu_sys_assert(ret == n_togo!, "bug found");
+            _ceu_assert(ret == n_togo!, "bug found");
         end
         n_read = n_read + (ret as usize);
 
@@ -283,7 +283,7 @@ printf(">>> FREE\n");
     }
 
     void ceu_uv_listen_cb (uv_stream_t* s, int err) {
-        ceu_sys_assert(err >= 0, "bug found (UV: listen)");
+        ceu_assert_ex(err >= 0, "bug found (UV: listen)", CEU_TRACE_null);
         tceu_input_UV_STREAM_LISTEN p = { s, err };
         ceu_input(CEU_INPUT_UV_STREAM_LISTEN, &p);
     }
@@ -294,7 +294,7 @@ printf(">>> FREE\n");
         tceu_uv_stream_data* data = (tceu_uv_stream_data*) h->data;
         tceu_vector* vec   = data->vector;
         usize        n_req = data->n_req;
-        ceu_sys_assert(vec != NULL, "bug found");
+        ceu_assert_ex(vec != NULL, "bug found", CEU_TRACE_null);
 
         if (vec->max==0 || n_req>vec->max && vec->is_dyn && !vec->is_freezed) {
             ceu_vector_setmax_ex(vec, (n_req==0 ? CEU_UV_STREAM_READ_ALLOC_DYN_INIT : n_req), 0,
@@ -305,18 +305,18 @@ printf(">>> FREE\n");
     }
 
     void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* _) {
-        //ceu_sys_assert(n != 0); // TODO: if this happens, try to understand why
+        //ceu_assert(n != 0); // TODO: if this happens, try to understand why
         // ok, it happend, the underlying syscall may fail with EGAIN/EWOULDBLOCK
 
         tceu_uv_stream_data* data = (tceu_uv_stream_data*) s->data;
-        ceu_sys_assert(data != NULL, "bug found (UV: read 1)");
+        ceu_assert_ex(data != NULL, "bug found (UV: read 1)", CEU_TRACE_null);
         //printf(">>> %ld %ld %ld\n", n, data->n_req, data->n_togo);
-        //ceu_sys_assert(n<0 || data->n_req==0 || data->n_togo>=n, "bug found (UV: read 2)"); // it is probably ok to fail the last case (let's see when it happens) -- ok, it happened and made sense
+        //ceu_assert(n<0 || data->n_req==0 || data->n_togo>=n, "bug found (UV: read 2)"); // it is probably ok to fail the last case (let's see when it happens) -- ok, it happened and made sense
 
         tceu_vector* vec = data->vector;
         if (n > 0) {
             if (ceu_vector_setlen_could_ex(vec,vec->len+n,1,((tceu_trace){NULL,NULL,0})) == 0) {
-                ceu_sys_assert(data != NULL, "should never happen"); // if it does and makes sense, just comment this line and let n=ENOBUFS
+                ceu_assert_ex(data != NULL, "should never happen", CEU_TRACE_null); // if it does and makes sense, just comment this line and let n=ENOBUFS
                 n = UV_ENOBUFS;
             } else {
                 ceu_vector_setlen_ex(vec,vec->len+n,1,((tceu_trace){NULL,NULL,0}));
@@ -337,7 +337,7 @@ printf(">>> FREE\n");
         if (err < 0) {
             // if the "assert" fails, see if the error makes sense and extend it
             //  ok, it happened, "broken pipe" on closed connection
-            //ceu_sys_assert(err == UV__EOF, "bug found");
+            //ceu_assert(err == UV__EOF, "bug found");
             tceu_input_UV_STREAM_ERROR p = { req->handle, err };
             ceu_input(CEU_INPUT_UV_STREAM_ERROR, &p);
         }

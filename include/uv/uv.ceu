@@ -28,7 +28,11 @@ native/nohold
 native/pre do
     ##include <uv.h>
     ##define CEU_CALLBACK_ENV CEU_CALLBACK_UV
-    tceu_callback_ret ceu_callback_uv (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line);
+    int ceu_callback_uv (int cmd, tceu_callback_val p1, tceu_callback_val p2
+##ifdef CEU_FEATURES_TRACE
+                        , tceu_trace trace
+##endif
+                        );
     tceu_callback CEU_CALLBACK_UV = { &ceu_callback_uv, NULL };
 end
 
@@ -53,7 +57,7 @@ native/pos do
     }
 
     void ceu_uv_timer_cb (uv_timer_t* timer) {
-        ceu_sys_assert(timer == &ceu_uv_timer, "bug found (UV: timer)");
+        ceu_assert_ex(timer == &ceu_uv_timer, "bug found (UV: timer)", CEU_TRACE_null);
         uv_async_send(&ceu_uv_async);
     }
 ##endif
@@ -66,10 +70,12 @@ native/pos do
         CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     }
 
-    tceu_callback_ret ceu_callback_uv (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line)
+    int ceu_callback_uv (int cmd, tceu_callback_val p1, tceu_callback_val p2
+##ifdef CEU_FEATURES_TRACE
+                        , tceu_trace trace
+##endif
+                        )
     {
-        tceu_callback_ret ret = { .is_handled=1 };
-
         switch (cmd) {
             case CEU_CALLBACK_START:
                 signal(SIGPIPE, SIG_IGN); // TODO: fails on "uv_write" would crash otherwise
@@ -103,7 +109,7 @@ native/pos do
 
 ##ifndef CEU_UV_WCLOCK_DISABLE
             case CEU_CALLBACK_WCLOCK_DT:
-                ret.value.num = ceu_uv_dt();
+                ceu_callback_ret.num = ceu_uv_dt();
                 break;
             case CEU_CALLBACK_WCLOCK_MIN: {
                 s32 us = p1.num;
@@ -122,10 +128,10 @@ native/pos do
 ##endif
 
             default:
-                ret.is_handled = 0;
+                return 0;
         }
 
-        return ret;
+        return 1;
     }
 end
 

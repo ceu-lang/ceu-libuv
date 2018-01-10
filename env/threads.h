@@ -8,7 +8,7 @@
 #define CEU_THREADS_CREATE(t,f,p)   uv_thread_create(t,f,p)
 #define CEU_THREADS_CANCEL(t)
 #define CEU_THREADS_JOIN_TRY(t)     0
-#define CEU_THREADS_JOIN(t)         ceu_sys_assert(uv_thread_join(&t)==0, "bug found")
+#define CEU_THREADS_JOIN(t)         ceu_assert_ex(uv_thread_join(&t)==0, "bug found", CEU_TRACE_null)
 #define CEU_THREADS_MUTEX_LOCK(m)   uv_mutex_lock(m)
 #define CEU_THREADS_MUTEX_UNLOCK(m) uv_mutex_unlock(m)
 #define CEU_THREADS_SLEEP(us)       usleep(us)
