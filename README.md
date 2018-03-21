@@ -45,6 +45,7 @@ https://github.com/fsantanna/ceu/
 ```
 $ git clone https://github.com/fsantanna/ceu-libuv
 $ cd ceu-libuv/
+$ git checkout v0.30
 ```
 
 ## Compile and Run
