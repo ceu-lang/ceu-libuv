@@ -296,12 +296,12 @@ printf(">>> FREE\n");
         usize        n_req = data->n_req;
         ceu_assert_ex(vec != NULL, "bug found", CEU_TRACE_null);
 
-        if (vec->max==0 || n_req>vec->max && vec->is_dyn && !vec->is_freezed) {
+        if (vec->max==0 || (n_req>vec->max && vec->is_dyn && !vec->is_freezed)) {
             ceu_vector_setmax_ex(vec, (n_req==0 ? CEU_UV_STREAM_READ_ALLOC_DYN_INIT : n_req), 0,
                                  ((tceu_trace){NULL,NULL,0}));  /* TODO: error message */
         }
 
-        *buf = uv_buf_init(ceu_vector_buf_get(vec,vec->len), (n_req==0 ? (vec->max-vec->ini) : n_req));
+        *buf = uv_buf_init((char*)ceu_vector_buf_get(vec,vec->len), (n_req==0 ? (vec->max-vec->ini) : n_req));
     }
 
     void ceu_uv_read_start_cb(uv_stream_t* s, ssize_t n, const uv_buf_t* _) {
