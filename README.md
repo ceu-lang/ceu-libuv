@@ -1,8 +1,8 @@
 Céu-libuv supports the development of libuv applications in the programming
 language Céu:
 
-- Source Code:   https://github.com/fsantanna/ceu-libuv/
-- Documentation: http://fsantanna.github.io/ceu-libuv/
+- Source Code:   https://github.com/ceu-lang/ceu-libuv/
+- Documentation: http://ceu-lang.github.io/ceu-libuv/
 - Chat:          https://gitter.im/fsantanna/ceu
 
 [libuv](http://www.libuv.org/) libuv is a multi-platform C library that
@@ -12,7 +12,7 @@ Céu is a reactive language that aims to offer a higher-level and safer
 alternative to C:
 
 - Home Page:   http://www.ceu-lang.org/
-- Source code: https://github.com/fsantanna/ceu/
+- Source code: https://github.com/ceu-lang/ceu/
 
 Céu-libuv empowers the development of libuv applications with the following
 extensions:
@@ -38,12 +38,12 @@ $ sudo apt-get install libuv1-dev
 
 ## Install Céu:
 
-https://github.com/fsantanna/ceu/
+https://github.com/ceu-lang/ceu/
 
 ## Clone Céu-libuv:
 
 ```
-$ git clone https://github.com/fsantanna/ceu-libuv
+$ git clone https://github.com/ceu-lang/ceu-libuv
 $ cd ceu-libuv/
 $ git checkout v0.30
 ```
