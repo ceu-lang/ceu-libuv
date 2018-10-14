@@ -27,13 +27,19 @@ native/nohold
 
 native/pre do
     ##include <uv.h>
-    ##define CEU_CALLBACK_ENV CEU_CALLBACK_UV
-    int ceu_callback_uv (int cmd, tceu_callback_val p1, tceu_callback_val p2
-##ifdef CEU_FEATURES_TRACE
-                        , tceu_trace trace
-##endif
-                        );
-    tceu_callback CEU_CALLBACK_UV = { &ceu_callback_uv, NULL };
+
+    ##define ceu_callback_start(trace)              ceu_uv_callback_start()
+    ##define ceu_callback_step(trace)               uv_run(&ceu_uv_loop, UV_RUN_ONCE)
+    ##define ceu_callback_wclock_dt(trace)          ceu_uv_callback_wclock_dt()
+    ##define ceu_callback_wclock_min(dt,trace)      ceu_uv_callback_wclock_min(dt)
+    ##define ceu_callback_thread_terminating(trace) uv_async_send(&ceu_uv_async)
+    ##define ceu_callback_async_pending(trace)      uv_async_send(&ceu_uv_async)
+
+    void ceu_uv_callback_start              (void);
+    void ceu_uv_callback_step               (void);
+    s32  ceu_uv_callback_wclock_dt          (void);
+    void ceu_uv_callback_wclock_min         (s32 dt);
+    void ceu_uv_callback_thread_terminating (void);
 end
 
 native/pos do
@@ -49,7 +55,7 @@ native/pos do
 
     u64 ceu_uv_timer_old;
 
-    s32 ceu_uv_dt (void) {
+    s32 ceu_uv_callback_wclock_dt (void) {
         u64 now = uv_now(&ceu_uv_loop);
         u32 dt = (now - ceu_uv_timer_old);
         ceu_uv_timer_old = now;
@@ -59,6 +65,19 @@ native/pos do
     void ceu_uv_timer_cb (uv_timer_t* timer) {
         ceu_assert_ex(timer == &ceu_uv_timer, "bug found (UV: timer)", CEU_TRACE_null);
         uv_async_send(&ceu_uv_async);
+    }
+
+    void ceu_uv_callback_wclock_min (s32 dt) {
+        if (dt == CEU_WCLOCK_INACTIVE) {
+            uv_timer_stop(&ceu_uv_timer);
+        //} else if (dt <= 0) {
+            //uv_async_send(&ceu_uv_async);
+        } else {
+            if (dt < 0) {
+                dt = 0;
+            }
+            uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, dt/1000, 0);
+        }
     }
 ##endif
 
@@ -70,68 +89,18 @@ native/pos do
         CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     }
 
-    int ceu_callback_uv (int cmd, tceu_callback_val p1, tceu_callback_val p2
-##ifdef CEU_FEATURES_TRACE
-                        , tceu_trace trace
-##endif
-                        )
-    {
-        switch (cmd) {
-            case CEU_CALLBACK_START:
-                signal(SIGPIPE, SIG_IGN); // TODO: fails on "uv_write" would crash otherwise
-                uv_loop_init(&ceu_uv_loop);
-                uv_async_init(&ceu_uv_loop, &ceu_uv_async, NULL);
-                uv_check_init(&ceu_uv_loop, &ceu_uv_check);
-                uv_check_start(&ceu_uv_check, &ceu_uv_check_cb);
-                uv_prepare_init(&ceu_uv_loop, &ceu_uv_prepare);
-                uv_prepare_start(&ceu_uv_prepare, &ceu_uv_prepare_cb);
-
+    void ceu_uv_callback_start (void) {
+        signal(SIGPIPE, SIG_IGN); // TODO: fails on "uv_write" would crash otherwise
+        uv_loop_init(&ceu_uv_loop);
+        uv_async_init(&ceu_uv_loop, &ceu_uv_async, NULL);
+        uv_check_init(&ceu_uv_loop, &ceu_uv_check);
+        uv_check_start(&ceu_uv_check, &ceu_uv_check_cb);
+        uv_prepare_init(&ceu_uv_loop, &ceu_uv_prepare);
+        uv_prepare_start(&ceu_uv_prepare, &ceu_uv_prepare_cb);
 ##ifndef CEU_UV_WCLOCK_DISABLE
-                uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
-                ceu_uv_timer_old = uv_now(&ceu_uv_loop);
+        uv_timer_init(&ceu_uv_loop, &ceu_uv_timer);
+        ceu_uv_timer_old = uv_now(&ceu_uv_loop);
 ##endif
-
-                break;
-
-            case CEU_CALLBACK_STEP:
-                // TODO: detect/error if return w/o "escape"
-                uv_run(&ceu_uv_loop, UV_RUN_ONCE);
-                break;
-
-            case CEU_CALLBACK_ASYNC_PENDING:
-                uv_async_send(&ceu_uv_async);
-                break;
-
-            case CEU_CALLBACK_THREAD_TERMINATING: {
-                uv_async_send(&ceu_uv_async);
-                break;
-            }
-
-##ifndef CEU_UV_WCLOCK_DISABLE
-            case CEU_CALLBACK_WCLOCK_DT:
-                ceu_callback_ret.num = ceu_uv_dt();
-                break;
-            case CEU_CALLBACK_WCLOCK_MIN: {
-                s32 us = p1.num;
-                if (us == CEU_WCLOCK_INACTIVE) {
-                    uv_timer_stop(&ceu_uv_timer);
-                //} else if (us <= 0) {
-                    //uv_async_send(&ceu_uv_async);
-                } else {
-                    if (us < 0) {
-                        us = 0;
-                    }
-                    uv_timer_start(&ceu_uv_timer, ceu_uv_timer_cb, us/1000, 0);
-                }
-                break;
-            }
-##endif
-
-            default:
-                return 0;
-        }
-
-        return 1;
     }
 end
 
