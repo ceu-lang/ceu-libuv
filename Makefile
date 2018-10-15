@@ -1,4 +1,4 @@
-include Makefile.dirs
+include Makefile.conf
 
 CEU_ARGS ?=
 CEU_SRC  ?= samples/tcp-01.ceu

@@ -45,29 +45,30 @@ https://github.com/ceu-lang/ceu/
 ```
 $ git clone https://github.com/ceu-lang/ceu-libuv
 $ cd ceu-libuv/
-$ git checkout v0.30
+$ git checkout v0.40
+```
+
+## Configure:
+
+Edit the `Makefile.conf` to set your configurations:
+
+```
+$ gedit Makefile.conf
 ```
 
 ## Compile and Run
 
-Edit the `Makefile` to point to your `ceu` directory and then run `make`:
-
-```
-$ gedit Makefile
-$ make
-```
-
+<!--
 If necessary, configure the variables in the `Makefile`.
-The default example prints the time elapsing during 5 seconds.
 
-To compile and run another application, run `make` and set `CEU_SRC`:
+The default example prints the time elapsing during 5 seconds.
+-->
+
+To compile and run an application, run `make` and set `CEU_SRC`:
 
 ```
 $ make CEU_SRC=<path-to-ceu-application>
 ```
-
-Examples
-========
 
 The `samples/` directory contains a number of examples.
 
@@ -76,6 +77,10 @@ To run all examples one after another, run `make samples`:
 ```
 $ make samples
 ```
+
+<!--
+Examples
+========
 
 Opening a File
 --------------
@@ -158,3 +163,4 @@ escape 0;
 
 TODO
 ----
+-->
